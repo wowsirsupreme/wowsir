@@ -472,6 +472,42 @@ function BankImportModal({ onClose, onImport }: {
   );
 }
 
+/* ─── auto-scaling preview wrapper ────────────────────────────────── */
+function ScaledPreview({ draft }: { draft: AssessmentDraft }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const PAPER_W = 540;
+
+  const rescale = useCallback(() => {
+    const wrap = wrapRef.current;
+    const inner = innerRef.current;
+    if (!wrap || !inner) return;
+    const avail = wrap.clientWidth - 4;
+    const scale = Math.min(1, avail / PAPER_W);
+    inner.style.transform = `scale(${scale})`;
+    // collapse the whitespace created by scale-down
+    inner.style.marginBottom = `${-(PAPER_W * (1 - scale) * 0.6)}px`;
+  }, []);
+
+  useEffect(() => {
+    rescale();
+    const ro = new ResizeObserver(rescale);
+    if (wrapRef.current) ro.observe(wrapRef.current);
+    return () => ro.disconnect();
+  }, [rescale]);
+
+  // re-apply margin whenever draft changes (paper height may change)
+  useEffect(() => { rescale(); }, [draft, rescale]);
+
+  return (
+    <div ref={wrapRef} style={{ width: '100%', overflow: 'hidden' }}>
+      <div ref={innerRef} style={{ width: PAPER_W, transformOrigin: 'top left', transition: 'transform 0.1s' }}>
+        <PaperPreview draft={draft} />
+      </div>
+    </div>
+  );
+}
+
 /* ─── main page ────────────────────────────────────────────────────── */
 export default function AssessmentBuilderPage() {
   const router = useRouter();
@@ -498,7 +534,6 @@ export default function AssessmentBuilderPage() {
   });
 
   const [activeTab, setActiveTab] = useState<'details' | 'questions' | 'format'>('details');
-  const [showPreview, setShowPreview] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -609,10 +644,6 @@ export default function AssessmentBuilderPage() {
             </span>
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-            <button onClick={() => setShowPreview(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, background: showPreview ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${showPreview ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.1)'}`, color: showPreview ? '#c9a84c' : 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer' }}>
-              <Eye size={12} /> Preview
-            </button>
             <button onClick={() => handleSave('draft')} disabled={saving}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', fontSize: 12, cursor: 'pointer' }}>
               <Save size={12} /> Save draft
@@ -624,10 +655,10 @@ export default function AssessmentBuilderPage() {
           </div>
         </nav>
 
-        <div style={{ display: 'flex', gap: 0, maxWidth: showPreview ? '100%' : 720, margin: '0 auto' }}>
+        <div style={{ display: 'flex', gap: 0, width: '100%' }}>
 
           {/* ── editor panel ── */}
-          <div style={{ flex: showPreview ? '0 0 480px' : '1', padding: '24px 20px 80px', overflowY: 'auto', maxHeight: 'calc(100vh - 56px)', minWidth: 0 }}>
+          <div style={{ flex: '0 0 440px', minWidth: 0, padding: '24px 20px 80px', overflowY: 'auto', maxHeight: 'calc(100vh - 56px)' }}>
 
             {/* tab bar */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: 12, width: 'fit-content' }}>
@@ -842,15 +873,20 @@ export default function AssessmentBuilderPage() {
             )}
           </div>
 
-          {/* ── live preview panel ── */}
-          {showPreview && (
-            <div style={{ flex: 1, padding: '24px 24px 24px 12px', overflowY: 'auto', maxHeight: 'calc(100vh - 56px)', background: 'rgba(0,0,0,0.25)', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 12, letterSpacing: '0.07em' }}>PAPER PREVIEW</p>
-              <div style={{ transform: 'scale(0.9)', transformOrigin: 'top left', width: '111%' }}>
-                <PaperPreview draft={draft} />
+          {/* ── live preview panel — always visible ── */}
+          <div style={{ flex: 1, minWidth: 0, position: 'sticky', top: 56, height: 'calc(100vh - 56px)', overflowY: 'auto', background: 'rgba(0,0,0,0.3)', borderLeft: '1px solid rgba(255,255,255,0.07)', padding: '18px 20px 40px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Eye size={11} color="rgba(255,255,255,0.3)" />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.07em', fontWeight: 600 }}>LIVE PREVIEW</span>
               </div>
+              <button onClick={handlePrint}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 7, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>
+                🖨 Print / PDF
+              </button>
             </div>
-          )}
+            <ScaledPreview draft={draft} />
+          </div>
         </div>
       </div>
 
