@@ -441,28 +441,52 @@ function FlashcardsMode({ accentColor, classId }: { accentColor: string; classId
             {index + 1} / {filtered.length}
           </p>
 
-          {/* Card */}
+          {/* Card — 3-D flip */}
           <div
             onClick={() => setFlipped(f => !f)}
-            style={{
-              minHeight: 220, borderRadius: 20, cursor: 'pointer',
-              background: flipped ? `${accentColor}14` : 'rgba(255,255,255,0.05)',
-              border: `2px solid ${flipped ? `${accentColor}45` : 'rgba(255,255,255,0.1)'}`,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '28px 32px', textAlign: 'center',
-              transition: 'all 0.25s',
-              boxShadow: flipped ? `0 0 32px ${accentColor}20` : 'none',
-              userSelect: 'none',
-            }}
+            style={{ perspective: '1200px', cursor: 'pointer', userSelect: 'none' }}
           >
-            {!flipped ? (
-              <>
+            <div
+              style={{
+                position: 'relative',
+                minHeight: 220,
+                transformStyle: 'preserve-3d',
+                transition: 'transform 0.55s cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+                transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              {/* Front — Term */}
+              <div
+                style={{
+                  borderRadius: 20, padding: '28px 32px', textAlign: 'center',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '2px solid rgba(255,255,255,0.1)',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  minHeight: 220,
+                }}
+              >
                 <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: 16 }}>TERM</p>
                 <p style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: '#fff', lineHeight: 1.3 }}>{card.term}</p>
                 <p style={{ marginTop: 20, fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>Tap to reveal</p>
-              </>
-            ) : (
-              <>
+              </div>
+
+              {/* Back — Definition */}
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  borderRadius: 20, padding: '28px 32px', textAlign: 'center',
+                  background: `${accentColor}14`,
+                  border: `2px solid ${accentColor}45`,
+                  boxShadow: `0 0 32px ${accentColor}20`,
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  minHeight: 220,
+                }}
+              >
                 <p style={{ fontSize: 10, color: accentColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: 16, opacity: 0.7 }}>DEFINITION</p>
                 <p style={{ fontSize: 16, color: '#fff', lineHeight: 1.6 }}>{card.definition}</p>
                 {card.example && (
@@ -470,8 +494,8 @@ function FlashcardsMode({ accentColor, classId }: { accentColor: string; classId
                     e.g. {card.example}
                   </p>
                 )}
-              </>
-            )}
+              </div>
+            </div>
           </div>
 
           {/* Arrows */}
