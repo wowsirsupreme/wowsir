@@ -1,0 +1,28 @@
+{
+  "rules": {
+    "sessions": {
+      "$sessionId": {
+        "meta": {
+          ".read": true,
+          ".write": "auth != null"
+        },
+        "players": {
+          ".read": true,
+          "$playerId": {
+            ".write": true
+          }
+        }
+      }
+    },
+    "sessions_questions": {
+      "$sessionId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "session_codes": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}
