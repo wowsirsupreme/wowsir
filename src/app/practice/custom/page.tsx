@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { submitScore, fetchLeaderboard } from '@/lib/firebase/leaderboard';
 import type { LeaderboardEntry } from '@/lib/firebase/leaderboard';
+import { useFirebase } from '@/hooks/useFirebase';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -203,6 +204,7 @@ function LeaderboardDrawer({ entries, myScore, accent, onClose }:
 
 export default function CustomPracticePage() {
   const router = useRouter();
+  useFirebase(); // initialise Firebase from env vars so leaderboard writes work
 
   // Data
   const [pool,     setPool]     = useState<Question[]>([]);
