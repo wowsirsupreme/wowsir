@@ -10,6 +10,7 @@
  */
 
 import type { Question } from '@/types/question';
+import { CHAPTER_RESOURCES } from './studyResources';
 
 /* ── Flashcard (study-only, not in Firestore question bank) ── */
 export interface Flashcard {
@@ -203,6 +204,28 @@ const GRADE9DT_CHAPTERS: StudyChapter[] = [
    with /study/[classId]/[mode]/page.tsx
    ══════════════════════════════════════════════════════ */
 export const STUDY_CHAPTERS: StudyChapter[] = GRADE7_CHAPTERS;
+
+/* ── Merge resource data into chapters ────────────────────
+   Chapters that already have inline resources (e.g. gr9-number-systems)
+   keep them; all others get their data from CHAPTER_RESOURCES.
+   ─────────────────────────────────────────────────────── */
+function applyResources(chapters: StudyChapter[]): StudyChapter[] {
+  return chapters.map(ch => ({
+    ...ch,
+    resources: ch.resources ?? CHAPTER_RESOURCES[ch.key],
+  }));
+}
+
+const ALL_CHAPTER_ARRAYS = [
+  GRADE4_CHAPTERS, GRADE5_CHAPTERS, GRADE6_CHAPTERS,
+  GRADE7_CHAPTERS, GRADE8_CHAPTERS,
+  GRADE9CS_CHAPTERS, GRADE9DT_CHAPTERS,
+];
+ALL_CHAPTER_ARRAYS.forEach(arr => arr.forEach((ch, i, a) => {
+  if (!ch.resources && CHAPTER_RESOURCES[ch.key]) {
+    a[i] = { ...ch, resources: CHAPTER_RESOURCES[ch.key] };
+  }
+}));
 
 /* ── Grade → chapters map ── */
 export const GRADE_CHAPTERS: Record<string, StudyChapter[]> = {
