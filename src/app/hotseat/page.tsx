@@ -380,7 +380,7 @@ export default function HotSeatPage() {
             ))}
           </div>
 
-<div className="flex gap-4 w-full max-w-xs mt-2">
+<div className="flex gap-5 w-full max-w-sm px-2">
             <button
               onClick={handleStart}
               className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
@@ -441,7 +441,7 @@ export default function HotSeatPage() {
           </div>
 
           {/* Per-question dots */}
-          <div className="w-full max-w-sm flex gap-1 mb-8">
+          <div className="w-full max-w-sm flex gap-1 mb-12">
             {results.map((r, i) => (
               <div
                 key={i}
@@ -457,7 +457,7 @@ export default function HotSeatPage() {
             ))}
           </div>
 
-<div className="flex gap-4 w-full max-w-xs mt-2">
+<div className="flex gap-5 w-full max-w-sm px-2">
             <button
               onClick={handleStart}
               className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
