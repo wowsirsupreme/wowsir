@@ -4,13 +4,12 @@ import {
   addDoc,
   query,
   where,
-  orderBy,
   limit,
   getDocs,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
+import { getApp, getApps } from 'firebase/app';
 
 export interface LeaderboardEntry {
   id?: string;
@@ -23,22 +22,28 @@ export interface LeaderboardEntry {
   timestamp: Timestamp | null;
 }
 
+/** Returns null when Firebase has not been initialised (no config provided). */
 function db() {
+  if (getApps().length === 0) return null;
   return getFirestore(getApp());
 }
 
 export async function submitScore(entry: Omit<LeaderboardEntry, 'id' | 'timestamp'>) {
-  await addDoc(collection(db(), 'practiceLeaderboard'), {
+  const firestore = db();
+  if (!firestore) return;   // no Firebase config — skip silently
+  await addDoc(collection(firestore, 'practiceLeaderboard'), {
     ...entry,
     timestamp: serverTimestamp(),
   });
 }
 
 export async function fetchLeaderboard(gradeKey: string, limitN = 100): Promise<LeaderboardEntry[]> {
+  const firestore = db();
+  if (!firestore) return [];   // no Firebase config — return empty list silently
   // No orderBy in the query — avoids requiring a composite Firestore index.
   // We filter by gradeKey, fetch all, then sort client-side.
   const q = query(
-    collection(db(), 'practiceLeaderboard'),
+    collection(firestore, 'practiceLeaderboard'),
     where('gradeKey', '==', gradeKey),
     limit(limitN),
   );

@@ -501,7 +501,7 @@ export default function CustomPracticePage() {
           </div>
 
           {/* Leaderboard summary + drawer */}
-          {lbError && (
+          {lbError && !lbError.includes('no-app') && (
             <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 10, fontSize: 12, color: '#fca5a5', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
               ⚠ {lbError}
             </div>
