@@ -384,9 +384,15 @@ export default function CustomPracticePage() {
     try {
       await submitScore({ name: playerName, score, gradeKey: meta.gradeKey, level: level + 1, accuracy: acc, streak: bestStreak });
       setSubmitted2lb(true);
+    } catch (e) {
+      console.error('[Leaderboard] submitScore failed:', e);
+    }
+    try {
       const entries = await fetchLeaderboard(meta.gradeKey, 100);
       setLbEntries(entries);
-    } catch { /* leaderboard is best-effort */ }
+    } catch (e) {
+      console.error('[Leaderboard] fetchLeaderboard failed:', e);
+    }
     setLbLoading(false);
   }, [submitted, levelQs, answers, playerName, meta, score, level, bestStreak, totalDone, totalCorrect, submitted2lb]);
 

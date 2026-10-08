@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "practiceLeaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gradeKey", "order": "ASCENDING" },
+        { "fieldPath": "score",    "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
