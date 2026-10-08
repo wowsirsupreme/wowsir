@@ -32,5 +32,15 @@ service cloud.firestore {
       allow read: if resource.data.isActive == true;
       allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
+
+    // Practice leaderboard: public read + write (no auth required — students use display names)
+    match /practiceLeaderboard/{entryId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['name','score','gradeKey','level','accuracy','timestamp'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 30
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0;
+    }
   }
 }

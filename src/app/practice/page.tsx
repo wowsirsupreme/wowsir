@@ -76,6 +76,12 @@ export default function PracticePage() {
     if (qs.length === 0) return;
     // Store questions in sessionStorage and navigate to a quiz player
     sessionStorage.setItem('customQuiz', JSON.stringify(qs));
+    sessionStorage.setItem('customQuizMeta', JSON.stringify({
+      gradeLabel: gradeInfo.label,
+      gradeKey: gradeInfo.classId,
+      accent: gradeInfo.accent,
+      chapters: keys,
+    }));
     router.push('/practice/custom');
   }
 
