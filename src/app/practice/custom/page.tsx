@@ -244,6 +244,7 @@ export default function CustomPracticePage() {
   // Leaderboard
   const [lbEntries,    setLbEntries]    = useState<LeaderboardEntry[]>([]);
   const [lbLoading,    setLbLoading]    = useState(false);
+  const [lbError,      setLbError]      = useState<string | null>(null);
   const [submitted2lb, setSubmitted2lb] = useState(false);
   const [showLbDrawer, setShowLbDrawer] = useState(false);
 
@@ -381,17 +382,22 @@ export default function CustomPracticePage() {
 
     if (!playerName || !meta || submitted2lb) return;
     setLbLoading(true);
+    setLbError(null);
     try {
       await submitScore({ name: playerName, score, gradeKey: meta.gradeKey, level: level + 1, accuracy: acc, streak: bestStreak });
       setSubmitted2lb(true);
-    } catch (e) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error('[Leaderboard] submitScore failed:', e);
+      setLbError(`Save failed: ${msg}`);
     }
     try {
       const entries = await fetchLeaderboard(meta.gradeKey, 100);
       setLbEntries(entries);
-    } catch (e) {
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.error('[Leaderboard] fetchLeaderboard failed:', e);
+      setLbError(prev => prev ? `${prev} | Fetch failed: ${msg}` : `Fetch failed: ${msg}`);
     }
     setLbLoading(false);
   }, [submitted, levelQs, answers, playerName, meta, score, level, bestStreak, totalDone, totalCorrect, submitted2lb]);
@@ -495,6 +501,11 @@ export default function CustomPracticePage() {
           </div>
 
           {/* Leaderboard summary + drawer */}
+          {lbError && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 10, fontSize: 12, color: '#fca5a5', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
+              ⚠ {lbError}
+            </div>
+          )}
           <LeaderboardSummary entries={lbEntries} myScore={score} accent={accent} loading={lbLoading} onExpand={() => setShowLbDrawer(true)} />
           {showLbDrawer && <LeaderboardDrawer entries={lbEntries} myScore={score} accent={accent} onClose={() => setShowLbDrawer(false)} />}
 
