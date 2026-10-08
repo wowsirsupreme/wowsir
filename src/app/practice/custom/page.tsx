@@ -287,7 +287,7 @@ export default function CustomPracticePage() {
     try {
       await submitScore({ name: playerName, score, gradeKey: meta.gradeKey, level: level + 1, accuracy: acc, streak: bestStreak });
       setSubmitted2lb(true);
-      const entries = await fetchLeaderboard(meta.gradeKey, 10);
+      const entries = await fetchLeaderboard(meta.gradeKey, 100);
       setLbEntries(entries);
     } catch { /* leaderboard is best-effort */ }
     setLbLoading(false);

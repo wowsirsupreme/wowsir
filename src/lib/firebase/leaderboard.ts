@@ -34,7 +34,7 @@ export async function submitScore(entry: Omit<LeaderboardEntry, 'id' | 'timestam
   });
 }
 
-export async function fetchLeaderboard(gradeKey: string, limitN = 10): Promise<LeaderboardEntry[]> {
+export async function fetchLeaderboard(gradeKey: string, limitN = 100): Promise<LeaderboardEntry[]> {
   const q = query(
     collection(db(), 'practiceLeaderboard'),
     where('gradeKey', '==', gradeKey),
