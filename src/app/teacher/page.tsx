@@ -109,11 +109,18 @@ export default function TeacherPage() {
       accent: string; border: string; hoverBorder: string; glow: string; tagColor: string;
     }[] = [
       {
-        id: 'new',    Icon: Plus, label: 'Paper Builder',
-        href: '/teacher/assessment/new',
+        id: 'quiz',   Icon: Rocket, label: 'New Quiz',
+        href: '/teacher/quiz/new',
         accent: 'rgba(56,189,248,0.18)', border: 'rgba(56,189,248,0.3)',
         hoverBorder: 'rgba(56,189,248,0.6)', glow: 'rgba(56,189,248,0.22)',
         tagColor: '#7dd3fc',
+      },
+      {
+        id: 'new',    Icon: Plus, label: 'Paper Builder',
+        href: '/teacher/assessment/new',
+        accent: 'rgba(201,168,76,0.15)', border: 'rgba(201,168,76,0.3)',
+        hoverBorder: 'rgba(201,168,76,0.6)', glow: 'rgba(201,168,76,0.22)',
+        tagColor: '#fcd34d',
       },
       {
         id: 'bank',   Icon: BookOpen, label: 'Question Bank',
@@ -125,16 +132,16 @@ export default function TeacherPage() {
       {
         id: 'import', Icon: FileDown, label: 'Import CSV',
         href: '/teacher/import',
-        accent: 'rgba(16,185,129,0.14)', border: 'rgba(16,185,129,0.28)',
-        hoverBorder: 'rgba(16,185,129,0.6)', glow: 'rgba(16,185,129,0.22)',
-        tagColor: '#6ee7b7',
+        accent: 'rgba(244,114,182,0.12)', border: 'rgba(244,114,182,0.25)',
+        hoverBorder: 'rgba(244,114,182,0.55)', glow: 'rgba(244,114,182,0.18)',
+        tagColor: '#f9a8d4',
       },
       {
         id: 'results', Icon: BarChart2, label: 'Results',
         href: '/teacher/results',
-        accent: 'rgba(245,158,11,0.14)', border: 'rgba(245,158,11,0.28)',
-        hoverBorder: 'rgba(245,158,11,0.6)', glow: 'rgba(245,158,11,0.22)',
-        tagColor: '#fcd34d',
+        accent: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)',
+        hoverBorder: 'rgba(16,185,129,0.55)', glow: 'rgba(16,185,129,0.18)',
+        tagColor: '#6ee7b7',
       },
     ];
 
