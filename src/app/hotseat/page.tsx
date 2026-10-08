@@ -380,15 +380,23 @@ export default function HotSeatPage() {
             ))}
           </div>
 
-          <div className="flex gap-3">
+<div className="flex gap-4 w-full max-w-xs mt-2">
             <button
               onClick={handleStart}
-              className="px-6 py-3 rounded-xl text-sm font-semibold"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(255,255,255,0.12)' }}
+              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+              style={{ background: 'rgba(255,255,255,0.07)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.15)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
             >
-              Try Again
+              ↩ Try Again
             </button>
-            <button className="btn-ember" style={{ width: 'auto', fontSize: 14, padding: '12px 24px' }} onClick={() => router.push('/')}>
+            <button
+              onClick={() => router.push('/')}
+              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+              style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(249,115,22,0.4)'; }}
+            >
               🏠 Home
             </button>
           </div>
@@ -449,15 +457,23 @@ export default function HotSeatPage() {
             ))}
           </div>
 
-          <div className="flex gap-3">
+<div className="flex gap-4 w-full max-w-xs mt-2">
             <button
               onClick={handleStart}
-              className="px-6 py-3 rounded-xl text-sm font-semibold"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(255,255,255,0.12)' }}
+              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+              style={{ background: 'rgba(255,255,255,0.07)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.15)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
             >
-              Play Again
+              ↩ Play Again
             </button>
-            <button className="btn-ember" style={{ width: 'auto', fontSize: 14, padding: '12px 24px' }} onClick={() => router.push('/')}>
+            <button
+              onClick={() => router.push('/')}
+              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+              style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(249,115,22,0.4)'; }}
+            >
               🏠 Home
             </button>
           </div>
