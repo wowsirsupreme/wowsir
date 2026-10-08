@@ -161,12 +161,18 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // GRADE 9 — DT IGCSE 0445
   // ════════════════════════════════════════════════════════════════
   'gr9dt-influences':    { title: 'CC 1.1 – Influences on Designing',    subject: 'DT IGCSE 0445', emoji: '🎭' },
+  'gr9dt-design-brief':  { title: 'CC 1.2a – Design Brief',              subject: 'DT IGCSE 0445', emoji: '🔍' },
+  'gr9dt-developing':    { title: 'CC 1.2b – Developing Designs',        subject: 'DT IGCSE 0445', emoji: '✏️' },
+  'gr9dt-plan':          { title: 'CC 1.2c – Planning',                  subject: 'DT IGCSE 0445', emoji: '📋' },
+  'gr9dt-evaluation':    { title: 'CC 1.2d – Evaluation & Testing',      subject: 'DT IGCSE 0445', emoji: '✅' },
   'gr9dt-design1':       { title: 'CC 1.2a – Identifying & Defining',    subject: 'DT IGCSE 0445', emoji: '🔍' },
   'gr9dt-design2':       { title: 'CC 1.2b – Proposing & Developing',    subject: 'DT IGCSE 0445', emoji: '✏️' },
   'gr9dt-design3':       { title: 'CC 1.2c – Planning & Testing',        subject: 'DT IGCSE 0445', emoji: '📋' },
   'gr9dt-communication': { title: 'CC 1.3 – Communicating Designs',      subject: 'DT IGCSE 0445', emoji: '📐' },
   'gr9dt-making':        { title: 'CC 1.4 – Making Principles',          subject: 'DT IGCSE 0445', emoji: '🔨' },
   'gr9dt-materials':     { title: 'CC 1.5 – Material Classification',    subject: 'DT IGCSE 0445', emoji: '🧱' },
+  'gr9dt-manufacturing': { title: 'CC 1.5b – Manufacturing Processes',   subject: 'DT IGCSE 0445', emoji: '🏭' },
+  'gr9dt-health-safety': { title: 'CC 1.5c – Health & Safety',           subject: 'DT IGCSE 0445', emoji: '🦺' },
   'gr9dt-structures':    { title: 'CC 1.6 – Structures',                 subject: 'DT IGCSE 0445', emoji: '🏗️' },
   'gr9dt-mechanisms':    { title: 'CC 1.7 – Mechanisms',                 subject: 'DT IGCSE 0445', emoji: '⚙️' },
 
