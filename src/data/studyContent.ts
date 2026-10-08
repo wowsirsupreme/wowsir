@@ -20,6 +20,19 @@ export interface Flashcard {
   chapterKey: string;
 }
 
+/* ── Chapter Resource ── */
+export interface ChapterKeyword {
+  term: string;
+  definition: string;
+}
+
+export interface ChapterResource {
+  keywords?: ChapterKeyword[];
+  notes?: string[];          // bullet-point notes
+  mindmapUrl?: string;       // URL to an image/PDF mindmap
+  mindmapAlt?: string;
+}
+
 /* ── Chapter metadata ── */
 export interface StudyChapter {
   key: string;
@@ -28,6 +41,7 @@ export interface StudyChapter {
   description: string;
   questions: Question[];
   flashcards: Flashcard[];
+  resources?: ChapterResource;
 }
 
 /* ── Practice Test definition ── */
@@ -130,7 +144,30 @@ const GRADE8_CHAPTERS: StudyChapter[] = [
    GRADE 9 CS  (15 chapters · IGCSE 0478 Year 1)
    ══════════════════════════════════════════════════════ */
 const GRADE9CS_CHAPTERS: StudyChapter[] = [
-  { key: 'gr9-number-systems',  shortTitle: 'Number Systems & Data',         title: 'Ch 1 – Number Systems & Data',         description: 'Binary, denary, hexadecimal; converting between bases and two\'s complement.',questions: [], flashcards: [] },
+  { key: 'gr9-number-systems',  shortTitle: 'Number Systems & Data',         title: 'Ch 1 – Number Systems & Data',         description: 'Binary, denary, hexadecimal; converting between bases and two\'s complement.',questions: [], flashcards: [],
+    resources: {
+      keywords: [
+        { term: 'Binary', definition: 'Base-2 number system using only digits 0 and 1. Used internally by all computers.' },
+        { term: 'Denary', definition: 'Base-10 number system (0–9) — the everyday number system humans use.' },
+        { term: 'Hexadecimal', definition: 'Base-16 number system using digits 0–9 and letters A–F. Used as a shorthand for binary.' },
+        { term: 'Bit', definition: 'The smallest unit of data — a single binary digit, either 0 or 1.' },
+        { term: 'Byte', definition: 'A group of 8 bits. Can store values from 0 to 255 in binary.' },
+        { term: "Two's complement", definition: 'A method of representing negative numbers in binary by inverting all bits and adding 1.' },
+        { term: 'Overflow', definition: 'Occurs when a calculation produces a result too large to store in the available number of bits.' },
+        { term: 'Binary shift', definition: 'Moving all bits left or right. Left shift multiplies by 2; right shift divides by 2.' },
+      ],
+      notes: [
+        'To convert denary to binary: repeatedly divide by 2 and record remainders from bottom to top.',
+        'To convert binary to denary: multiply each bit by its place value (1, 2, 4, 8, 16…) and add up.',
+        'Hexadecimal digits A=10, B=11, C=12, D=13, E=14, F=15.',
+        'One hex digit = 4 binary bits (a nibble). Two hex digits = 1 byte.',
+        "Two's complement: flip all bits, then add 1. The leading bit is the sign bit (1 = negative).",
+        'A left binary shift of n places multiplies the value by 2ⁿ.',
+        'A right binary shift of n places divides the value by 2ⁿ (integer division).',
+        'Overflow happens when the result of an operation exceeds the maximum storable value for the bit width.',
+      ],
+    },
+  },
   { key: 'gr9-text-sound-images',shortTitle: 'Text, Sound & Images',         title: 'Ch 2 – Text, Sound & Images',          description: 'ASCII, Unicode, sound sampling, bitmap images and colour depth.',             questions: [], flashcards: [] },
   { key: 'gr9-compression',     shortTitle: 'Compression',                   title: 'Ch 3 – Compression',                   description: 'Lossy vs lossless, run-length encoding (RLE) and Huffman coding.',             questions: [], flashcards: [] },
   { key: 'gr9-cpu',             shortTitle: 'CPU Architecture',              title: 'Ch 4 – CPU Architecture',              description: 'CPU components: ALU, CU, registers, buses and the fetch-decode-execute cycle.',questions: [], flashcards: [] },

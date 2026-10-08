@@ -114,4 +114,9 @@ export const STUDY_MODES: StudyMode[] = [
     label: 'Flashcards',
     description: 'Review key terms and definitions',
   },
+  {
+    id: 'resources',
+    label: 'Resources',
+    description: 'Keywords, notes & mindmaps by chapter',
+  },
 ];

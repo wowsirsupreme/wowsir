@@ -92,7 +92,11 @@ export default function StudyIndexPage() {
                 {STUDY_MODES.map(mode => (
                   <button
                     key={mode.id}
-                    onClick={() => router.push(`/study/${cls.id}/${mode.id}`)}
+                    onClick={() => router.push(
+                      mode.id === 'resources'
+                        ? `/study/${cls.id}/resources`
+                        : `/study/${cls.id}/${mode.id}`
+                    )}
                     style={{
                       padding: '14px 12px',
                       background: 'rgba(6,5,16,0.9)',
