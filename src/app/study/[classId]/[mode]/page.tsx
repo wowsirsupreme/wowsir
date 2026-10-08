@@ -99,90 +99,83 @@ export default function StudyPage({ params }: PageProps) {
 }
 
 /* ══════════════════════════════════════════════════════
-   PRACTICE TEST MODE
+   PRACTICE TEST MODE  — chapter-by-chapter
    ══════════════════════════════════════════════════════ */
 
 function PracticeMode({ accentColor, classId }: { accentColor: string; classId: string }) {
-  const chapters     = GRADE_CHAPTERS[classId] ?? [];
-  const practiceTests = GRADE_PRACTICE_TESTS[classId] ?? [];
+  const chapters = GRADE_CHAPTERS[classId] ?? [];
 
-  const [selectedTest, setSelectedTest] = useState<string | null>(null);
-  const [questions, setQuestions]       = useState<Question[]>([]);
-  const [current, setCurrent]           = useState(0);
-  const [answers, setAnswers]           = useState<Record<string, string>>({});
-  const [submitted, setSubmitted]       = useState(false);
-  const [started, setStarted]           = useState(false);
+  const [activeChapter, setActiveChapter] = useState<string | null>(null);
+  const [questions, setQuestions]         = useState<Question[]>([]);
+  const [current, setCurrent]             = useState(0);
+  const [answers, setAnswers]             = useState<Record<string, string>>({});
+  const [submitted, setSubmitted]         = useState(false);
 
-  function start(testId: string) {
-    const qs = buildPracticeTest(testId, classId);
-    setSelectedTest(testId);
-    setQuestions(qs);
+  function startChapter(chKey: string) {
+    const ch = chapters.find(c => c.key === chKey);
+    if (!ch || ch.questions.length === 0) return;
+    setActiveChapter(chKey);
+    setQuestions([...ch.questions].sort(() => Math.random() - 0.5));
     setCurrent(0);
     setAnswers({});
     setSubmitted(false);
-    setStarted(true);
   }
 
   function reset() {
-    setStarted(false);
-    setSelectedTest(null);
+    setActiveChapter(null);
     setQuestions([]);
     setAnswers({});
     setSubmitted(false);
     setCurrent(0);
   }
 
-  /* Empty state — no questions loaded yet */
-  if (!started || questions.length === 0) {
-    const totalLoaded = chapters.reduce((s, c) => s + c.questions.length, 0);
-
+  /* ── Chapter list ── */
+  if (!activeChapter || questions.length === 0) {
     return (
       <div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, marginBottom: 8 }}>Practice Tests</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, marginBottom: 8 }}>Practice by Chapter</h1>
         <p style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 28, fontSize: 14 }}>
-          Timed tests drawn from all chapter question banks.
+          Pick a chapter to practise its questions. Answers are revealed after you submit.
         </p>
 
-        {totalLoaded === 0 && (
-          <div style={{
-            padding: '16px 20px', borderRadius: 14, marginBottom: 24,
-            background: 'rgba(250,204,21,0.08)', border: '1.5px dashed rgba(250,204,21,0.25)',
-            fontSize: 13, color: 'rgba(250,204,21,0.7)',
-          }}>
-            <strong>Questions coming soon.</strong> Your teacher will add the chapter notes and questions will appear here automatically.
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {practiceTests.map(test => {
-            const available = test.chapterKeys.flatMap(k =>
-              chapters.find(c => c.key === k)?.questions ?? []
-            ).length;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {chapters.map((ch, idx) => {
+            const count = ch.questions.length;
             return (
               <button
-                key={test.id}
-                onClick={() => available > 0 && start(test.id)}
+                key={ch.key}
+                onClick={() => startChapter(ch.key)}
+                disabled={count === 0}
                 style={{
-                  padding: '18px 20px', borderRadius: 16, textAlign: 'left',
-                  background: available > 0 ? `${accentColor}0d` : 'rgba(255,255,255,0.03)',
-                  border: `1.5px solid ${available > 0 ? `${accentColor}30` : 'rgba(255,255,255,0.07)'}`,
-                  opacity: available > 0 ? 1 : 0.5,
-                  cursor: available > 0 ? 'pointer' : 'default',
-                  transition: 'all 0.15s',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '14px 18px', borderRadius: 14, textAlign: 'left',
+                  background: count > 0 ? `${accentColor}0d` : 'rgba(255,255,255,0.03)',
+                  border: `1.5px solid ${count > 0 ? `${accentColor}28` : 'rgba(255,255,255,0.07)'}`,
+                  opacity: count > 0 ? 1 : 0.45,
+                  cursor: count > 0 ? 'pointer' : 'default',
+                  transition: 'border-color 0.15s',
+                  display: 'flex', alignItems: 'center', gap: 14,
                 }}
-                onMouseEnter={e => available > 0 && ((e.currentTarget as HTMLElement).style.borderColor = `${accentColor}55`)}
-                onMouseLeave={e => available > 0 && ((e.currentTarget as HTMLElement).style.borderColor = `${accentColor}30`)}
+                onMouseEnter={e => count > 0 && ((e.currentTarget as HTMLElement).style.borderColor = `${accentColor}50`)}
+                onMouseLeave={e => count > 0 && ((e.currentTarget as HTMLElement).style.borderColor = `${accentColor}28`)}
               >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{test.title}</div>
-                  <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{test.description}</div>
-                  <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> {test.timeLimitMinutes} min</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><HelpCircle size={12} /> {available} question{available !== 1 ? 's' : ''} available</span>
-                  </div>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', minWidth: 20 }}>
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{ch.shortTitle}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{ch.description}</div>
                 </div>
-                {available > 0 && <ChevronRight size={18} color={accentColor} />}
+                <span style={{
+                  fontSize: 11, fontFamily: 'var(--font-mono)',
+                  color: count > 0 ? accentColor : 'rgba(255,255,255,0.2)',
+                  padding: '3px 9px', borderRadius: 999,
+                  background: count > 0 ? `${accentColor}18` : 'transparent',
+                  border: `1px solid ${count > 0 ? `${accentColor}35` : 'transparent'}`,
+                  flexShrink: 0,
+                }}>
+                  {count > 0 ? `${count}q` : 'no q'}
+                </span>
+                {count > 0 && <ChevronRight size={16} color={accentColor} style={{ flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -197,11 +190,13 @@ function PracticeMode({ accentColor, classId }: { accentColor: string; classId: 
   const progress = ((current + 1) / total) * 100;
 
   if (submitted) {
+    const chTitle = chapters.find(c => c.key === activeChapter)?.shortTitle ?? '';
     const correct = questions.filter(q => answers[q.id] === q.answer).length;
     const pct     = Math.round((correct / total) * 100);
     return (
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 64, marginBottom: 8 }}>{pct >= 70 ? '🎉' : '📚'}</div>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', marginBottom: 6 }}>{chTitle}</p>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, marginBottom: 4 }}>
           {correct} / {total}
         </h2>
