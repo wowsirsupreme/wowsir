@@ -14,14 +14,19 @@ function fs(): Firestore {
 }
 
 export async function getQuestionsByTopic(topicKey: string): Promise<Question[]> {
+  // No orderBy — avoids composite index requirement. Sort client-side.
   const q = query(
     collection(fs(), 'questions'),
     where('topicKey', '==', topicKey),
     where('approvalStatus', '==', 'approved'),
-    orderBy('createdAt', 'asc')
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ ...d.data(), id: d.id } as Question));
+  const docs = snap.docs.map(d => ({ ...d.data(), id: d.id } as Question));
+  return docs.sort((a, b) => {
+    const ta = (a as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
+    const tb = (b as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
+    return ta - tb;
+  });
 }
 
 export async function getRandomQuestions(topicKey: string, count: number): Promise<Question[]> {
