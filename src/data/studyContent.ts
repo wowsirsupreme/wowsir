@@ -222,9 +222,17 @@ const ALL_CHAPTER_ARRAYS = [
   GRADE9CS_CHAPTERS, GRADE9DT_CHAPTERS,
 ];
 ALL_CHAPTER_ARRAYS.forEach(arr => arr.forEach((ch, i, a) => {
-  if (!ch.resources && CHAPTER_RESOURCES[ch.key]) {
-    a[i] = { ...ch, resources: CHAPTER_RESOURCES[ch.key] };
-  }
+  const res = ch.resources ?? CHAPTER_RESOURCES[ch.key];
+  /* Auto-generate flashcards from keywords when the chapter has none */
+  const flashcards: Flashcard[] = ch.flashcards.length > 0
+    ? ch.flashcards
+    : (res?.keywords ?? []).map((kw, j) => ({
+        id: `${ch.key}-fc-${j}`,
+        term: kw.term,
+        definition: kw.definition,
+        chapterKey: ch.key,
+      }));
+  a[i] = { ...ch, resources: res, flashcards };
 }));
 
 /* ── Grade → chapters map ── */
