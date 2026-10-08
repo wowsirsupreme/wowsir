@@ -110,7 +110,7 @@ export default function TeacherPage() {
     }[] = [
       {
         id: 'new',    Icon: Plus, label: 'Paper Builder',
-        href: '/teacher/quiz/new',
+        href: '/teacher/assessment/new',
         accent: 'rgba(56,189,248,0.18)', border: 'rgba(56,189,248,0.3)',
         hoverBorder: 'rgba(56,189,248,0.6)', glow: 'rgba(56,189,248,0.22)',
         tagColor: '#7dd3fc',
