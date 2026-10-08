@@ -100,34 +100,102 @@ function NameModal({ accent, onDone }: { accent: string; onDone(name: string): v
   );
 }
 
-// ── Leaderboard panel ─────────────────────────────────────────────────────────
+// ── Leaderboard components ────────────────────────────────────────────────────
 
-function Leaderboard({ entries, myScore, accent, loading }: { entries: LeaderboardEntry[]; myScore: number; accent: string; loading: boolean }) {
+/** One row used in both the summary and the full drawer */
+function LbRow({ entry, rank, myScore, accent }: { entry: LeaderboardEntry; rank: number; myScore: number; accent: string }) {
   const medals = ['🥇', '🥈', '🥉'];
+  const isMe   = Math.abs(entry.score - myScore) < 1;
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
-      <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Trophy size={15} color={accent} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>Leaderboard</span>
-      </div>
-      {loading && (
-        <div style={{ padding: '24px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Loading…</div>
-      )}
-      {!loading && entries.length === 0 && (
-        <div style={{ padding: '24px', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>No scores yet — yours will be first!</div>
-      )}
-      {!loading && entries.map((e, i) => {
-        const isMe = Math.abs(e.score - myScore) < 1 && i === entries.findIndex(x => Math.abs(x.score - myScore) < 1);
-        return (
-          <div key={e.id ?? i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 18px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: isMe ? `${accent}0d` : 'transparent' }}>
-            <span style={{ width: 22, textAlign: 'center', fontSize: 15 }}>{medals[i] ?? `${i + 1}`}</span>
-            <span style={{ flex: 1, fontSize: 14, color: isMe ? accent : '#e2e8f0', fontWeight: isMe ? 700 : 400 }}>{e.name}{isMe ? ' (you)' : ''}</span>
-            <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: isMe ? accent : 'rgba(255,255,255,0.5)', fontWeight: 700 }}>{e.score.toLocaleString()}</span>
-            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.25)' }}>{e.accuracy}%</span>
-          </div>
-        );
-      })}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: isMe ? `${accent}12` : 'transparent' }}>
+      <span style={{ width: 24, textAlign: 'center', fontSize: 14, flexShrink: 0 }}>{medals[rank] ?? rank + 1}</span>
+      <span style={{ flex: 1, fontSize: 13, color: isMe ? accent : '#e2e8f0', fontWeight: isMe ? 700 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {entry.name}{isMe ? ' ← you' : ''}
+      </span>
+      <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: isMe ? accent : 'rgba(255,255,255,0.55)', fontWeight: 700, flexShrink: 0 }}>{entry.score.toLocaleString()}</span>
+      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.22)', flexShrink: 0, minWidth: 28, textAlign: 'right' }}>{entry.accuracy}%</span>
     </div>
+  );
+}
+
+/** Compact top-3 + your rank card shown inline on the results screen */
+function LeaderboardSummary({ entries, myScore, accent, loading, onExpand }:
+  { entries: LeaderboardEntry[]; myScore: number; accent: string; loading: boolean; onExpand: () => void }) {
+  const myRank = entries.findIndex(e => Math.abs(e.score - myScore) < 1);
+  // Show top 3, plus the player's own row if outside top 3
+  const preview = entries.slice(0, 3);
+  const showExtra = myRank > 2 && myRank !== -1;
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+      {/* Header */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Trophy size={14} color={accent} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9' }}>Leaderboard</span>
+          {!loading && entries.length > 0 && (
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontFamily: 'var(--font-mono)' }}>{entries.length} students</span>
+          )}
+        </div>
+        <button onClick={onExpand}
+          style={{ fontSize: 12, color: accent, background: `${accent}15`, border: `1px solid ${accent}30`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 600 }}>
+          View all →
+        </button>
+      </div>
+
+      {loading && <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>Loading…</div>}
+      {!loading && entries.length === 0 && <div style={{ padding: '18px', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>No scores yet — yours will be first!</div>}
+
+      {!loading && preview.map((e, i) => <LbRow key={e.id ?? i} entry={e} rank={i} myScore={myScore} accent={accent} />)}
+
+      {/* Player's rank when outside top 3 */}
+      {!loading && showExtra && (
+        <>
+          <div style={{ textAlign: 'center', padding: '3px', color: 'rgba(255,255,255,0.15)', fontSize: 13, letterSpacing: '0.2em' }}>···</div>
+          <LbRow entry={entries[myRank]} rank={myRank} myScore={myScore} accent={accent} />
+        </>
+      )}
+
+      {/* Your rank label */}
+      {!loading && myRank !== -1 && (
+        <div style={{ padding: '9px 16px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Your rank</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: accent }}>#{myRank + 1} of {entries.length}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Full leaderboard slide-in drawer */
+function LeaderboardDrawer({ entries, myScore, accent, onClose }:
+  { entries: LeaderboardEntry[]; myScore: number; accent: string; onClose: () => void }) {
+  return (
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', zIndex: 200 }} />
+      {/* Panel */}
+      <div style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(400px, 100vw)',
+        background: '#0d0d18', borderLeft: '1px solid rgba(255,255,255,0.08)',
+        zIndex: 201, display: 'flex', flexDirection: 'column',
+        animation: 'slideInRight 0.22s ease',
+      }}>
+        {/* Drawer header */}
+        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Trophy size={16} color={accent} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>Leaderboard</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>top {entries.length}</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: 'rgba(255,255,255,0.5)', fontSize: 13, padding: '5px 12px', cursor: 'pointer' }}>✕ Close</button>
+        </div>
+        {/* Scrollable list */}
+        <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 20 }}>
+          {entries.length === 0 && <div style={{ padding: '30px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>No entries yet.</div>}
+          {entries.map((e, i) => <LbRow key={e.id ?? i} entry={e} rank={i} myScore={myScore} accent={accent} />)}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -174,9 +242,10 @@ export default function CustomPracticePage() {
   const [shieldActive,    setShieldActive]    = useState(false);
 
   // Leaderboard
-  const [lbEntries, setLbEntries] = useState<LeaderboardEntry[]>([]);
-  const [lbLoading, setLbLoading] = useState(false);
+  const [lbEntries,    setLbEntries]    = useState<LeaderboardEntry[]>([]);
+  const [lbLoading,    setLbLoading]    = useState(false);
   const [submitted2lb, setSubmitted2lb] = useState(false);
+  const [showLbDrawer, setShowLbDrawer] = useState(false);
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
@@ -419,10 +488,9 @@ export default function CustomPracticePage() {
             </div>
           </div>
 
-          {/* Leaderboard */}
-          <div style={{ marginBottom: 20 }}>
-            <Leaderboard entries={lbEntries} myScore={score} accent={accent} loading={lbLoading} />
-          </div>
+          {/* Leaderboard summary + drawer */}
+          <LeaderboardSummary entries={lbEntries} myScore={score} accent={accent} loading={lbLoading} onExpand={() => setShowLbDrawer(true)} />
+          {showLbDrawer && <LeaderboardDrawer entries={lbEntries} myScore={score} accent={accent} onClose={() => setShowLbDrawer(false)} />}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 32, flexWrap: 'wrap' }}>
@@ -493,7 +561,8 @@ export default function CustomPracticePage() {
       <style>{`
         @keyframes spin      { to { transform: rotate(360deg); } }
         @keyframes popUp     { 0%{opacity:0;transform:translateY(0) scale(0.8)} 20%{opacity:1;transform:translateY(-12px) scale(1.1)} 80%{opacity:1;transform:translateY(-18px) scale(1)} 100%{opacity:0;transform:translateY(-28px) scale(0.9)} }
-        @keyframes speedDrain { from{width:100%} to{width:0%} }
+        @keyframes speedDrain    { from{width:100%} to{width:0%} }
+        @keyframes slideInRight  { from{transform:translateX(100%)} to{transform:translateX(0)} }
         @keyframes puGlow    { 0%,100%{box-shadow:0 0 6px 0 var(--pu-color,#6366f1)} 50%{box-shadow:0 0 18px 4px var(--pu-color,#6366f1)} }
         @keyframes puShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes puBounce  { 0%,100%{transform:translateY(0) scale(1)} 30%{transform:translateY(-5px) scale(1.08)} 60%{transform:translateY(2px) scale(0.97)} }
