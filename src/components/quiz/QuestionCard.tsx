@@ -13,7 +13,11 @@ interface QuestionCardProps {
 
 export function QuestionCard({ question, selected, revealed, onAnswer, disabled }: QuestionCardProps) {
   const labels = ['A', 'B', 'C', 'D'];
-  const correctIndex = parseInt(question.answer, 10);
+  // answer may be a numeric index string ("0") or option text ("Paris") — handle both
+  const parsedIdx = parseInt(question.answer, 10);
+  const correctIndex = !isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < (question.options?.length ?? 0)
+    ? parsedIdx
+    : (question.options ?? []).findIndex(o => o === question.answer);
 
   return (
     <div className="w-full">

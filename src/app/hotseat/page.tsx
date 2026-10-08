@@ -269,7 +269,8 @@ export default function HotSeatPage() {
 
       {/* ── PLAYING / REVEAL ── */}
       {(phase === 'playing' || phase === 'reveal') && currentQ && (
-        <div className="flex-1 flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center w-full">
+        <div className="flex flex-col w-full max-w-2xl px-4 py-6 mx-auto">
 
           {/* Progress + streak + timer */}
           <div className="w-full flex items-center gap-3 mb-5">
@@ -343,6 +344,7 @@ export default function HotSeatPage() {
               {currentIdx + 1 < questions.length ? 'Next →' : '🏁 See Results'}
             </button>
           )}
+        </div>
         </div>
       )}
 
