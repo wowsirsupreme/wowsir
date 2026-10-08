@@ -277,11 +277,11 @@ export default function HotSeatPage() {
       {/* ── PLAYING / REVEAL ── */}
       {(phase === 'playing' || phase === 'reveal') && currentQ && (
         <div className="flex-1 flex flex-col items-center w-full">
-        <div className="flex flex-col w-full max-w-2xl px-4 py-6 mx-auto">
+        <div className="flex flex-col w-full max-w-3xl px-6 py-10 mx-auto">
 
           {/* Progress + streak + timer */}
-          <div className="w-full flex items-center gap-3 mb-5">
-            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <div className="w-full flex items-center gap-4 mb-8">
+            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
@@ -291,10 +291,10 @@ export default function HotSeatPage() {
                 }}
               />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {streak > 1 && (
                 <span
-                  className="text-xs font-mono font-bold px-2 py-0.5 rounded-full"
+                  className="text-sm font-mono font-bold px-3 py-1 rounded-full"
                   style={{ color: '#fdba74', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}
                 >
                   🔥 ×{streak}
@@ -306,20 +306,20 @@ export default function HotSeatPage() {
                   seconds={currentTimeLimit}
                   onEnd={handleTimerEnd}
                   paused={false}
-                  size={44}
+                  size={52}
                 />
               )}
             </div>
           </div>
 
-          {/* Difficulty badge */}
-          <div className="flex items-center gap-2 mb-3 self-start">
-            <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {/* Q counter + difficulty badge + time */}
+          <div className="flex items-center gap-3 mb-5 self-start">
+            <p className="text-sm font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Q{currentIdx + 1}/{questions.length}
             </p>
             {currentQ.difficulty && (
               <span
-                className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full"
+                className="text-xs font-mono uppercase px-3 py-1 rounded-full"
                 style={{
                   background: currentQ.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' : currentQ.difficulty === 'medium' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)',
                   color: currentQ.difficulty === 'hard' ? '#f87171' : currentQ.difficulty === 'medium' ? '#fbbf24' : '#4ade80',
@@ -329,7 +329,7 @@ export default function HotSeatPage() {
                 {currentQ.difficulty}
               </span>
             )}
-            <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <span className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>
               {currentTimeLimit}s
             </span>
           </div>
@@ -344,8 +344,8 @@ export default function HotSeatPage() {
 
           {phase === 'reveal' && (
             <button
-              className="btn-ember mt-6"
-              style={{ fontSize: 16, padding: '14px 28px' }}
+              className="btn-ember mt-10"
+              style={{ fontSize: 17, padding: '16px 36px' }}
               onClick={handleNext}
             >
               {currentIdx + 1 < questions.length ? 'Next →' : '🏁 See Results'}

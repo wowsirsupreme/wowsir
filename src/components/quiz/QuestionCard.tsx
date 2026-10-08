@@ -22,15 +22,15 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
   return (
     <div className="w-full">
       {/* Question text */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-9 mb-6">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-7">
         {question.imageUrl && (
           <img
             src={question.imageUrl}
             alt="Question"
-            className="w-full max-h-48 object-contain rounded-xl mb-4"
+            className="w-full max-h-48 object-contain rounded-xl mb-6"
           />
         )}
-        <p className="font-display text-[clamp(20px,3.5vw,30px)] leading-snug text-paper">
+        <p className="font-display text-[clamp(22px,3.5vw,34px)] leading-snug text-paper">
           {question.text}
         </p>
         {question.type === 'truefalse' && (
@@ -40,7 +40,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
 
       {/* Options */}
       {question.type === 'mcq' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {question.options.map((opt, i) => {
             const isCorrect = i === correctIndex;
             const isSelected = selected === i;
@@ -50,8 +50,8 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
                 onClick={() => !disabled && onAnswer(i)}
                 disabled={disabled}
                 className={cn(
-                  'flex items-center gap-3 text-left px-5 py-4 rounded-xl border-[1.5px] transition-all duration-200',
-                  'bg-white/6 border-white/10 text-paper font-body text-[15px]',
+                  'flex items-center gap-4 text-left px-6 py-5 rounded-xl border-[1.5px] transition-all duration-200',
+                  'bg-white/6 border-white/10 text-paper font-body text-[16px]',
                   !disabled && 'hover:bg-gold/15 hover:border-gold hover:-translate-y-0.5',
                   isSelected && !revealed && 'border-gold',
                   revealed && isCorrect && 'bg-green/30 border-green-500 animate-revealPulse',
@@ -59,7 +59,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
                   disabled && 'cursor-default'
                 )}
               >
-                <span className="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[12px] font-bold font-mono flex-shrink-0">
+                <span className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-[13px] font-bold font-mono flex-shrink-0">
                   {labels[i]}
                 </span>
                 {opt}
@@ -99,7 +99,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
 
       {/* Explanation (shown after reveal) */}
       {revealed && question.explanation && (
-        <div className="mt-4 px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-muted animate-fadeIn">
+        <div className="mt-5 px-6 py-4 bg-white/5 border border-white/10 rounded-xl text-[15px] text-muted animate-fadeIn">
           💡 {question.explanation}
         </div>
       )}
