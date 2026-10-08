@@ -100,11 +100,6 @@ export const CLASSES: StudyClass[] = [
 
 export const STUDY_MODES: StudyMode[] = [
   {
-    id: 'chapters',
-    label: 'Chapters',
-    description: 'Study by chapter with questions & flashcards',
-  },
-  {
     id: 'practice',
     label: 'Practice Tests',
     description: 'Timed practice tests across multiple chapters',
