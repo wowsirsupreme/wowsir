@@ -344,7 +344,7 @@ export default function HotSeatPage() {
 
           {phase === 'reveal' && (
             <button
-              className="btn-ember mt-12"
+              className="btn-ember mt-4"
               style={{ fontSize: 17, padding: '16px 36px' }}
               onClick={handleNext}
             >
