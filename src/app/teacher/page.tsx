@@ -109,7 +109,7 @@ export default function TeacherPage() {
       accent: string; border: string; hoverBorder: string; glow: string; tagColor: string;
     }[] = [
       {
-        id: 'new',    Icon: Plus, label: 'New Quiz',
+        id: 'new',    Icon: Plus, label: 'Paper Builder',
         href: '/teacher/quiz/new',
         accent: 'rgba(56,189,248,0.18)', border: 'rgba(56,189,248,0.3)',
         hoverBorder: 'rgba(56,189,248,0.6)', glow: 'rgba(56,189,248,0.22)',
@@ -277,22 +277,6 @@ export default function TeacherPage() {
                   {quizzes.length > 0 ? `${quizzes.length} quiz${quizzes.length > 1 ? 'zes' : ''}` : 'My Quizzes'}
                 </h2>
               </div>
-              <button
-                onClick={() => router.push('/teacher/quiz/new')}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '11px 20px', borderRadius: 12, minHeight: 46,
-                  background: 'linear-gradient(135deg, #c9a84c 0%, #e8d08a 50%, #c9a84c 100%)',
-                  color: '#0d0d14', fontWeight: 700, fontSize: 14,
-                  border: 'none', cursor: 'pointer',
-                  boxShadow: '0 4px 20px rgba(201,168,76,0.35)',
-                  transition: 'transform 0.15s, box-shadow 0.15s',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 28px rgba(201,168,76,0.45)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(201,168,76,0.35)'; }}
-              >
-                ＋ New Quiz
-              </button>
             </div>
 
             {/* Loading */}
