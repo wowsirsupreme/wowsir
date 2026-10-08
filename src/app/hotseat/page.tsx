@@ -344,8 +344,8 @@ export default function HotSeatPage() {
 
           {phase === 'reveal' && (
             <button
-              className="btn-ember mt-4"
-              style={{ fontSize: 17, padding: '16px 36px' }}
+              className="btn-ember"
+              style={{ fontSize: 17, padding: '16px 36px', marginTop: '1rem' }}
               onClick={handleNext}
             >
               {currentIdx + 1 < questions.length ? 'Next →' : '🏁 See Results'}

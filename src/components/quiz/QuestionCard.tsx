@@ -99,7 +99,10 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
 
       {/* Explanation (shown after reveal) */}
       {revealed && question.explanation && (
-        <div className="mt-8 mb-8 px-6 py-6 bg-white/5 border border-white/10 rounded-xl text-[16px] leading-relaxed text-muted animate-fadeIn">
+        <div
+          className="px-6 py-6 bg-white/5 border border-white/10 rounded-xl text-[16px] leading-relaxed text-muted animate-fadeIn"
+          style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}
+        >
           💡 {question.explanation}
         </div>
       )}
