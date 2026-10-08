@@ -243,24 +243,47 @@ export default function CustomPracticePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
           {q.options.map((opt, oi) => {
             const isSelected = chosen === opt;
+            const isCorrect  = opt === q.answer;
+            // Once an answer is chosen, reveal green for correct, red for wrong selection
+            const revealed   = !!chosen;
+            let bg     = 'rgba(255,255,255,0.03)';
+            let border = 'rgba(255,255,255,0.07)';
+            let color  = 'rgba(255,255,255,0.75)';
+            if (revealed && isCorrect) {
+              bg = 'rgba(16,185,129,0.15)'; border = 'rgba(16,185,129,0.55)'; color = '#6ee7b7';
+            } else if (revealed && isSelected && !isCorrect) {
+              bg = 'rgba(239,68,68,0.15)'; border = 'rgba(239,68,68,0.5)'; color = '#fca5a5';
+            } else if (!revealed && isSelected) {
+              bg = 'rgba(99,102,241,0.18)'; border = 'rgba(99,102,241,0.5)'; color = '#c7d2fe';
+            }
             return (
               <button
                 key={oi}
-                onClick={() => setAnswers(prev => ({ ...prev, [current]: opt }))}
+                onClick={() => !chosen && setAnswers(prev => ({ ...prev, [current]: opt }))}
                 style={{
                   textAlign: 'left', padding: '14px 18px', borderRadius: 12, fontSize: 15,
-                  background: isSelected ? 'rgba(99,102,241,0.18)' : 'rgba(255,255,255,0.03)',
-                  border: `1.5px solid ${isSelected ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                  color: isSelected ? '#c7d2fe' : 'rgba(255,255,255,0.75)',
-                  cursor: 'pointer', transition: 'all 0.12s',
-                  transform: isSelected ? 'translateX(4px)' : 'none',
+                  background: bg, border: `1.5px solid ${border}`, color,
+                  cursor: chosen ? 'default' : 'pointer', transition: 'all 0.18s',
+                  transform: isSelected && !revealed ? 'translateX(4px)' : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}
               >
-                {opt}
+                <span>{opt}</span>
+                {revealed && isCorrect && <CheckCircle2 size={16} color="#10b981" style={{ flexShrink: 0 }} />}
+                {revealed && isSelected && !isCorrect && <XCircle size={16} color="#ef4444" style={{ flexShrink: 0 }} />}
               </button>
             );
           })}
         </div>
+
+        {/* Explanation — shown after answering */}
+        {chosen && q.explanation && (
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, fontStyle: 'italic' }}>
+              {q.explanation}
+            </p>
+          </div>
+        )}
 
         {/* Bottom controls */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
