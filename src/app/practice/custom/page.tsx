@@ -163,6 +163,7 @@ export default function CustomPracticePage() {
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [totalDone,    setTotalDone]    = useState(0);
   const [scorePopup,   setScorePopup]   = useState<string | null>(null);
+  const [qStartTime,   setQStartTime]   = useState<number>(Date.now()); // for speed bonus
 
   // Power-ups (keys available this level)
   const [availPowerUps, setAvailPowerUps] = useState<PowerUpKey[]>([]);
@@ -186,12 +187,21 @@ export default function CustomPracticePage() {
       if (!raw) { setError('No questions found. Please go back and select chapters.'); setLoaded(true); return; }
       // Normalise: q.answer may be a numeric index string ("0","2") — convert to option text so all
       // downstream comparisons (opt === q.answer) work correctly.
+      // Also shuffle options per question so students can't exploit position or length patterns.
       const qs: Question[] = (JSON.parse(raw) as Question[]).map(q => {
-        const idx = parseInt(q.answer as string, 10);
+        // 1. Resolve answer text from index if needed
+        let answerText = q.answer as string;
+        const idx = parseInt(answerText, 10);
         if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
-          return { ...q, answer: q.options[idx] };
+          answerText = q.options[idx];
         }
-        return q;
+        // 2. Shuffle options (Fisher-Yates) so position & length hacks don't work
+        const opts = [...(q.options ?? [])];
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [opts[i], opts[j]] = [opts[j], opts[i]];
+        }
+        return { ...q, answer: answerText, options: opts };
       });
       if (!Array.isArray(qs) || qs.length === 0) { setError('Question data is empty.'); setLoaded(true); return; }
       const m: QuizMeta = rawM ? JSON.parse(rawM) : { gradeLabel: 'Practice', gradeKey: 'unknown', accent: '#6366f1', chapters: [] };
@@ -211,6 +221,9 @@ export default function CustomPracticePage() {
     }
   }, []);
 
+  // Reset speed timer whenever the question index changes
+  useEffect(() => { setQStartTime(Date.now()); }, [current]);
+
   function saveName(name: string) {
     localStorage.setItem('practicePlayerName', name);
     setPlayerName(name);
@@ -229,7 +242,12 @@ export default function CustomPracticePage() {
     if (correct) {
       const newStreak = streak + 1;
       const mult = infernoLeft > 0 ? 3 : getMultiplier(newStreak);
-      const pts  = Math.round(BASE_POINTS * mult * (doubleActive ? 2 : 1));
+
+      // Speed bonus: answer in <5s → +50%, scales linearly to 0% at 20s
+      const elapsed = (Date.now() - qStartTime) / 1000; // seconds
+      const speedMult = elapsed < 5 ? 1.5 : elapsed < 20 ? 1 + 0.5 * (20 - elapsed) / 15 : 1;
+
+      const pts = Math.round(BASE_POINTS * mult * (doubleActive ? 2 : 1) * speedMult);
       setScore(s => s + pts);
       setStreak(newStreak);
       setBestStreak(b => Math.max(b, newStreak));
@@ -237,8 +255,10 @@ export default function CustomPracticePage() {
       if (infernoLeft > 0) setInfernoLeft(n => n - 1);
 
       // Score popup text
-      const bonus = pts > BASE_POINTS ? ` (×${(pts / BASE_POINTS).toFixed(1)})` : '';
-      setScorePopup(`+${pts}${bonus}`);
+      const totalMult = mult * (doubleActive ? 2 : 1) * speedMult;
+      const bonus = totalMult > 1.05 ? ` (×${totalMult.toFixed(1)})` : '';
+      const speedLabel = elapsed < 5 ? ' ⚡' : '';
+      setScorePopup(`+${pts}${bonus}${speedLabel}`);
       setTimeout(() => setScorePopup(null), 900);
     } else {
       if (shieldActive) {
@@ -473,6 +493,7 @@ export default function CustomPracticePage() {
       <style>{`
         @keyframes spin      { to { transform: rotate(360deg); } }
         @keyframes popUp     { 0%{opacity:0;transform:translateY(0) scale(0.8)} 20%{opacity:1;transform:translateY(-12px) scale(1.1)} 80%{opacity:1;transform:translateY(-18px) scale(1)} 100%{opacity:0;transform:translateY(-28px) scale(0.9)} }
+        @keyframes speedDrain { from{width:100%} to{width:0%} }
         @keyframes puGlow    { 0%,100%{box-shadow:0 0 6px 0 var(--pu-color,#6366f1)} 50%{box-shadow:0 0 18px 4px var(--pu-color,#6366f1)} }
         @keyframes puShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes puBounce  { 0%,100%{transform:translateY(0) scale(1)} 30%{transform:translateY(-5px) scale(1.08)} 60%{transform:translateY(2px) scale(0.97)} }
@@ -573,9 +594,29 @@ export default function CustomPracticePage() {
           })}
         </div>
 
-        {/* Question card */}
-        <div style={{ background: 'rgba(255,255,255,0.035)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '26px 24px', marginBottom: 16, backdropFilter: 'blur(12px)' }}>
-          <p style={{ fontSize: 17, color: '#f1f5f9', lineHeight: 1.6, margin: 0 }}>{q.text}</p>
+        {/* Question card + speed-bonus bar */}
+        <div style={{ background: 'rgba(255,255,255,0.035)', border: '1.5px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '26px 24px 18px', marginBottom: 16, backdropFilter: 'blur(12px)' }}>
+          <p style={{ fontSize: 17, color: '#f1f5f9', lineHeight: 1.6, margin: '0 0 14px' }}>{q.text}</p>
+          {/* Speed bar — only visible before answering; shrinks over 20 s */}
+          {!chosen && (
+            <div style={{ position: 'relative', height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              <div
+                key={`speed-${current}`}   /* key forces restart on question change */
+                style={{
+                  position: 'absolute', inset: '0 auto 0 0',
+                  height: '100%', borderRadius: 2,
+                  background: 'linear-gradient(90deg, #10b981, #6366f1)',
+                  animation: 'speedDrain 20s linear forwards',
+                }}
+              />
+            </div>
+          )}
+          {chosen && (
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', marginTop: 2 }}>
+              answered in {((Date.now() - qStartTime) / 1000).toFixed(1)}s
+              {(Date.now() - qStartTime) < 5000 && <span style={{ color: '#fbbf24', marginLeft: 5 }}>⚡ speed bonus!</span>}
+            </div>
+          )}
         </div>
 
         {/* Options */}
