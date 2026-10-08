@@ -11,6 +11,7 @@
 
 import type { Question } from '@/types/question';
 import { CHAPTER_RESOURCES } from './studyResources';
+import { ALL_STUDY_QUESTIONS } from './studyQuestions';
 
 /* ── Flashcard (study-only, not in Firestore question bank) ── */
 export interface Flashcard {
@@ -221,6 +222,12 @@ const ALL_CHAPTER_ARRAYS = [
   GRADE7_CHAPTERS, GRADE8_CHAPTERS,
   GRADE9CS_CHAPTERS, GRADE9DT_CHAPTERS,
 ];
+/* Build a topicKey → questions lookup once */
+const _questionsByTopic: Record<string, Question[]> = {};
+for (const q of ALL_STUDY_QUESTIONS) {
+  (_questionsByTopic[q.topicKey] ??= []).push(q as unknown as Question);
+}
+
 ALL_CHAPTER_ARRAYS.forEach(arr => arr.forEach((ch, i, a) => {
   const res = ch.resources ?? CHAPTER_RESOURCES[ch.key];
   /* Auto-generate flashcards from keywords when the chapter has none */
@@ -232,7 +239,11 @@ ALL_CHAPTER_ARRAYS.forEach(arr => arr.forEach((ch, i, a) => {
         definition: kw.definition,
         chapterKey: ch.key,
       }));
-  a[i] = { ...ch, resources: res, flashcards };
+  /* Populate questions from the static bank */
+  const questions: Question[] = ch.questions.length > 0
+    ? ch.questions
+    : (_questionsByTopic[ch.key] ?? []);
+  a[i] = { ...ch, resources: res, flashcards, questions };
 }));
 
 /* ── Grade → chapters map ── */
