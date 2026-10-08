@@ -11,7 +11,9 @@ import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 
-const TOPIC_KEYS = Object.keys(TOPIC_LABELS);
+// Only show topics that have at least one local question
+const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
+const TOPIC_KEYS = Object.keys(TOPIC_LABELS).filter(k => LOCAL_TOPIC_KEYS.has(k));
 const HOT_SEAT_COUNT = 10;
 const MAX_LIVES = 3;
 
@@ -73,6 +75,7 @@ export default function HotSeatPage() {
   const [results, setResults] = useState<{ correct: boolean; timeMs: number; score: number }[]>([]);
   const [loading, setLoading] = useState(false);
   const [shakeHeart, setShakeHeart] = useState(false);
+  const [error, setError] = useState('');
 
   // Ref to track lives within handleAnswer without stale closure issues
   const livesRef = useRef(MAX_LIVES);
@@ -83,7 +86,7 @@ export default function HotSeatPage() {
     let remote: Question[] = [];
     try { remote = await getRandomQuestions(topicKey, 50); } catch { /* offline */ }
     const pool = mergeQuestions(remote, topicKey);
-    if (pool.length === 0) { alert('No questions available for this topic yet.'); setLoading(false); return; }
+    if (pool.length === 0) { setError('No questions available for this topic yet.'); setLoading(false); return; }
     const sorted = sortByDifficulty(pool);
     const picked = sorted.slice(0, Math.min(HOT_SEAT_COUNT, sorted.length)).map(prepareQuestion);
     setQuestions(picked);
@@ -228,7 +231,7 @@ export default function HotSeatPage() {
               className="dark-select"
               style={{ '--tw-ring-color': 'rgba(249,115,22,0.4)' } as React.CSSProperties}
               value={topicKey}
-              onChange={e => setTopicKey(e.target.value)}
+              onChange={e => { setTopicKey(e.target.value); setError(''); }}
             >
               <option value="">— Select a topic —</option>
               {TOPIC_KEYS.map(k => (
@@ -240,6 +243,10 @@ export default function HotSeatPage() {
               <p className="text-xs text-center mb-3" style={{ color: '#fb923c' }}>
                 ⚠️ Firebase not connected — using local questions only
               </p>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-400 text-center -mt-2 mb-1">{error}</p>
             )}
 
             <button
