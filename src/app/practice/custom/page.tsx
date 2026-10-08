@@ -184,7 +184,15 @@ export default function CustomPracticePage() {
       const raw  = sessionStorage.getItem('customQuiz');
       const rawM = sessionStorage.getItem('customQuizMeta');
       if (!raw) { setError('No questions found. Please go back and select chapters.'); setLoaded(true); return; }
-      const qs: Question[] = JSON.parse(raw);
+      // Normalise: q.answer may be a numeric index string ("0","2") — convert to option text so all
+      // downstream comparisons (opt === q.answer) work correctly.
+      const qs: Question[] = (JSON.parse(raw) as Question[]).map(q => {
+        const idx = parseInt(q.answer as string, 10);
+        if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
+          return { ...q, answer: q.options[idx] };
+        }
+        return q;
+      });
       if (!Array.isArray(qs) || qs.length === 0) { setError('Question data is empty.'); setLoaded(true); return; }
       const m: QuizMeta = rawM ? JSON.parse(rawM) : { gradeLabel: 'Practice', gradeKey: 'unknown', accent: '#6366f1', chapters: [] };
       setPool(qs);
@@ -560,9 +568,6 @@ export default function CustomPracticePage() {
               >
                 <span style={{ fontSize: 15, lineHeight: 1 }}>{p.emoji}</span>
                 <span>{p.label}</span>
-                {!used && !locked && (
-                  <span style={{ fontSize: 10, opacity: 0.55, fontWeight: 400, marginLeft: 1 }}>— {p.desc}</span>
-                )}
               </button>
             );
           })}
