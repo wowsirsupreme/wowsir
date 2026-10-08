@@ -2,23 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, ChevronRight, Clock, Layers, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { BookOpen, ChevronRight, Clock, Layers, AlertCircle, Loader2, ArrowLeft, CheckSquare, Square, PlayCircle } from 'lucide-react';
 import { useFirebase } from '@/hooks/useFirebase';
 import { listPresetQuizzes } from '@/lib/firebase/presetQuizzes';
 import type { PresetQuiz } from '@/lib/firebase/presetQuizzes';
+import { GRADE_CHAPTERS } from '@/data/studyContent';
+import type { StudyChapter } from '@/data/studyContent';
 
 // ── Grade catalogue ───────────────────────────────────────────────────────────
 
 const GRADE_LIST = [
-  { key: 4,    label: 'Grade 4',  sub: 'Computing Basics',          accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
-  { key: 5,    label: 'Grade 5',  sub: 'Computing & Tech',          accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
-  { key: 6,    label: 'Grade 6',  sub: 'Computing & Programming',   accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
-  { key: 7,    label: 'Grade 7',  sub: 'Computing & Web',           accent: '#10b981', glow: 'rgba(16,185,129,0.15)' },
-  { key: 8,    label: 'Grade 8',  sub: 'Python & Networks',         accent: '#10b981', glow: 'rgba(16,185,129,0.15)' },
-  { key: 9,    label: 'Grade 9',  sub: 'IGCSE CS 0478 Year 1',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)' },
-  { key: '9dt',label: 'Grade 9',  sub: 'IGCSE D&T 0445',            accent: '#ec4899', glow: 'rgba(236,72,153,0.15)' },
-  { key: 10,   label: 'Grade 10', sub: 'IGCSE CS 0478 Year 2',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)' },
-  { key: 11,   label: 'Grade 11', sub: 'A-Level CS 9618',           accent: '#8b5cf6', glow: 'rgba(139,92,246,0.15)' },
+  { key: 4,    label: 'Grade 4',  sub: 'Computing Basics',          accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)',   classId: 'gr4-cs' },
+  { key: 5,    label: 'Grade 5',  sub: 'Computing & Tech',          accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)',   classId: 'gr5-cs' },
+  { key: 6,    label: 'Grade 6',  sub: 'Computing & Programming',   accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)',   classId: 'gr6-cs' },
+  { key: 7,    label: 'Grade 7',  sub: 'Computing & Web',           accent: '#10b981', glow: 'rgba(16,185,129,0.15)',   classId: 'gr7-cs' },
+  { key: 8,    label: 'Grade 8',  sub: 'Python & Networks',         accent: '#10b981', glow: 'rgba(16,185,129,0.15)',   classId: 'gr8-cs' },
+  { key: 9,    label: 'Grade 9',  sub: 'IGCSE CS 0478 Year 1',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)',   classId: 'gr9-cs' },
+  { key: '9dt',label: 'Grade 9',  sub: 'IGCSE D&T 0445',            accent: '#ec4899', glow: 'rgba(236,72,153,0.15)',   classId: 'gr9-dt' },
+  { key: 10,   label: 'Grade 10', sub: 'IGCSE CS 0478 Year 2',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)',   classId: null },
+  { key: 11,   label: 'Grade 11', sub: 'A-Level CS 9618',           accent: '#8b5cf6', glow: 'rgba(139,92,246,0.15)',   classId: null },
 ];
 
 const DIFFICULTY_BADGE: Record<string, { label: string; color: string }> = {
@@ -35,20 +37,47 @@ export default function PracticePage() {
   const { configured, checking } = useFirebase();
 
   const [selectedGrade, setSelectedGrade] = useState<number | string | null>(null);
-  const [presets, setPresets] = useState<PresetQuiz[]>([]);
+  const [presets, setPresets]             = useState<PresetQuiz[]>([]);
   const [loadingPresets, setLoadingPresets] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]                 = useState<string | null>(null);
+
+  // Chapter-picker state
+  const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set());
 
   // Load presets when a grade is selected
   useEffect(() => {
     if (selectedGrade === null || !configured) return;
     setLoadingPresets(true);
     setError(null);
+    setSelectedChapters(new Set());
     listPresetQuizzes(selectedGrade)
       .then(setPresets)
       .catch(e => setError(e instanceof Error ? e.message : 'Failed to load quizzes'))
       .finally(() => setLoadingPresets(false));
   }, [selectedGrade, configured]);
+
+  function toggleChapter(key: string) {
+    setSelectedChapters(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
+  function startCustomQuiz() {
+    const gradeInfo = GRADE_LIST.find(g => g.key === selectedGrade);
+    if (!gradeInfo?.classId) return;
+    const chapters = GRADE_CHAPTERS[gradeInfo.classId] ?? [];
+    const keys = [...selectedChapters];
+    const qs = chapters
+      .filter(c => keys.includes(c.key))
+      .flatMap(c => c.questions)
+      .sort(() => Math.random() - 0.5);
+    if (qs.length === 0) return;
+    // Store questions in sessionStorage and navigate to a quiz player
+    sessionStorage.setItem('customQuiz', JSON.stringify(qs));
+    router.push('/practice/custom');
+  }
 
   const gradeInfo = GRADE_LIST.find(g => g.key === selectedGrade);
 
@@ -192,9 +221,78 @@ export default function PracticePage() {
           </div>
         )}
 
-        {/* Preset quiz list for selected grade */}
+        {/* Grade selected — chapter picker + teacher presets */}
         {selectedGrade !== null && (
           <div>
+            {/* ── Chapter picker ── */}
+            {(() => {
+              const gradeInfo = GRADE_LIST.find(g => g.key === selectedGrade);
+              const chapters: StudyChapter[] = gradeInfo?.classId ? (GRADE_CHAPTERS[gradeInfo.classId] ?? []) : [];
+              if (chapters.length === 0) return null;
+              const totalQs = [...selectedChapters].reduce((sum, k) => {
+                return sum + (chapters.find(c => c.key === k)?.questions.length ?? 0);
+              }, 0);
+              return (
+                <div style={{ marginBottom: 32 }}>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                    Build your own practice
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                    {chapters.map(ch => {
+                      const checked = selectedChapters.has(ch.key);
+                      const count = ch.questions.length;
+                      return (
+                        <button
+                          key={ch.key}
+                          onClick={() => count > 0 && toggleChapter(ch.key)}
+                          disabled={count === 0}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            padding: '11px 14px', borderRadius: 12, textAlign: 'left',
+                            background: checked ? `${gradeInfo!.accent}12` : 'rgba(255,255,255,0.03)',
+                            border: `1.5px solid ${checked ? gradeInfo!.accent + '45' : 'rgba(255,255,255,0.07)'}`,
+                            cursor: count > 0 ? 'pointer' : 'not-allowed',
+                            opacity: count > 0 ? 1 : 0.4,
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {checked
+                            ? <CheckSquare size={15} color={gradeInfo!.accent} style={{ flexShrink: 0 }} />
+                            : <Square size={15} color="rgba(255,255,255,0.25)" style={{ flexShrink: 0 }} />
+                          }
+                          <span style={{ flex: 1, fontSize: 14, color: checked ? '#fff' : 'rgba(255,255,255,0.7)' }}>{ch.shortTitle}</span>
+                          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)' }}>
+                            {count > 0 ? `${count}q` : '—'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={startCustomQuiz}
+                    disabled={selectedChapters.size === 0}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '12px 20px', borderRadius: 12, fontWeight: 700, fontSize: 14,
+                      background: selectedChapters.size > 0 ? gradeInfo!.accent : 'rgba(255,255,255,0.06)',
+                      color: selectedChapters.size > 0 ? '#000' : 'rgba(255,255,255,0.3)',
+                      border: 'none', cursor: selectedChapters.size > 0 ? 'pointer' : 'default',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <PlayCircle size={16} />
+                    Start practice
+                    {selectedChapters.size > 0 && ` · ${totalQs} question${totalQs !== 1 ? 's' : ''}`}
+                  </button>
+                </div>
+              );
+            })()}
+
+            <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.07)', marginBottom: 24 }} />
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              Teacher-set tests
+            </p>
+
             {loadingPresets && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.45)', padding: '40px 0' }}>
                 <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
