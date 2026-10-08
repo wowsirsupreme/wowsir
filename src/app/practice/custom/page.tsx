@@ -463,8 +463,20 @@ export default function CustomPracticePage() {
   return (
     <main style={{ minHeight: '100vh', background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%), #09090f', fontFamily: 'var(--font-body)' }}>
       <style>{`
-        @keyframes spin  { to { transform: rotate(360deg); } }
-        @keyframes popUp { 0%{opacity:0;transform:translateY(0) scale(0.8)} 20%{opacity:1;transform:translateY(-12px) scale(1.1)} 80%{opacity:1;transform:translateY(-18px) scale(1)} 100%{opacity:0;transform:translateY(-28px) scale(0.9)} }
+        @keyframes spin      { to { transform: rotate(360deg); } }
+        @keyframes popUp     { 0%{opacity:0;transform:translateY(0) scale(0.8)} 20%{opacity:1;transform:translateY(-12px) scale(1.1)} 80%{opacity:1;transform:translateY(-18px) scale(1)} 100%{opacity:0;transform:translateY(-28px) scale(0.9)} }
+        @keyframes puGlow    { 0%,100%{box-shadow:0 0 6px 0 var(--pu-color,#6366f1)} 50%{box-shadow:0 0 18px 4px var(--pu-color,#6366f1)} }
+        @keyframes puShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes puBounce  { 0%,100%{transform:translateY(0) scale(1)} 30%{transform:translateY(-5px) scale(1.08)} 60%{transform:translateY(2px) scale(0.97)} }
+        @keyframes puUsed    { 0%{opacity:1;filter:brightness(2)} 100%{opacity:0.28;filter:brightness(0.5)} }
+        @keyframes puFloat   { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-3px)} }
+        .pu-btn { position:relative; overflow:hidden; }
+        .pu-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.22) 50%,transparent 60%); background-size:200% 100%; background-position:-200% center; border-radius:inherit; pointer-events:none; }
+        .pu-btn:not(.pu-used):not(.pu-locked):hover::after { animation: puShimmer 0.6s ease forwards; }
+        .pu-btn:not(.pu-used):not(.pu-locked) { animation: puFloat 2.8s ease-in-out infinite, puGlow 2.5s ease-in-out infinite; }
+        .pu-btn:not(.pu-used):not(.pu-locked):hover { animation: puBounce 0.4s ease, puGlow 2.5s ease-in-out infinite; transform-origin: center bottom; }
+        .pu-btn:not(.pu-used):not(.pu-locked):active { transform: scale(0.93); }
+        .pu-btn.pu-used { animation: puUsed 0.35s ease forwards !important; pointer-events:none; }
       `}</style>
 
       {showNameModal && <NameModal accent={accent} onDone={saveName} />}
@@ -515,29 +527,42 @@ export default function CustomPracticePage() {
         </div>
 
         {/* Power-ups */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
           {availPowerUps.map(key => {
-            const p    = POWERUPS.find(x => x.key === key)!;
-            const used = usedPowerUps.has(key);
+            const p      = POWERUPS.find(x => x.key === key)!;
+            const used   = usedPowerUps.has(key);
             const locked = !!chosen;
+            const cls    = ['pu-btn', used ? 'pu-used' : '', locked && !used ? 'pu-locked' : ''].filter(Boolean).join(' ');
             return (
               <button
                 key={key}
                 title={p.desc}
+                className={cls}
                 onClick={() => !used && !locked && usePowerUp(key)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  background: used ? 'rgba(255,255,255,0.03)' : `${p.color}15`,
-                  border: `1px solid ${used ? 'rgba(255,255,255,0.07)' : p.color + '35'}`,
-                  color: used ? 'rgba(255,255,255,0.2)' : p.color,
+                  // CSS variable lets the keyframe animation pick up the per-powerup color
+                  ['--pu-color' as string]: p.color + '80',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  background: used
+                    ? 'rgba(255,255,255,0.03)'
+                    : `linear-gradient(135deg, ${p.color}22 0%, ${p.color}10 100%)`,
+                  border: `1.5px solid ${used ? 'rgba(255,255,255,0.07)' : p.color + '55'}`,
+                  color: used ? 'rgba(255,255,255,0.18)' : p.color,
                   cursor: used || locked ? 'default' : 'pointer',
-                  opacity: used ? 0.4 : locked ? 0.6 : 1,
+                  opacity: locked && !used ? 0.55 : 1,
                   textDecoration: used ? 'line-through' : 'none',
-                  transition: 'all 0.12s',
+                  backdropFilter: 'blur(6px)',
+                  letterSpacing: '0.01em',
+                  // reset inline transform so CSS class animation takes over
+                  transform: 'none',
                 }}
               >
-                <span>{p.emoji}</span> {p.label}
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{p.emoji}</span>
+                <span>{p.label}</span>
+                {!used && !locked && (
+                  <span style={{ fontSize: 10, opacity: 0.55, fontWeight: 400, marginLeft: 1 }}>— {p.desc}</span>
+                )}
               </button>
             );
           })}
