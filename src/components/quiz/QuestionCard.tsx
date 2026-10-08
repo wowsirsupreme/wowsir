@@ -22,7 +22,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
   return (
     <div className="w-full">
       {/* Question text */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-7">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-8">
         {question.imageUrl && (
           <img
             src={question.imageUrl}
@@ -30,11 +30,11 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
             className="w-full max-h-48 object-contain rounded-xl mb-6"
           />
         )}
-        <p className="font-display text-[clamp(22px,3.5vw,34px)] leading-snug text-paper">
+        <p className="font-display text-[clamp(26px,4vw,38px)] leading-[1.5] text-paper">
           {question.text}
         </p>
         {question.type === 'truefalse' && (
-          <span className="inline-block mt-3 text-xs font-mono tracking-widest text-muted uppercase">True / False</span>
+          <span className="inline-block mt-4 text-sm font-mono tracking-widest text-muted uppercase">True / False</span>
         )}
       </div>
 
@@ -51,7 +51,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
                 disabled={disabled}
                 className={cn(
                   'flex items-center gap-4 text-left px-6 py-5 rounded-xl border-[1.5px] transition-all duration-200',
-                  'bg-white/6 border-white/10 text-paper font-body text-[16px]',
+                  'bg-white/6 border-white/10 text-paper font-body text-[18px] leading-relaxed',
                   !disabled && 'hover:bg-gold/15 hover:border-gold hover:-translate-y-0.5',
                   isSelected && !revealed && 'border-gold',
                   revealed && isCorrect && 'bg-green/30 border-green-500 animate-revealPulse',
@@ -59,7 +59,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
                   disabled && 'cursor-default'
                 )}
               >
-                <span className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-[13px] font-bold font-mono flex-shrink-0">
+                <span className="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[14px] font-bold font-mono flex-shrink-0">
                   {labels[i]}
                 </span>
                 {opt}
@@ -70,7 +70,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
       )}
 
       {question.type === 'truefalse' && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {['True', 'False'].map((opt, i) => {
             const val = opt.toLowerCase();
             const isCorrect = question.answer === val;
@@ -81,8 +81,8 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
                 onClick={() => !disabled && onAnswer(i)}
                 disabled={disabled}
                 className={cn(
-                  'flex items-center justify-center gap-3 px-5 py-6 rounded-xl border-[1.5px] transition-all duration-200',
-                  'bg-white/6 border-white/10 text-paper text-lg font-semibold',
+                  'flex items-center justify-center gap-3 px-5 py-7 rounded-xl border-[1.5px] transition-all duration-200',
+                  'bg-white/6 border-white/10 text-paper text-xl font-semibold',
                   !disabled && 'hover:bg-gold/15 hover:border-gold',
                   isSelected && !revealed && 'border-gold',
                   revealed && isCorrect && 'bg-green/30 border-green-500',
@@ -99,7 +99,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, disabled 
 
       {/* Explanation (shown after reveal) */}
       {revealed && question.explanation && (
-        <div className="mt-5 px-6 py-4 bg-white/5 border border-white/10 rounded-xl text-[15px] text-muted animate-fadeIn">
+        <div className="mt-6 px-6 py-5 bg-white/5 border border-white/10 rounded-xl text-[16px] leading-relaxed text-muted animate-fadeIn">
           💡 {question.explanation}
         </div>
       )}
