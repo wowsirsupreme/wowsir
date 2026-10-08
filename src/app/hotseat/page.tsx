@@ -1,21 +1,58 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getRandomQuestions } from '@/lib/firebase/questions';
 import { TOPIC_LABELS } from '@/types/question';
+import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 
 const TOPIC_KEYS = Object.keys(TOPIC_LABELS);
 const HOT_SEAT_COUNT = 10;
-const TIME_LIMIT = 15;
+const MAX_LIVES = 3;
 
-type Phase = 'setup' | 'playing' | 'reveal' | 'done';
+// Timer per question band: q1-3 easy 15s, q4-7 medium 12s, q8-10 hard 10s
+function timeForIdx(idx: number): number {
+  if (idx < 3) return 15;
+  if (idx < 7) return 12;
+  return 10;
+}
+
+/** Normalise q.answer (may be numeric index string) → option text, then shuffle options. */
+function prepareQuestion(q: Question): Question {
+  let answerText = q.answer as string;
+  const idx = parseInt(answerText, 10);
+  if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
+    answerText = q.options[idx];
+  }
+  const opts = [...(q.options ?? [])];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { ...q, answer: answerText, options: opts };
+}
+
+/** Sort by difficulty band, then shuffle within each band. */
+function sortByDifficulty(qs: Question[]): Question[] {
+  const order = { easy: 0, medium: 1, hard: 2 };
+  const band = (q: Question) => order[(q.difficulty as keyof typeof order) ?? 'medium'] ?? 1;
+  return [...qs].sort((a, b) => band(a) - band(b) || Math.random() - 0.5);
+}
+
+/** Merge Firestore questions with local builtin questions for a topic, dedup by id. */
+function mergeQuestions(remote: Question[], topicKey: string): Question[] {
+  const local = (allGradeQuestions as Question[]).filter(q => q.topicKey === topicKey);
+  const seen = new Set(remote.map(q => q.id));
+  const merged = [...remote, ...local.filter(q => !seen.has(q.id))];
+  return merged;
+}
+
+type Phase = 'setup' | 'playing' | 'reveal' | 'dead' | 'done';
 
 export default function HotSeatPage() {
   const router = useRouter();
@@ -29,23 +66,37 @@ export default function HotSeatPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
+  const [lives, setLives] = useState(MAX_LIVES);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [questionStart, setQuestionStart] = useState(0);
   const [results, setResults] = useState<{ correct: boolean; timeMs: number; score: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [shakeHeart, setShakeHeart] = useState(false);
+
+  // Ref to track lives within handleAnswer without stale closure issues
+  const livesRef = useRef(MAX_LIVES);
 
   async function handleStart() {
     if (!topicKey) return;
-    const qs = await getRandomQuestions(topicKey, HOT_SEAT_COUNT);
-    if (qs.length === 0) { alert('No questions available for this topic yet.'); return; }
-    setQuestions(qs);
+    setLoading(true);
+    let remote: Question[] = [];
+    try { remote = await getRandomQuestions(topicKey, 50); } catch { /* offline */ }
+    const pool = mergeQuestions(remote, topicKey);
+    if (pool.length === 0) { alert('No questions available for this topic yet.'); setLoading(false); return; }
+    const sorted = sortByDifficulty(pool);
+    const picked = sorted.slice(0, Math.min(HOT_SEAT_COUNT, sorted.length)).map(prepareQuestion);
+    setQuestions(picked);
     setCurrentIdx(0);
     setScore(0);
     setCorrect(0);
+    setLives(MAX_LIVES);
+    livesRef.current = MAX_LIVES;
     setStreak(0);
     setMaxStreak(0);
     setResults([]);
     setSelected(null);
+    setLoading(false);
     setPhase('playing');
     setQuestionStart(Date.now());
   }
@@ -54,10 +105,15 @@ export default function HotSeatPage() {
     if (selected !== null || !questions[currentIdx]) return;
     const timeMs = Date.now() - questionStart;
     const q = questions[currentIdx];
-    const correctIndex = parseInt(q.answer, 10);
+    // After prepareQuestion, q.answer is option text; match by text
+    const correctIndex = q.options.findIndex(o => o === q.answer);
     const isCorrect = index === correctIndex;
-    const timeBonus = isCorrect ? calcTimeBonus(timeMs, TIME_LIMIT * 1000) : 0;
-    const earned = isCorrect ? 100 + timeBonus : 0;
+    const timeLimit = timeForIdx(currentIdx) * 1000;
+    const timeRemaining = Math.max(0, timeLimit - timeMs);
+    const timeBonus = isCorrect ? calcTimeBonus(timeRemaining, timeLimit) : 0;
+    // Streak multiplier: ×1 at 0, up to ×2 at streak 5+
+    const streakMult = isCorrect ? 1 + Math.min(streak, 5) * 0.2 : 1;
+    const earned = isCorrect ? Math.round((100 + timeBonus) * streakMult) : 0;
 
     setSelected(index);
     setPhase('reveal');
@@ -72,9 +128,19 @@ export default function HotSeatPage() {
       });
     } else {
       setStreak(0);
+      const newLives = livesRef.current - 1;
+      livesRef.current = newLives;
+      setLives(newLives);
+      setShakeHeart(true);
+      setTimeout(() => setShakeHeart(false), 600);
+      if (newLives <= 0) {
+        setResults(r => [...r, { correct: false, timeMs, score: 0 }]);
+        setTimeout(() => setPhase('dead'), 1200);
+        return;
+      }
     }
     setResults(r => [...r, { correct: isCorrect, timeMs, score: earned }]);
-  }, [selected, questions, currentIdx, questionStart]);
+  }, [selected, questions, currentIdx, questionStart, streak]);
 
   function handleTimerEnd() {
     if (selected === null) handleAnswer(-1);
@@ -91,6 +157,14 @@ export default function HotSeatPage() {
 
   const currentQ = questions[currentIdx];
   const accuracy = results.length > 0 ? correct / results.length : 0;
+  const currentTimeLimit = timeForIdx(currentIdx);
+
+  const heartStyle = (i: number) => ({
+    fontSize: 22,
+    filter: i < lives ? 'none' : 'grayscale(1) opacity(0.25)',
+    transition: 'filter 0.3s',
+    transform: shakeHeart && i === lives ? 'scale(1.4)' : 'scale(1)',
+  });
 
   return (
     <div className="hotseat-screen flex flex-col min-h-screen">
@@ -114,8 +188,16 @@ export default function HotSeatPage() {
           <span className="font-display text-lg" style={{ color: '#fff' }}>Hot Seat</span>
         </div>
         {phase !== 'setup' ? (
-          <div className="font-mono text-sm font-bold" style={{ color: '#fdba74' }}>
-            {score.toLocaleString()} pts
+          <div className="flex items-center gap-3">
+            {/* Lives */}
+            <div className="flex gap-0.5">
+              {Array.from({ length: MAX_LIVES }).map((_, i) => (
+                <span key={i} style={heartStyle(i)}>❤️</span>
+              ))}
+            </div>
+            <div className="font-mono text-sm font-bold" style={{ color: '#fdba74' }}>
+              {score.toLocaleString()}
+            </div>
           </div>
         ) : <div className="w-16" />}
       </div>
@@ -128,7 +210,7 @@ export default function HotSeatPage() {
             Hot Seat
           </h2>
           <p className="text-sm mb-8 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            10 questions · 15 seconds each · Streak bonuses
+            10 questions · 3 lives · Timer shrinks · Streak multiplier
           </p>
 
           <div className="w-full max-w-sm">
@@ -163,18 +245,18 @@ export default function HotSeatPage() {
             <button
               className="btn-ember"
               onClick={handleStart}
-              disabled={!topicKey}
+              disabled={!topicKey || loading}
             >
-              🔥 Start Challenge
+              {loading ? '⏳ Loading…' : '🔥 Start Challenge'}
             </button>
           </div>
 
           {/* Stats row */}
           <div className="flex gap-6 mt-8">
             {[
-              { icon: '❓', label: '10 Questions' },
-              { icon: '⏱️', label: '15s Per Q' },
-              { icon: '🔥', label: 'Streak Bonus' },
+              { icon: '❤️', label: '3 Lives' },
+              { icon: '⏱️', label: '15 → 10s' },
+              { icon: '🔥', label: 'Streak ×2' },
             ].map(({ icon, label }) => (
               <div key={label} className="text-center">
                 <div className="text-xl mb-1">{icon}</div>
@@ -189,7 +271,7 @@ export default function HotSeatPage() {
       {(phase === 'playing' || phase === 'reveal') && currentQ && (
         <div className="flex-1 flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full">
 
-          {/* Progress bar + streak + timer */}
+          {/* Progress + streak + timer */}
           <div className="w-full flex items-center gap-3 mb-5">
             <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
               <div
@@ -204,21 +286,45 @@ export default function HotSeatPage() {
             <div className="flex items-center gap-3">
               {streak > 1 && (
                 <span
-                  className="text-xs font-mono font-bold animate-pulse-slow px-2 py-0.5 rounded-full"
+                  className="text-xs font-mono font-bold px-2 py-0.5 rounded-full"
                   style={{ color: '#fdba74', background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)' }}
                 >
                   🔥 ×{streak}
                 </span>
               )}
               {phase === 'playing' && (
-                <TimerRing seconds={TIME_LIMIT} onEnd={handleTimerEnd} paused={false} size={44} />
+                <TimerRing
+                  key={`${currentIdx}-${currentTimeLimit}`}
+                  seconds={currentTimeLimit}
+                  onEnd={handleTimerEnd}
+                  paused={false}
+                  size={44}
+                />
               )}
             </div>
           </div>
 
-          <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Question {currentIdx + 1} of {questions.length}
-          </p>
+          {/* Difficulty badge */}
+          <div className="flex items-center gap-2 mb-3 self-start">
+            <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Q{currentIdx + 1}/{questions.length}
+            </p>
+            {currentQ.difficulty && (
+              <span
+                className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full"
+                style={{
+                  background: currentQ.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' : currentQ.difficulty === 'medium' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)',
+                  color: currentQ.difficulty === 'hard' ? '#f87171' : currentQ.difficulty === 'medium' ? '#fbbf24' : '#4ade80',
+                  border: `1px solid ${currentQ.difficulty === 'hard' ? 'rgba(239,68,68,0.3)' : currentQ.difficulty === 'medium' ? 'rgba(234,179,8,0.3)' : 'rgba(34,197,94,0.3)'}`,
+                }}
+              >
+                {currentQ.difficulty}
+              </span>
+            )}
+            <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              {currentTimeLimit}s
+            </span>
+          </div>
 
           <QuestionCard
             question={currentQ}
@@ -240,7 +346,54 @@ export default function HotSeatPage() {
         </div>
       )}
 
-      {/* ── DONE ── */}
+      {/* ── DEAD (out of lives) ── */}
+      {phase === 'dead' && (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 animate-slideUp">
+          <div className="text-[88px] leading-none mb-4 select-none" style={{ filter: 'drop-shadow(0 0 20px rgba(239,68,68,0.8))' }}>
+            💀
+          </div>
+          <h2 className="font-display text-4xl mb-2 text-center" style={{ color: '#ef4444', textShadow: '0 0 30px rgba(239,68,68,0.5)' }}>
+            Game Over
+          </h2>
+          <p className="text-sm mb-6 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            You ran out of lives on Q{currentIdx + 1}
+          </p>
+          <div
+            className="font-mono text-4xl font-bold mb-1"
+            style={{ color: '#fdba74', textShadow: '0 0 16px rgba(249,115,22,0.5)' }}
+          >
+            {score.toLocaleString()}
+          </div>
+          <p className="text-xs mb-8" style={{ color: 'rgba(255,255,255,0.3)' }}>points</p>
+
+          <div className="grid grid-cols-2 gap-3 mb-8 w-full max-w-xs">
+            {[
+              { label: 'Correct', val: `${correct}/${results.length}`, color: '#4ade80' },
+              { label: 'Best Streak', val: `🔥 ${maxStreak}`, color: '#fb923c' },
+            ].map(({ label, val, color }) => (
+              <div key={label} className="rounded-xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="font-mono text-xl font-bold" style={{ color }}>{val}</div>
+                <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleStart}
+              className="px-6 py-3 rounded-xl text-sm font-semibold"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(255,255,255,0.12)' }}
+            >
+              Try Again
+            </button>
+            <button className="btn-ember" style={{ width: 'auto', fontSize: 14, padding: '12px 24px' }} onClick={() => router.push('/')}>
+              🏠 Home
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── DONE (survived all 10) ── */}
       {phase === 'done' && (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 animate-slideUp">
           <div
@@ -250,7 +403,7 @@ export default function HotSeatPage() {
             {accuracy >= 0.8 ? '🏆' : accuracy >= 0.6 ? '🎉' : '💪'}
           </div>
           <h2 className="font-display text-4xl mb-1 text-center" style={{ color: '#fff', textShadow: '0 0 30px rgba(249,115,22,0.5)' }}>
-            {name ? `${name}'s Result` : 'Your Result'}
+            {name ? `${name}'s Result` : 'You Survived!'}
           </h2>
           <div
             className="font-mono text-5xl font-bold my-4 animate-scoreSlide"
@@ -258,7 +411,7 @@ export default function HotSeatPage() {
           >
             {score.toLocaleString()}
           </div>
-          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>points</p>
+          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>points · {lives} {lives === 1 ? 'life' : 'lives'} remaining</p>
 
           <div className="grid grid-cols-3 gap-3 mb-6 w-full max-w-sm">
             {[
@@ -298,13 +451,9 @@ export default function HotSeatPage() {
             <button
               onClick={handleStart}
               className="px-6 py-3 rounded-xl text-sm font-semibold"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                color: 'rgba(255,255,255,0.7)',
-                border: '1.5px solid rgba(255,255,255,0.12)',
-              }}
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(255,255,255,0.12)' }}
             >
-              Try Again
+              Play Again
             </button>
             <button className="btn-ember" style={{ width: 'auto', fontSize: 14, padding: '12px 24px' }} onClick={() => router.push('/')}>
               🏠 Home
