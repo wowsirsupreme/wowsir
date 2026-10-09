@@ -9,28 +9,32 @@ const GROUPED = getGroupedTopics();
 interface Props {
   value: string;
   onChange: (key: string) => void;
-  /** Visual style override for the trigger button */
   inputStyle?: React.CSSProperties;
 }
 
 export default function TopicPicker({ value, onChange, inputStyle }: Props) {
-  const [open, setOpen]           = useState(false);
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
   const selected = value ? TOPIC_LABELS[value] : null;
 
-  // Auto-expand the group that contains the currently selected topic on open
+  // Auto-select the group containing current value when opening
   useEffect(() => {
-    if (open && value) {
-      for (const { subject, topics } of GROUPED) {
-        if (topics.some(t => t.key === value)) {
-          setExpandedGroup(subject);
-          break;
+    if (open) {
+      if (value) {
+        for (const { subject, topics } of GROUPED) {
+          if (topics.some(t => t.key === value)) {
+            setActiveGroup(subject);
+            break;
+          }
         }
+      } else {
+        setActiveGroup(GROUPED[0]?.subject ?? null);
       }
+    } else {
+      setActiveGroup(null);
     }
-    if (!open) setExpandedGroup(null);
   }, [open, value]);
 
   // Close on outside click
@@ -50,7 +54,7 @@ export default function TopicPicker({ value, onChange, inputStyle }: Props) {
     setOpen(false);
   }, [onChange]);
 
-  const baseInputStyle: React.CSSProperties = {
+  const triggerStyle: React.CSSProperties = {
     width: '100%',
     padding: '11px 14px',
     borderRadius: 12,
@@ -69,10 +73,12 @@ export default function TopicPicker({ value, onChange, inputStyle }: Props) {
     ...inputStyle,
   };
 
+  const activeTopics = GROUPED.find(g => g.subject === activeGroup)?.topics ?? [];
+
   return (
     <div ref={dropRef} style={{ position: 'relative', width: '100%' }}>
       {/* ── Trigger ── */}
-      <button type="button" onClick={() => setOpen(o => !o)} style={baseInputStyle}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={triggerStyle}>
         <span style={{ color: selected ? '#f5f3ee' : 'rgba(255,255,255,0.28)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selected ? `${selected.emoji} ${selected.title}` : '— Choose a topic —'}
         </span>
@@ -83,7 +89,7 @@ export default function TopicPicker({ value, onChange, inputStyle }: Props) {
         />
       </button>
 
-      {/* ── Dropdown ── */}
+      {/* ── Two-panel dropdown ── */}
       {open && (
         <div style={{
           position: 'absolute',
@@ -91,114 +97,104 @@ export default function TopicPicker({ value, onChange, inputStyle }: Props) {
           left: 0,
           right: 0,
           zIndex: 40,
-          background: 'rgba(10,9,24,0.98)',
+          background: 'rgba(9,8,22,0.98)',
           backdropFilter: 'blur(18px)',
           border: '1.5px solid rgba(201,168,76,0.18)',
           borderRadius: 14,
           boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
+          display: 'flex',
           overflow: 'hidden',
-          maxHeight: 420,
-          overflowY: 'auto',
+          minHeight: 220,
         }}>
-          {GROUPED.map(({ subject, topics }, gi) => {
-            const isExpanded = expandedGroup === subject;
-            const hasSelected = topics.some(t => t.key === value);
 
-            return (
-              <div key={subject} style={{ borderTop: gi > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                {/* ── Group Header (Level 1) ── */}
+          {/* Left panel — subjects */}
+          <div style={{
+            width: '42%',
+            flexShrink: 0,
+            borderRight: '1px solid rgba(255,255,255,0.06)',
+            overflowY: 'auto',
+          }}>
+            {GROUPED.map(({ subject, topics }, gi) => {
+              const isActive = activeGroup === subject;
+              const hasSelected = topics.some(t => t.key === value);
+              return (
                 <button
+                  key={subject}
                   type="button"
-                  onClick={() => setExpandedGroup(isExpanded ? null : subject)}
+                  onMouseEnter={() => setActiveGroup(subject)}
+                  onClick={() => setActiveGroup(subject)}
                   style={{
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    padding: '10px 14px',
-                    background: isExpanded ? 'rgba(201,168,76,0.08)' : 'none',
-                    border: 'none',
+                    gap: 7,
+                    padding: '9px 12px',
+                    background: isActive ? 'rgba(201,168,76,0.1)' : 'none',
+                    borderTop: gi > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderLeft: isActive ? `2.5px solid ${GOLD}` : '2.5px solid transparent',
+                    borderRight: 'none',
+                    borderBottom: 'none',
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s',
+                    transition: 'background 0.1s',
                   }}
-                  onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                  onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'none'; }}
                 >
-                  <ChevronRight
-                    size={12}
-                    color={isExpanded ? GOLD : 'rgba(255,255,255,0.35)'}
-                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.18s', flexShrink: 0 }}
-                  />
                   <span style={{
                     flex: 1,
                     fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: hasSelected ? GOLD : isExpanded ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.45)',
+                    fontWeight: isActive ? 700 : 500,
+                    color: hasSelected ? GOLD : isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
+                    lineHeight: 1.3,
                   }}>
                     {subject}
                   </span>
-                  <span style={{
-                    fontSize: 10,
-                    color: 'rgba(255,255,255,0.2)',
-                    background: 'rgba(255,255,255,0.05)',
-                    borderRadius: 6,
-                    padding: '1px 6px',
-                  }}>
-                    {topics.length}
-                  </span>
-                  {hasSelected && !isExpanded && (
-                    <span style={{
-                      width: 6, height: 6, borderRadius: '50%',
-                      background: GOLD, flexShrink: 0,
-                    }} />
+                  {hasSelected && (
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />
                   )}
+                  <ChevronRight size={10} color={isActive ? GOLD : 'rgba(255,255,255,0.2)'} style={{ flexShrink: 0 }} />
                 </button>
+              );
+            })}
+          </div>
 
-                {/* ── Chapter list (Level 2) ── */}
-                {isExpanded && (
-                  <div style={{
-                    background: 'rgba(0,0,0,0.2)',
-                    borderTop: '1px solid rgba(255,255,255,0.04)',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                  }}>
-                    {topics.map(t => {
-                      const isActive = t.key === value;
-                      return (
-                        <button
-                          key={t.key}
-                          type="button"
-                          onClick={() => pick(t.key)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            width: '100%',
-                            padding: '8px 14px 8px 30px',
-                            background: isActive ? 'rgba(201,168,76,0.13)' : 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: isActive ? GOLD : 'rgba(255,255,255,0.65)',
-                            fontSize: 13,
-                            textAlign: 'left',
-                            transition: 'background 0.12s, color 0.12s',
-                          }}
-                          onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.9)'; } }}
-                          onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; } }}
-                        >
-                          <span style={{ fontSize: 14, flexShrink: 0 }}>{t.emoji}</span>
-                          <span style={{ flex: 1, lineHeight: 1.35 }}>{t.title}</span>
-                          {isActive && <Check size={11} color={GOLD} style={{ flexShrink: 0 }} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+          {/* Right panel — chapters */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {activeTopics.length === 0 ? (
+              <div style={{ padding: '14px 12px', color: 'rgba(255,255,255,0.25)', fontSize: 12 }}>
+                No topics available
               </div>
-            );
-          })}
+            ) : activeTopics.map(t => {
+              const isChosen = t.key === value;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => pick(t.key)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '9px 12px',
+                    background: isChosen ? 'rgba(201,168,76,0.13)' : 'none',
+                    border: 'none',
+                    borderTop: '1px solid rgba(255,255,255,0.04)',
+                    cursor: 'pointer',
+                    color: isChosen ? GOLD : 'rgba(255,255,255,0.7)',
+                    fontSize: 12,
+                    textAlign: 'left',
+                    transition: 'background 0.1s, color 0.1s',
+                  }}
+                  onMouseEnter={e => { if (!isChosen) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#fff'; } }}
+                  onMouseLeave={e => { if (!isChosen) { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; } }}
+                >
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{t.emoji}</span>
+                  <span style={{ flex: 1, lineHeight: 1.35 }}>{t.title}</span>
+                  {isChosen && <Check size={11} color={GOLD} style={{ flexShrink: 0 }} />}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
