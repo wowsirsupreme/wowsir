@@ -518,4 +518,41 @@ body::before {
     right: 12px !important;
     width: auto !important;
   }
+
+  /* Home page: stack sidebar above cards */
+  .home-layout {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 24px !important;
+    padding-top: 20px !important;
+  }
+
+  .home-sidebar {
+    width: 100% !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  /* On mobile sidebar goes horizontal: logo + title inline, status badge below */
+  .home-sidebar > button:first-child div {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  /* Cards: 2 columns on mobile */
+  .home-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  /* Compact card content on small screens */
+  .home-cards button {
+    padding: 14px 12px !important;
+    min-height: 110px !important;
+    border-radius: 16px !important;
+  }
 }

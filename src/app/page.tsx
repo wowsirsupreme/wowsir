@@ -111,10 +111,10 @@ export default function LandingPage() {
       />
 
       {/* ── Two-column layout: sidebar + cards ── */}
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 980, display: 'flex', alignItems: 'center', gap: 32 }}>
+      <div className="home-layout" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 980, display: 'flex', alignItems: 'center', gap: 32 }}>
 
         {/* ── Left sidebar: logo & branding ── */}
-        <div style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        <div className="home-sidebar" style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
           {/* Logo icon */}
           <button
             onClick={handleTap}
@@ -186,6 +186,7 @@ export default function LandingPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
         {/* ── 6-card grid ── */}
         <div
+          className="home-cards"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
