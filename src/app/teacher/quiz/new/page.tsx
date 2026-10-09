@@ -208,7 +208,8 @@ ${qHtml}
       await saveQuiz(quiz);
       toast(status === 'published' ? 'Quiz published!' : 'Saved as draft', 'success');
       router.push('/teacher');
-    } catch {
+    } catch (err) {
+      console.error('saveQuiz error:', err);
       toast('Failed to save quiz', 'error');
     } finally {
       setSaving(false);

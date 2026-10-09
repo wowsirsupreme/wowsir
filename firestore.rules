@@ -10,10 +10,9 @@ service cloud.firestore {
 
     // Quizzes: only owning teacher can read/write
     match /quizzes/{qId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == resource.data.teacherId ||
-        request.auth.uid == request.resource.data.teacherId
-      );
+      allow read: if request.auth != null && request.auth.uid == resource.data.teacherId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.teacherId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
     }
 
     // Users: read own, teachers can write own
