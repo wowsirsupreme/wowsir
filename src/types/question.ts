@@ -207,10 +207,13 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr11-databases':       { title: 'Databases & Normalisation',       subject: 'CS A-Level 9618', emoji: '🗄️' },
 };
 
-/** Returns topics grouped by their subject, preserving insertion order. */
+/** Returns topics grouped by their subject, preserving insertion order.
+ *  Only includes topics whose title starts with "Ch" (chapter topics),
+ *  hiding old standalone/legacy entries like "Smart Presentations". */
 export function getGroupedTopics(): Array<{ subject: string; topics: Array<{ key: string; title: string; emoji: string }> }> {
   const map = new Map<string, Array<{ key: string; title: string; emoji: string }>>();
   for (const [key, t] of Object.entries(TOPIC_LABELS)) {
+    if (!t.title.startsWith('Ch')) continue;   // skip non-chapter legacy topics
     const group = map.get(t.subject) ?? [];
     group.push({ key, title: t.title, emoji: t.emoji });
     map.set(t.subject, group);
