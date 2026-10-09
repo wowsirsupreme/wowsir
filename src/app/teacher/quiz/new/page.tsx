@@ -152,14 +152,14 @@ function QuizBuilderInner() {
   }
 
   /* ── loading / auth guards ── */
-  if (!ready || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
         <GraduationCap size={32} color="#c9a84c" strokeWidth={1.5} style={{ opacity: 0.6 }} />
       </div>
     );
   }
-  if (!user) { router.replace('/teacher'); return null; }
+  if (!ready || !user) { router.replace('/teacher'); return null; }
 
   const selectedLabel = topicKey ? TOPIC_LABELS[topicKey] : null;
 

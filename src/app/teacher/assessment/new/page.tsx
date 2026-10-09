@@ -603,12 +603,12 @@ export default function AssessmentBuilderPage() {
 
   const totalMarks = draft.questions.reduce((s, q) => s + q.marks, 0);
 
-  if (!ready || loading) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
       <div style={{ color: 'rgba(255,255,255,0.4)' }}>Loading…</div>
     </div>;
   }
-  if (!user) { router.replace('/teacher'); return null; }
+  if (!ready || !user) { router.replace('/teacher'); return null; }
 
   const TAB_STYLE = (active: boolean): React.CSSProperties => ({
     padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600,
