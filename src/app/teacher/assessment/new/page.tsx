@@ -155,6 +155,60 @@ const TERMS = ['Term 1', 'Term 2', 'Term 3'];
 const ASSESSMENT_TYPES = ['CA1', 'CA2', 'CA3', 'Mid-Term Exam', 'End of Term Exam', 'Mock Exam', 'Test', 'Quiz', 'Assignment'];
 const EXAM_TYPES = ['Theory Exam', 'Practical Exam', 'CA', 'Mid-Term Exam', 'End of Term Exam', 'Mock Exam'];
 
+const DEFAULT_COVER_INSTRUCTIONS: Record<string, string> = {
+  'Theory Exam': [
+    'Write your name, class, and roll number clearly on the cover page.',
+    'Answer ALL questions unless otherwise instructed.',
+    'Write neatly and legibly. Marks may be deducted for illegible answers.',
+    'Do not write outside the answer lines or in the margins.',
+    'Electronic devices are NOT permitted during this examination.',
+    'Hand in your paper when instructed by the invigilator.',
+  ].join('\n'),
+  'Practical Exam': [
+    'Log in using your assigned school username and password.',
+    'Read each task carefully before you begin.',
+    'Save your work regularly using the filename given in each task.',
+    'Do not browse the internet or open files unrelated to this examination.',
+    'Raise your hand silently if you need assistance from the invigilator.',
+    'When finished, ensure all files are saved in the correct location before calling the invigilator.',
+  ].join('\n'),
+  'CA': [
+    'Write your name, class, and section clearly at the top of your paper.',
+    'Answer ALL questions.',
+    'Show all working where applicable.',
+    'Write neatly. Marks may be deducted for untidy work.',
+    'Do not copy from a neighbour. Any act of cheating will result in cancellation.',
+  ].join('\n'),
+  'Mid-Term Exam': [
+    'Write your name, class, and roll number clearly on the cover page.',
+    'Answer ALL questions unless otherwise instructed.',
+    'Write neatly and legibly.',
+    'Electronic devices are NOT permitted during this examination.',
+    'Do not talk or communicate with other candidates during the examination.',
+  ].join('\n'),
+  'End of Term Exam': [
+    'Write your name, class, roll number, and section clearly on the cover page.',
+    'Answer ALL questions unless otherwise instructed.',
+    'Write neatly and legibly. Marks may be deducted for illegible answers.',
+    'Electronic devices including calculators are NOT permitted unless stated.',
+    'Do not write outside the answer lines or in the margins.',
+    'Hand in your paper quietly when the invigilator announces time is up.',
+  ].join('\n'),
+  'Mock Exam': [
+    'This is a practice examination. Treat it with the same seriousness as the real exam.',
+    'Write your name, class, and roll number clearly on the cover page.',
+    'Answer ALL questions unless otherwise instructed.',
+    'Electronic devices are NOT permitted during this examination.',
+    'Write neatly and legibly.',
+  ].join('\n'),
+  default: [
+    'Write your name, class, and roll number clearly.',
+    'Answer all questions unless otherwise instructed.',
+    'Write clearly and legibly.',
+    'Do not write in the margins.',
+  ].join('\n'),
+};
+
 const BG = [
   'radial-gradient(ellipse 80% 50% at 30% 0%,   rgba(56,189,248,0.13) 0%, transparent 55%)',
   'radial-gradient(ellipse 60% 60% at 80% 20%,  rgba(99,102,241,0.1)  0%, transparent 50%)',
@@ -602,9 +656,10 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
           <span>Section: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 30 }}>&nbsp;</span></span>
         </div>
 
-        {/* Date / Total marks row */}
+        {/* Date / Duration / Total marks row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: draft.bodyFontSize, marginBottom: 8 }}>
           <span>Date: <b>{draft.date ? new Date(draft.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '___'}</b></span>
+          {draft.duration && <span>Duration: <b>{draft.duration}</b></span>}
           <span>Total mark: <b>{totalMarks || '___'}</b></span>
         </div>
 
@@ -1804,9 +1859,17 @@ export default function AssessmentBuilderPage() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                         <div>
                           <FieldLabel>EXAM TYPE</FieldLabel>
-                          <select value={draft.examType} onChange={e => set('examType', e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>
+                          <select value={EXAM_TYPES.includes(draft.examType) ? draft.examType : '__custom__'}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (val === '__custom__') return;
+                              set('examType', val);
+                              set('coverInstructions', DEFAULT_COVER_INSTRUCTIONS[val] || DEFAULT_COVER_INSTRUCTIONS['default']);
+                            }}
+                            style={{ ...INPUT, cursor: 'pointer' }}>
                             <option value="">— same as assessment type —</option>
-                            {EXAM_TYPES.map(t => <option key={t}>{t}</option>)}
+                            {EXAM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            {draft.examType && !EXAM_TYPES.includes(draft.examType) && <option value="__custom__">{draft.examType} (custom)</option>}
                           </select>
                         </div>
                         <div>
@@ -1835,12 +1898,19 @@ export default function AssessmentBuilderPage() {
                       </div>
 
                       <div style={{ marginTop: 10 }}>
-                        <FieldLabel>COVER INSTRUCTIONS (each line becomes a bullet point)</FieldLabel>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <FieldLabel>COVER INSTRUCTIONS (one per line → bullet)</FieldLabel>
+                          <button type="button"
+                            onClick={() => set('coverInstructions', DEFAULT_COVER_INSTRUCTIONS[draft.examType] || DEFAULT_COVER_INSTRUCTIONS['default'])}
+                            style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            ↺ Reset to defaults
+                          </button>
+                        </div>
                         <textarea value={draft.coverInstructions} onChange={e => set('coverInstructions', e.target.value)}
-                          rows={5} placeholder={'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.'}
+                          rows={6} placeholder={'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.'}
                           style={{ ...INPUT, resize: 'vertical', lineHeight: 1.7, fontFamily: 'inherit' }} />
                         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>
-                          One instruction per line. Each line appears as a bullet on the cover page.
+                          Edit freely — selecting a preset exam type above will auto-fill these with tailored instructions.
                         </div>
                       </div>
                     </>
