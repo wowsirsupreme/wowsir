@@ -206,3 +206,14 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr11-algorithms':      { title: 'Further Algorithms & Big-O',      subject: 'CS A-Level 9618', emoji: '🔀' },
   'gr11-databases':       { title: 'Databases & Normalisation',       subject: 'CS A-Level 9618', emoji: '🗄️' },
 };
+
+/** Returns topics grouped by their subject, preserving insertion order. */
+export function getGroupedTopics(): Array<{ subject: string; topics: Array<{ key: string; title: string; emoji: string }> }> {
+  const map = new Map<string, Array<{ key: string; title: string; emoji: string }>>();
+  for (const [key, t] of Object.entries(TOPIC_LABELS)) {
+    const group = map.get(t.subject) ?? [];
+    group.push({ key, title: t.title, emoji: t.emoji });
+    map.set(t.subject, group);
+  }
+  return Array.from(map.entries()).map(([subject, topics]) => ({ subject, topics }));
+}

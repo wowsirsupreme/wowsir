@@ -10,12 +10,12 @@ import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getQuestionsByTopic, getRandomQuestions } from '@/lib/firebase/questions';
 import { saveQuiz, getQuiz } from '@/lib/firebase/quizzes';
-import { TOPIC_LABELS } from '@/types/question';
+import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question } from '@/types/question';
 import type { Quiz } from '@/types/quiz';
 import { uid } from '@/lib/utils';
 
-const TOPICS = Object.entries(TOPIC_LABELS);
+const GROUPED_TOPICS = getGroupedTopics();
 
 /* ── same background as teacher/page.tsx ─────────────────────────── */
 const BG = [
@@ -218,16 +218,23 @@ function QuizBuilderInner() {
               <ChevronDown size={13} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, transform: topicOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
             {topicOpen && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 30, maxHeight: 260, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 13, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
-                {TOPICS.map(([key, t]) => (
-                  <button key={key} type="button" onClick={() => { setTopicKey(key); setTopicOpen(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 15px', textAlign: 'left', background: topicKey === key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}
-                    onMouseEnter={e => { if (topicKey !== key) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
-                    onMouseLeave={e => { if (topicKey !== key) (e.currentTarget as HTMLElement).style.background = 'none'; }}>
-                    <span style={{ fontSize: 15 }}>{t.emoji}</span>
-                    <span>{t.title}</span>
-                    {topicKey === key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
-                  </button>
+              <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 30, maxHeight: 300, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 13, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
+                {GROUPED_TOPICS.map(({ subject, topics }) => (
+                  <div key={subject}>
+                    <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(201,168,76,0.7)', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 2 }}>
+                      {subject}
+                    </div>
+                    {topics.map(t => (
+                      <button key={t.key} type="button" onClick={() => { setTopicKey(t.key); setTopicOpen(false); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px 8px 22px', textAlign: 'left', background: topicKey === t.key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === t.key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}
+                        onMouseEnter={e => { if (topicKey !== t.key) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
+                        onMouseLeave={e => { if (topicKey !== t.key) (e.currentTarget as HTMLElement).style.background = 'none'; }}>
+                        <span style={{ fontSize: 14 }}>{t.emoji}</span>
+                        <span>{t.title}</span>
+                        {topicKey === t.key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
             )}

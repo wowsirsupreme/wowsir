@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { useToast } from '@/components/ui/Toast';
 import { getQuestionsByTopic } from '@/lib/firebase/questions';
-import { TOPIC_LABELS } from '@/types/question';
+import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question as BankQuestion } from '@/types/question';
 
 /* ─── types ────────────────────────────────────────────────────────── */
@@ -406,7 +406,7 @@ function BankImportModal({ onClose, onImport }: {
     onClose();
   }
 
-  const topicList = Object.entries(TOPIC_LABELS);
+  const GROUPED = getGroupedTopics();
   const selectedLabel = topicKey ? TOPIC_LABELS[topicKey] : null;
 
   return (
@@ -420,18 +420,25 @@ function BankImportModal({ onClose, onImport }: {
           <button type="button" onClick={() => setTopicOpen(o => !o)}
             style={{ ...INPUT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
             <span style={{ color: selectedLabel ? '#f5f3ee' : 'rgba(255,255,255,0.3)' }}>
-              {selectedLabel ? `${selectedLabel.emoji} ${selectedLabel.title}` : '— Pick a topic —'}
+              {selectedLabel ? `${selectedLabel.emoji} ${selectedLabel.title}` : '— Pick a class & topic —'}
             </span>
             <ChevronDown size={13} color="rgba(255,255,255,0.3)" style={{ transform: topicOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
           {topicOpen && (
-            <div style={{ position: 'absolute', top: 'calc(100% - 4px)', left: 22, right: 22, zIndex: 10, maxHeight: 220, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
-              {topicList.map(([key, t]) => (
-                <button key={key} type="button" onClick={() => { setTopicKey(key); setTopicOpen(false); setSelected(new Set()); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 14px', background: topicKey === key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}>
-                  <span>{t.emoji}</span><span>{t.title}</span>
-                  {topicKey === key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
-                </button>
+            <div style={{ position: 'absolute', top: 'calc(100% - 4px)', left: 22, right: 22, zIndex: 10, maxHeight: 260, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
+              {GROUPED.map(({ subject, topics }) => (
+                <div key={subject}>
+                  <div style={{ padding: '8px 14px 3px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(201,168,76,0.7)', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 2 }}>
+                    {subject}
+                  </div>
+                  {topics.map(t => (
+                    <button key={t.key} type="button" onClick={() => { setTopicKey(t.key); setTopicOpen(false); setSelected(new Set()); }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px 8px 22px', background: topicKey === t.key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === t.key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}>
+                      <span>{t.emoji}</span><span>{t.title}</span>
+                      {topicKey === t.key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           )}
