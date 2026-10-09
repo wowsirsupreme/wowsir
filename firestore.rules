@@ -2,34 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Questions: teachers can write, everyone can read approved
-    match /questions/{qId} {
-      allow read: if resource.data.approvalStatus == 'approved';
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
-    }
-
-    // Quizzes: only owning teacher can read/write
-    match /quizzes/{qId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.teacherId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.teacherId;
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
-    }
-
-    // Users: read own, teachers can write own
+    // Users: read/write own profile only
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Results: teacher who owns session can read
+    // Questions: teachers can write; everyone can read approved ones
+    match /questions/{qId} {
+      allow read: if resource.data.approvalStatus == 'approved';
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
+    // Quizzes: only the owning teacher can read/write
+    // create uses request.resource (doc doesn't exist yet); update/delete use resource
+    match /quizzes/{qId} {
+      allow read:   if request.auth != null && request.auth.uid == resource.data.teacherId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.teacherId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
+    }
+
+    // Results: any authenticated user can read/write
     match /results/{resultId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
 
     // Preset quizzes: anyone can read active ones; teachers can write
     match /presetQuizzes/{pqId} {
       allow read: if resource.data.isActive == true;
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
 
     // Practice leaderboard: public read + create (no auth — students use display names)
