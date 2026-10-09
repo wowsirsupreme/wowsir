@@ -9,6 +9,9 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { getRandomQuestions } from '@/lib/firebase/questions';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
+import { audioEngine } from '@/lib/audioEngine';
+import MuteButton from '@/components/MuteButton';
+import MusicThemePicker from '@/components/MusicThemePicker';
 
 const BATTLE_COUNT = 10;
 const TIME_LIMIT   = 12;
@@ -83,6 +86,15 @@ export default function BattlePage() {
     phaseRef.current = 'countdown';
   }
 
+  /* ── music lifecycle ── */
+  useEffect(() => {
+    if (phase === 'playing') {
+      audioEngine.startMusic('battle');
+    } else if (phase === 'done' || phase === 'setup') {
+      audioEngine.stopMusic();
+    }
+  }, [phase]);
+
   /* ── countdown ── */
   useEffect(() => {
     if (phase !== 'countdown') return;
@@ -92,6 +104,7 @@ export default function BattlePage() {
       setQuestionStart(Date.now());
       return;
     }
+    audioEngine.tick();
     const t = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(t);
   }, [phase, countdown]);
@@ -104,6 +117,19 @@ export default function BattlePage() {
       phaseRef.current = 'reveal';
     }
   }, [p1Selected, p2Selected]);
+
+  /* ── result SFX ── */
+  useEffect(() => {
+    if (phase !== 'done') return;
+    const p1Won = p1.score > p2.score;
+    const p2Won = p2.score > p1.score;
+    setTimeout(() => {
+      if (p1Won) audioEngine.win();
+      else if (p2Won) audioEngine.lose();
+      else audioEngine.win(); // draw → mild fanfare
+    }, 300);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   /* ── AI answer ── */
   useEffect(() => {
@@ -139,11 +165,18 @@ export default function BattlePage() {
     const q        = questions[currentIdx];
     const isCorrect = index === parseInt(q.answer, 10);
     const earned   = calcScore(isCorrect, timeMs);
+    const newStreak = isCorrect ? (p1.streak + 1) : 0;
+    if (isCorrect) {
+      if (newStreak >= 3) audioEngine.streak();
+      else audioEngine.correct();
+    } else if (index !== -1) {
+      audioEngine.wrong();
+    }
     setP1(prev => ({
       ...prev,
       score:   prev.score + earned,
       correct: prev.correct + (isCorrect ? 1 : 0),
-      streak:  isCorrect ? prev.streak + 1 : 0,
+      streak:  newStreak,
     }));
     p1SelectedRef.current = index;
     setP1Selected(index);
@@ -180,6 +213,7 @@ export default function BattlePage() {
       className="battle-screen flex flex-col min-h-screen"
       style={{ overflowX: 'hidden' }}
     >
+      <MuteButton />
 
       {/* Nav */}
       <div
@@ -326,6 +360,11 @@ export default function BattlePage() {
               <TopicPicker value={topicKey} onChange={setTopicKey} />
             </div>
 
+            {/* Music theme */}
+            <div style={{ marginBottom: 24 }}>
+              <MusicThemePicker />
+            </div>
+
             <button
               className="btn-battle"
               onClick={handleStart}
@@ -468,6 +507,8 @@ export default function BattlePage() {
         const p1Won  = p1.score > p2.score;
         const p2Won  = p2.score > p1.score;
         const winner = p1Won ? p1 : p2Won ? p2 : null;
+        // Play result sound once when we land here
+        // (useEffect with phase dep already stopped music)
         return (
           <div
             style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}

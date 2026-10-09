@@ -11,6 +11,9 @@ import TopicPicker from '@/components/TopicPicker';
 import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
+import { audioEngine } from '@/lib/audioEngine';
+import MuteButton from '@/components/MuteButton';
+import MusicThemePicker from '@/components/MusicThemePicker';
 
 // Only show topics that have at least one local question
 const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
@@ -124,14 +127,18 @@ export default function HotSeatPage() {
     setPhase('reveal');
 
     if (isCorrect) {
+      const ns = streak + 1;
+      if (ns >= 3) audioEngine.streak();
+      else audioEngine.correct();
       setScore(s => s + earned);
       setCorrect(c => c + 1);
       setStreak(s => {
-        const ns = s + 1;
-        setMaxStreak(m => Math.max(m, ns));
-        return ns;
+        const ns2 = s + 1;
+        setMaxStreak(m => Math.max(m, ns2));
+        return ns2;
       });
     } else {
+      if (index !== -1) audioEngine.wrong();
       setStreak(0);
       const newLives = livesRef.current - 1;
       livesRef.current = newLives;
@@ -160,6 +167,14 @@ export default function HotSeatPage() {
     setQuestionStart(Date.now());
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (phase === 'playing') audioEngine.startMusic('chill');
+    if (phase === 'done' || phase === 'dead' || phase === 'setup') audioEngine.stopMusic();
+    if (phase === 'done') setTimeout(() => audioEngine.win(), 300);
+    if (phase === 'dead') setTimeout(() => audioEngine.lose(), 300);
+  }, [phase]);
+
   const currentQ = questions[currentIdx];
   const accuracy = results.length > 0 ? correct / results.length : 0;
   const currentTimeLimit = timeForIdx(currentIdx);
@@ -173,6 +188,7 @@ export default function HotSeatPage() {
 
   return (
     <div className="hotseat-screen flex flex-col min-h-screen">
+      <MuteButton />
 
       {/* Nav */}
       <div
@@ -236,6 +252,10 @@ export default function HotSeatPage() {
                 ⚠️ Firebase not connected — using local questions only
               </p>
             )}
+
+            <div className="mb-5">
+              <MusicThemePicker />
+            </div>
 
             {error && (
               <p className="text-sm text-red-400 text-center -mt-2 mb-1">{error}</p>
