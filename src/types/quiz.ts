@@ -14,6 +14,7 @@ export interface Quiz {
   title: string;
   teacherId: string;
   topicKey?: string;
+  topicKeys?: string[];   // multi-topic quizzes
   questionIds: string[];
   questions?: Question[];  // denormalized for live sessions
   createdAt: number;

@@ -6,14 +6,15 @@ import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getRandomQuestions } from '@/lib/firebase/questions';
-import { TOPIC_LABELS } from '@/types/question';
+import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 
 // Only show topics that have at least one local question
 const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
-const TOPIC_KEYS = Object.keys(TOPIC_LABELS).filter(k => LOCAL_TOPIC_KEYS.has(k));
+const VALID_KEYS = new Set(getGroupedTopics().flatMap(g => g.topics.map(t => t.key)));
+const TOPIC_KEYS = Object.keys(TOPIC_LABELS).filter(k => LOCAL_TOPIC_KEYS.has(k) && VALID_KEYS.has(k));
 const HOT_SEAT_COUNT = 10;
 const MAX_LIVES = 3;
 

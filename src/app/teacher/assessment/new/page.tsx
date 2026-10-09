@@ -12,8 +12,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { useToast } from '@/components/ui/Toast';
 import { getQuestionsByTopic } from '@/lib/firebase/questions';
-import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
+import { TOPIC_LABELS } from '@/types/question';
 import type { Question as BankQuestion } from '@/types/question';
+import TopicPicker from '@/components/TopicPicker';
 
 /* ─── types ────────────────────────────────────────────────────────── */
 type QType = 'mcq' | 'short' | 'true_false' | 'essay' | 'fill_blank' | 'table' | 'label' | 'code_block' | 'draw_box';
@@ -1364,8 +1365,6 @@ function BankImportModal({ onClose, onImport }: {
   const [bankQs, setBankQs] = useState<BankQuestion[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const [topicOpen, setTopicOpen] = useState(false);
-  const GROUPED = getGroupedTopics();
 
   useEffect(() => {
     if (!topicKey) return;
@@ -1395,8 +1394,6 @@ function BankImportModal({ onClose, onImport }: {
     onClose();
   }
 
-  const selectedLabel = topicKey ? TOPIC_LABELS[topicKey] : null;
-
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#0f0f1e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
@@ -1404,32 +1401,12 @@ function BankImportModal({ onClose, onImport }: {
           <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>Import from Question Bank</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 20, lineHeight: 1 }}>×</button>
         </div>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
-          <button type="button" onClick={() => setTopicOpen(o => !o)}
-            style={{ ...INPUT, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-            <span style={{ color: selectedLabel ? '#f5f3ee' : 'rgba(255,255,255,0.3)' }}>
-              {selectedLabel ? `${selectedLabel.emoji} ${selectedLabel.title}` : '— Pick a class & topic —'}
-            </span>
-            <ChevronDown size={13} color="rgba(255,255,255,0.3)" style={{ transform: topicOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-          </button>
-          {topicOpen && (
-            <div style={{ position: 'absolute', top: 'calc(100% - 4px)', left: 20, right: 20, zIndex: 10, maxHeight: 260, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
-              {GROUPED.map(({ subject, topics }) => (
-                <div key={subject}>
-                  <div style={{ padding: '7px 13px 3px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(201,168,76,0.7)', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 2 }}>
-                    {subject}
-                  </div>
-                  {topics.map(t => (
-                    <button key={t.key} type="button" onClick={() => { setTopicKey(t.key); setTopicOpen(false); setSelected(new Set()); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 13px 8px 20px', background: topicKey === t.key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === t.key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}>
-                      <span>{t.emoji}</span><span>{t.title}</span>
-                      {topicKey === t.key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <TopicPicker
+            value={topicKey}
+            onChange={key => { setTopicKey(key); setSelected(new Set()); }}
+            inputStyle={INPUT}
+          />
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
           {loading && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>Loading…</p>}

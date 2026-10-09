@@ -207,7 +207,12 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr11-databases':       { title: 'Databases & Normalisation',       subject: 'CS A-Level 9618', emoji: '🗄️' },
 };
 
-const LEGACY_SUBJECTS = new Set(['Scratch', 'Word', 'HTML', 'CSS', 'Small Basic', 'Presentations', 'Excel']);
+const LEGACY_SUBJECTS = new Set([
+  'Scratch', 'Word', 'HTML', 'CSS', 'Small Basic', 'Presentations', 'Excel',
+  'Grade 7 CS',          // old legacy CS keys (gr7-ch1-intro etc.)
+  'Grade 4 Computing', 'Grade 5 Computing', 'Grade 6 Computing',
+  'Grade 7 Computing', 'Grade 8 Computing',
+]);
 
 /** Returns topics grouped by their subject, preserving insertion order.
  *  Excludes old standalone/legacy subjects (Scratch, Word, HTML, etc.). */

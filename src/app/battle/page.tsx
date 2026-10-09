@@ -7,11 +7,11 @@ import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getRandomQuestions } from '@/lib/firebase/questions';
-import { TOPIC_LABELS } from '@/types/question';
+import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question } from '@/types/question';
 import { calcTimeBonus, shuffle } from '@/lib/utils';
 
-const TOPIC_KEYS = Object.keys(TOPIC_LABELS);
+const TOPIC_KEYS = getGroupedTopics().flatMap(g => g.topics.map(t => t.key));
 const BATTLE_COUNT = 10;
 const TIME_LIMIT = 12;
 

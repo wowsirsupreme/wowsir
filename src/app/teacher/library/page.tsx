@@ -8,6 +8,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
+import TopicPicker from '@/components/TopicPicker';
 import type { Question } from '@/types/question';
 
 const BG = [
@@ -16,7 +17,6 @@ const BG = [
   '#050814',
 ].join(',');
 
-const TOPICS = Object.entries(TOPIC_LABELS);
 
 export default function QuestionBankPage() {
   const router = useRouter();
@@ -162,25 +162,16 @@ export default function QuestionBankPage() {
           <>
             {/* Topic selector + search */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: '1 1 200px' }}>
-                <Filter size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                <select
+              <div style={{ flex: '1 1 200px' }}>
+                <TopicPicker
                   value={selectedTopic}
-                  onChange={e => setSelectedTopic(e.target.value)}
-                  style={{
-                    width: '100%', paddingLeft: 36, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
+                  onChange={setSelectedTopic}
+                  inputStyle={{
+                    width: '100%', paddingLeft: 14, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
                     borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.12)',
-                    background: 'rgba(255,255,255,0.06)', color: selectedTopic ? '#fff' : 'rgba(255,255,255,0.4)',
-                    fontSize: 14, cursor: 'pointer', appearance: 'none',
+                    background: 'rgba(255,255,255,0.06)', fontSize: 14,
                   }}
-                >
-                  <option value="">Select a topic…</option>
-                  {TOPICS.map(([key, label]) => (
-                    <option key={key} value={key} style={{ background: '#1a1a2e', color: '#fff' }}>
-                      {label.emoji} {label.title}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               {selectedTopic && (
                 <div style={{ position: 'relative', flex: '1 1 200px' }}>

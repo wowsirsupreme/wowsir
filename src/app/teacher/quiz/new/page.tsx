@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   GraduationCap, ChevronLeft, Shuffle, Shield, Trophy, Rocket,
-  Settings2, Hash, Clock4, Check, ChevronDown,
+  Settings2, Hash, Clock4, Check,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,8 +14,8 @@ import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question } from '@/types/question';
 import type { Quiz } from '@/types/quiz';
 import { uid } from '@/lib/utils';
-
-const GROUPED_TOPICS = getGroupedTopics();
+import TopicPicker from '@/components/TopicPicker';
+import { Printer, Plus, X as XIcon } from 'lucide-react';
 
 /* ── same background as teacher/page.tsx ─────────────────────────── */
 const BG = [
@@ -79,7 +79,7 @@ function QuizBuilderInner() {
   const { user, ready, loading } = useAuth();
 
   const [title, setTitle]             = useState('');
-  const [topicKey, setTopicKey]       = useState('');
+  const [topicKeys, setTopicKeys]     = useState<string[]>(['']);   // multi-topic
   const [timeLimit, setTimeLimit]     = useState(20);
   const [pointsPerQ, setPointsPerQ]   = useState(100);
   const [shuffleQ, setShuffleQ]       = useState(true);
@@ -90,20 +90,38 @@ function QuizBuilderInner() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingQ, setLoadingQ]       = useState(false);
   const [saving, setSaving]           = useState(false);
-  const [topicOpen, setTopicOpen]     = useState(false);
 
+  const activeTopicKeys = topicKeys.filter(Boolean);
+
+  // Re-fetch whenever topicKeys changes
   useEffect(() => {
-    if (!topicKey) return;
+    if (activeTopicKeys.length === 0) { setQuestions([]); return; }
     setLoadingQ(true);
-    getQuestionsByTopic(topicKey).then(qs => { setQuestions(qs); setLoadingQ(false); });
-  }, [topicKey]);
+    Promise.all(activeTopicKeys.map(k => getQuestionsByTopic(k)))
+      .then(results => {
+        const seen = new Set<string>();
+        const merged: Question[] = [];
+        for (const qs of results) for (const q of qs) if (!seen.has(q.id)) { seen.add(q.id); merged.push(q); }
+        setQuestions(merged);
+      })
+      .finally(() => setLoadingQ(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTopicKeys.join(',')]);
+
+  function addTopic()  { setTopicKeys(prev => [...prev, '']); }
+  function removeTopic(i: number) {
+    setTopicKeys(prev => { const n = [...prev]; n.splice(i, 1); return n.length ? n : ['']; });
+  }
+  function setTopic(i: number, key: string) {
+    setTopicKeys(prev => { const n = [...prev]; n[i] = key; return n; });
+  }
 
   useEffect(() => {
     if (!editId) return;
     getQuiz(editId).then(q => {
       if (!q) return;
       setTitle(q.title);
-      setTopicKey(q.topicKey || '');
+      setTopicKeys(q.topicKeys?.length ? q.topicKeys : q.topicKey ? [q.topicKey] : ['']);
       setTimeLimit(q.settings?.timeLimit || 20);
       setPointsPerQ(q.settings?.pointsPerQ || 100);
       setShuffleQ(q.settings?.shuffleQuestions ?? true);
@@ -119,9 +137,54 @@ function QuizBuilderInner() {
   }
 
   async function pickRandom(n: number) {
-    if (!topicKey) return;
-    const qs = await getRandomQuestions(topicKey, n);
-    setSelectedIds(new Set(qs.map(q => q.id)));
+    if (activeTopicKeys.length === 0) return;
+    // spread evenly across topics
+    const perTopic = Math.ceil(n / activeTopicKeys.length);
+    const results = await Promise.all(activeTopicKeys.map(k => getRandomQuestions(k, perTopic)));
+    const ids = results.flat().slice(0, n).map(q => q.id);
+    setSelectedIds(new Set(ids));
+  }
+
+  function handlePrint() {
+    const selected = questions.filter(q => selectedIds.has(q.id));
+    if (selected.length === 0) { toast('Select questions first', 'error'); return; }
+    const OPTS = ['A', 'B', 'C', 'D'];
+    const qHtml = selected.map((q, i) => {
+      const opts = (q.options ?? [])
+        .map((o, j) => `<div class="opt"><span class="letter">${OPTS[j] ?? String.fromCharCode(65 + j)}</span>${o}</div>`)
+        .join('');
+      return `<div class="question"><div class="qnum">Q${i + 1}</div><div class="qbody"><p class="qtext">${q.text}</p>${opts}</div></div>`;
+    }).join('');
+    const topicLabel = activeTopicKeys.map(k => TOPIC_LABELS[k]?.title ?? k).join(', ');
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title || 'Quiz'}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,serif;font-size:13pt;color:#000;padding:30px 40px;max-width:800px;margin:0 auto}
+  h1{font-size:18pt;margin-bottom:4px}
+  .meta{font-size:10pt;color:#555;margin-bottom:22px;border-bottom:1px solid #ccc;padding-bottom:10px}
+  .question{margin-bottom:22px;page-break-inside:avoid}
+  .qnum{font-weight:bold;font-size:10pt;color:#555;margin-bottom:4px}
+  .qtext{margin-bottom:8px;line-height:1.5}
+  .opt{display:flex;gap:10px;margin-bottom:4px;padding:4px 8px;border:1px solid #ddd;border-radius:4px}
+  .letter{font-weight:bold;min-width:18px}
+  .answer-key{margin-top:30px;border-top:2px solid #000;padding-top:14px;page-break-before:auto}
+  .answer-key h2{font-size:13pt;margin-bottom:10px}
+  .answers{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:11pt}
+  @media print{body{padding:15px 20px}.answer-key{page-break-before:always}}
+</style></head><body>
+<h1>${title || 'Quiz'}</h1>
+<div class="meta">Topic: ${topicLabel} &nbsp;|&nbsp; ${selected.length} questions &nbsp;|&nbsp; Name: _____________________________ &nbsp; Date: __________</div>
+${qHtml}
+<div class="answer-key">
+  <h2>Answer Key</h2>
+  <div class="answers">${selected.map((q, i) => { const ans = parseInt(q.answer ?? '0', 10); return `<span>Q${i + 1}: ${OPTS[isNaN(ans) ? 0 : ans] ?? q.answer}</span>`; }).join('')}</div>
+</div>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) { toast('Allow pop-ups to print', 'error'); return; }
+    w.document.write(html);
+    w.document.close();
+    w.onload = () => w.print();
   }
 
   async function handleSave(status: 'draft' | 'published') {
@@ -134,7 +197,8 @@ function QuizBuilderInner() {
         id: editId || uid(),
         title: title.trim(),
         teacherId: user.uid,
-        topicKey,
+        topicKey: activeTopicKeys[0] || '',
+        topicKeys: activeTopicKeys,
         questionIds: Array.from(selectedIds),
         questions: questions.filter(q => selectedIds.has(q.id)),
         status,
@@ -160,8 +224,6 @@ function QuizBuilderInner() {
     );
   }
   if (!ready || !user) { router.replace('/teacher'); return null; }
-
-  const selectedLabel = topicKey ? TOPIC_LABELS[topicKey] : null;
 
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee', fontFamily: 'var(--font-body)' }}>
@@ -208,36 +270,25 @@ function QuizBuilderInner() {
             onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
           />
           <div style={{ height: 14 }} />
-          <Label>TOPIC</Label>
-          <div style={{ position: 'relative' }}>
-            <button type="button" onClick={() => setTopicOpen(o => !o)}
-              style={{ ...INPUT_STYLE, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderColor: topicOpen ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.1)', textAlign: 'left' }}>
-              <span style={{ color: selectedLabel ? '#f5f3ee' : 'rgba(255,255,255,0.25)' }}>
-                {selectedLabel ? `${selectedLabel.emoji} ${selectedLabel.title}` : '— Choose a topic —'}
-              </span>
-              <ChevronDown size={13} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, transform: topicOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            {topicOpen && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 30, maxHeight: 300, overflowY: 'auto', background: 'rgba(12,11,28,0.98)', backdropFilter: 'blur(16px)', border: '1.5px solid rgba(201,168,76,0.18)', borderRadius: 13, boxShadow: '0 12px 40px rgba(0,0,0,0.6)' }}>
-                {GROUPED_TOPICS.map(({ subject, topics }) => (
-                  <div key={subject}>
-                    <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(201,168,76,0.7)', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 2 }}>
-                      {subject}
-                    </div>
-                    {topics.map(t => (
-                      <button key={t.key} type="button" onClick={() => { setTopicKey(t.key); setTopicOpen(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px 8px 22px', textAlign: 'left', background: topicKey === t.key ? 'rgba(201,168,76,0.12)' : 'none', border: 'none', cursor: 'pointer', color: topicKey === t.key ? '#c9a84c' : 'rgba(255,255,255,0.65)', fontSize: 13 }}
-                        onMouseEnter={e => { if (topicKey !== t.key) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; }}
-                        onMouseLeave={e => { if (topicKey !== t.key) (e.currentTarget as HTMLElement).style.background = 'none'; }}>
-                        <span style={{ fontSize: 14 }}>{t.emoji}</span>
-                        <span>{t.title}</span>
-                        {topicKey === t.key && <Check size={11} color="#c9a84c" style={{ marginLeft: 'auto' }} />}
-                      </button>
-                    ))}
-                  </div>
-                ))}
+          <Label>TOPIC(S) — mix chapters for a combined quiz</Label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {topicKeys.map((key, i) => (
+              <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <TopicPicker value={key} onChange={k => setTopic(i, k)} inputStyle={INPUT_STYLE} />
+                </div>
+                {topicKeys.length > 1 && (
+                  <button type="button" onClick={() => removeTopic(i)}
+                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, background: 'rgba(255,80,80,0.1)', border: '1px solid rgba(255,80,80,0.2)', color: 'rgba(255,100,100,0.7)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <XIcon size={13} />
+                  </button>
+                )}
               </div>
-            )}
+            ))}
+            <button type="button" onClick={addTopic}
+              style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 9, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.7)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              <Plus size={12} /> Add another chapter
+            </button>
           </div>
         </div>
 
@@ -278,7 +329,7 @@ function QuizBuilderInner() {
         </div>
 
         {/* Question picker */}
-        {topicKey && (
+        {activeTopicKeys.length > 0 && (
           <div style={CARD}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -339,6 +390,10 @@ function QuizBuilderInner() {
           <button onClick={() => handleSave('draft')} disabled={saving}
             style={{ flexShrink: 0, padding: '13px 22px', borderRadius: 13, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
             Save draft
+          </button>
+          <button onClick={handlePrint} disabled={selectedIds.size === 0}
+            style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '13px 18px', borderRadius: 13, fontSize: 14, fontWeight: 600, background: 'rgba(99,102,241,0.12)', border: '1.5px solid rgba(99,102,241,0.3)', color: selectedIds.size === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(160,163,255,0.9)', cursor: selectedIds.size === 0 ? 'default' : 'pointer', transition: 'all 0.2s' }}>
+            <Printer size={14} /> Print / PDF
           </button>
           <button onClick={() => handleSave('published')} disabled={saving}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 22px', borderRadius: 13, fontSize: 14, fontWeight: 700, background: saving ? 'rgba(201,168,76,0.4)' : 'linear-gradient(135deg,#b8942a,#d4aa45,#c9a84c)', border: 'none', color: '#1a1200', cursor: saving ? 'default' : 'pointer', boxShadow: saving ? 'none' : '0 4px 20px rgba(201,168,76,0.3)', transition: 'all 0.2s' }}>
