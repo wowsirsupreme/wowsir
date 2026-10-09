@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, FileText, ChevronLeft } from 'lucide-react';
+import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, FileText, ChevronLeft, ShieldCheck, Clock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { loginTeacher, registerTeacher, logoutTeacher } from '@/lib/firebase/auth';
 import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
+import FeedbackPrompt from '@/components/FeedbackPrompt';
 import type { Quiz } from '@/types/quiz';
 
 type AuthMode = 'login' | 'register';
@@ -32,6 +33,8 @@ export default function TeacherPage() {
   const [pw, setPw]       = useState('');
   const [name, setName]   = useState('');
   const [school, setSchool] = useState('');
+  const [city, setCity]   = useState('');
+  const [country, setCountry] = useState('');
   const [busy, setBusy]   = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function TeacherPage() {
   const [hoveredQuiz, setHoveredQuiz] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && user && profile) {
+    if (ready && user && profile && profile.status === 'approved') {
       setQuizzesLoading(true);
       getTeacherQuizzes(user.uid).then(q => { setQuizzes(q); setQuizzesLoading(false); });
     }
@@ -54,8 +57,8 @@ export default function TeacherPage() {
         toast('Welcome back!', 'success');
       } else {
         if (!name) { toast('Enter your name', 'error'); setBusy(false); return; }
-        await registerTeacher(email, pw, name, school);
-        toast('Account created!', 'success');
+        await registerTeacher(email, pw, name, school, city, country);
+        toast('Account created! Your account is under review.', 'success');
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Authentication failed';
@@ -79,11 +82,7 @@ export default function TeacherPage() {
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, marginBottom: 28 }}>
             Ask your admin for the access link, or configure Firebase from the admin panel.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="btn-glass"
-            style={{ fontSize: 15 }}
-          >
+          <button onClick={() => router.push('/')} className="btn-glass" style={{ fontSize: 15 }}>
             ← Go Back
           </button>
         </div>
@@ -97,6 +96,75 @@ export default function TeacherPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
         <div style={{ animation: 'float 2s ease-in-out infinite', filter: 'drop-shadow(0 0 16px rgba(56,189,248,0.4))' }}>
           <GraduationCap size={48} color="#7dd3fc" strokeWidth={1.5} />
+        </div>
+      </div>
+    );
+  }
+
+  /* ── PENDING APPROVAL SCREEN ── */
+  if (user && profile && profile.status === 'pending') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: BG }}>
+        <div className="text-center max-w-sm animate-slideUp">
+          <div
+            style={{
+              width: 88, height: 88, borderRadius: 24, marginBottom: 24, marginLeft: 'auto', marginRight: 'auto',
+              background: 'rgba(201,168,76,0.1)', border: '1.5px solid rgba(201,168,76,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              filter: 'drop-shadow(0 0 20px rgba(201,168,76,0.35))',
+              animation: 'float 3s ease-in-out infinite',
+            }}
+          >
+            <Clock size={40} color="#c9a84c" strokeWidth={1.5} />
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: '#fff', marginBottom: 12 }}>
+            Account under review
+          </h2>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, marginBottom: 8 }}>
+            Welcome, {profile.name.split(' ')[0]}. Your account is awaiting approval from an admin.
+          </p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', marginBottom: 32 }}>
+            You'll be able to access the dashboard once approved.
+          </p>
+          <button
+            onClick={async () => { await logoutTeacher(); }}
+            className="btn-glass"
+            style={{ fontSize: 14, padding: '10px 24px' }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── SUSPENDED SCREEN ── */
+  if (user && profile && profile.status === 'suspended') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: BG }}>
+        <div className="text-center max-w-sm animate-slideUp">
+          <div
+            style={{
+              width: 88, height: 88, borderRadius: 24, marginBottom: 24, marginLeft: 'auto', marginRight: 'auto',
+              background: 'rgba(239,68,68,0.1)', border: '1.5px solid rgba(239,68,68,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <ShieldCheck size={40} color="#f87171" strokeWidth={1.5} />
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: '#fff', marginBottom: 12 }}>
+            Account suspended
+          </h2>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', lineHeight: 1.75, marginBottom: 32 }}>
+            Contact your administrator if you think this is a mistake.
+          </p>
+          <button
+            onClick={async () => { await logoutTeacher(); }}
+            className="btn-glass"
+            style={{ fontSize: 14, padding: '10px 24px' }}
+          >
+            Sign out
+          </button>
         </div>
       </div>
     );
@@ -151,6 +219,9 @@ export default function TeacherPage() {
     return (
       <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
 
+        {/* Feedback prompt — visits 1 and 2 only */}
+        <FeedbackPrompt uid={user.uid} profile={profile} />
+
         {/* ── sticky nav bar ── */}
         <div
           style={{
@@ -161,7 +232,6 @@ export default function TeacherPage() {
             borderBottom: '1px solid rgba(255,255,255,0.07)',
           }}
         >
-          {/* Nav inner — same max-width as page content */}
           <div
             style={{
               maxWidth: 720, margin: '0 auto',
@@ -192,13 +262,33 @@ export default function TeacherPage() {
                 {firstName}
               </span>
             </div>
-            <button
-              onClick={async () => { await logoutTeacher(); }}
-              className="btn-glass"
-              style={{ fontSize: 13, padding: '7px 14px', minHeight: 36, borderRadius: 9 }}
-            >
-              Sign out
-            </button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {profile.role === 'admin' && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  style={{
+                    fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
+                    padding: '6px 12px', borderRadius: 8, minHeight: 32,
+                    background: 'rgba(139,92,246,0.15)',
+                    color: '#c4b5fd',
+                    border: '1px solid rgba(139,92,246,0.35)',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(139,92,246,0.25)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(139,92,246,0.15)')}
+                >
+                  Admin
+                </button>
+              )}
+              <button
+                onClick={async () => { await logoutTeacher(); }}
+                className="btn-glass"
+                style={{ fontSize: 13, padding: '7px 14px', minHeight: 36, borderRadius: 9 }}
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
 
@@ -472,7 +562,7 @@ export default function TeacherPage() {
           {mode === 'login' ? 'Sign in to your teacher account' : 'Register as a teacher'}
         </p>
 
-        {/* Fields */}
+        {/* Register-only fields */}
         {mode === 'register' && (
           <>
             <label style={{ display: 'block', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', marginBottom: 7 }}>
@@ -493,6 +583,30 @@ export default function TeacherPage() {
               value={school}
               onChange={e => setSchool(e.target.value)}
             />
+            <div style={{ display: 'flex', gap: 12, marginBottom: 0 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', marginBottom: 7 }}>
+                  CITY
+                </label>
+                <input
+                  className="dark-input"
+                  placeholder="Accra"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', marginBottom: 7 }}>
+                  COUNTRY
+                </label>
+                <input
+                  className="dark-input"
+                  placeholder="Ghana"
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                />
+              </div>
+            </div>
           </>
         )}
 
