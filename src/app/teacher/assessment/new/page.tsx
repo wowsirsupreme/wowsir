@@ -96,6 +96,8 @@ interface AssessmentDraft {
   sections: PaperSection[];
   headerFont: string;
   bodyFont: string;
+  headerFontSize: number;   // pt, for section/title headings
+  bodyFontSize: number;     // pt, for question body text
   borderStyle: 'none' | 'single' | 'double' | 'thick';
   showPageNumbers: boolean;
   footerText: string;
@@ -228,7 +230,7 @@ function RubricPreview({ items }: { items: RubricItem[] }) {
 }
 
 /* ─── single question preview ────────────────────────────────────────── */
-function QuestionPreview({ q, qNum, bodyFont, headerFont }: { q: PaperQuestion; qNum: number; bodyFont: string; headerFont: string }) {
+function QuestionPreview({ q, qNum, bodyFont, headerFont, bodyFontSize }: { q: PaperQuestion; qNum: number; bodyFont: string; headerFont: string; bodyFontSize: number }) {
   const qMarks = q.marks + q.subParts.reduce((a, sp) => a + sp.marks, 0);
   const hasRightImage = q.imageUrl && q.imagePosition === 'right';
 
@@ -329,7 +331,7 @@ function QuestionPreview({ q, qNum, bodyFont, headerFont }: { q: PaperQuestion; 
   );
 
   return (
-    <div style={{ marginBottom: 14, fontSize: 12, lineHeight: 1.7 }}>
+    <div style={{ marginBottom: 14, fontSize: bodyFontSize, lineHeight: 1.7 }}>
       {hasRightImage ? (
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
@@ -539,7 +541,7 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
       qCounter++;
       const qNum = qCounter;
       return (
-        <QuestionPreview key={q.id} q={q} qNum={qNum} bodyFont={draft.bodyFont} headerFont={draft.headerFont} />
+        <QuestionPreview key={q.id} q={q} qNum={qNum} bodyFont={draft.bodyFont} headerFont={draft.headerFont} bodyFontSize={draft.bodyFontSize} />
       );
     });
   }
@@ -551,6 +553,7 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
       <div style={{
         width: '100%', background: '#fff', color: '#111',
         fontFamily: draft.bodyFont || 'Times New Roman, serif',
+        fontSize: draft.bodyFontSize || 11,
         padding: '28px 32px',
         border: borderMap[draft.borderStyle] || 'none',
         boxShadow: '0 4px 32px rgba(0,0,0,0.35)',
@@ -626,19 +629,19 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
               <div key={sec.id} style={{ marginBottom: 18 }}>
                 {/* Section heading */}
                 {sec.title && (
-                  <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, marginBottom: 4, fontFamily: draft.headerFont }}>
+                  <div style={{ textAlign: 'center', fontWeight: 700, fontSize: draft.headerFontSize + 2, marginBottom: 4, fontFamily: draft.headerFont }}>
                     {sec.title}{secMarks > 0 ? ` [${secMarks} Marks]` : ''}
                   </div>
                 )}
                 {sec.instruction && (
-                  <div style={{ fontSize: 11, textAlign: 'center', marginBottom: 6, textDecoration: 'underline' }}>
+                  <div style={{ fontSize: draft.bodyFontSize, textAlign: 'center', marginBottom: 6, textDecoration: 'underline' }}>
                     {sec.instruction}
                   </div>
                 )}
 
                 {/* Word bank */}
                 {sec.wordBank.length > 0 && (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10, fontSize: 11 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10, fontSize: draft.bodyFontSize }}>
                     <tbody>
                       <tr>
                         {sec.wordBank.map((w, wi) => (
@@ -654,14 +657,14 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
                   sec.parts.map((part) => (
                     <div key={part.id} style={{ marginBottom: 14 }}>
                       <div style={{
-                        fontWeight: 700, fontSize: 12, marginBottom: part.instruction ? 2 : 6,
+                        fontWeight: 700, fontSize: draft.headerFontSize, marginBottom: part.instruction ? 2 : 6,
                         fontStyle: part.style === 'italic-underline' ? 'italic' : 'normal',
                         textDecoration: part.style === 'italic-underline' ? 'underline' : 'none',
                       }}>
                         {part.title}
                       </div>
                       {part.instruction && (
-                        <div style={{ fontSize: 11, fontStyle: 'italic', marginBottom: 6, color: '#444' }}>
+                        <div style={{ fontSize: draft.bodyFontSize, fontStyle: 'italic', marginBottom: 6, color: '#444' }}>
                           {part.instruction}
                         </div>
                       )}
@@ -1475,6 +1478,8 @@ export default function AssessmentBuilderPage() {
     sections: [newSection('Section A')],
     headerFont: 'Times New Roman, serif',
     bodyFont: 'Times New Roman, serif',
+    headerFontSize: 13,
+    bodyFontSize: 11,
     borderStyle: 'single',
     showPageNumbers: false,
     footerText: '',
@@ -1894,6 +1899,27 @@ export default function AssessmentBuilderPage() {
                     </select>
                     <div style={{ marginTop: 5, fontSize: 13, fontFamily: draft.bodyFont, color: 'rgba(255,255,255,0.35)', padding: '5px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 7 }}>
                       1. The CPU stands for Central ___ Unit.
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <FieldLabel>HEADER SIZE (pt)</FieldLabel>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="range" min={9} max={20} value={draft.headerFontSize}
+                          onChange={e => set('headerFontSize', Number(e.target.value))}
+                          style={{ flex: 1, accentColor: '#c9a84c' }} />
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', minWidth: 24, textAlign: 'right' }}>{draft.headerFontSize}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <FieldLabel>BODY SIZE (pt)</FieldLabel>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input type="range" min={7} max={16} value={draft.bodyFontSize}
+                          onChange={e => set('bodyFontSize', Number(e.target.value))}
+                          style={{ flex: 1, accentColor: '#c9a84c' }} />
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', minWidth: 24, textAlign: 'right' }}>{draft.bodyFontSize}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
