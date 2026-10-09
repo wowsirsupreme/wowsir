@@ -6,7 +6,7 @@ import {
   ChevronLeft, Plus, Trash2, Image as ImageIcon, Upload,
   FileText, Settings2, Type, Layout, Eye, Save, Send,
   GripVertical, Check, ChevronDown, AlignLeft, BookOpen,
-  Table2, Pencil, Layers,
+  Table2, Pencil, Layers, Code, Square,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -16,54 +16,74 @@ import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question as BankQuestion } from '@/types/question';
 
 /* ─── types ────────────────────────────────────────────────────────── */
-type QType = 'mcq' | 'short' | 'true_false' | 'essay' | 'fill_blank' | 'table' | 'label';
+type QType = 'mcq' | 'short' | 'true_false' | 'essay' | 'fill_blank' | 'table' | 'label' | 'code_block' | 'draw_box';
 
 interface SubPart {
   id: string;
-  label: string;   // 'a', 'b', 'c' …
+  label: string;
   text: string;
   marks: number;
   answerLines: number;
 }
 
-interface TableCell { value: string; readOnly: boolean; }
+interface RubricItem {
+  id: string;
+  text: string;
+  marks: number;
+}
 
 interface PaperQuestion {
   id: string;
   type: QType;
   text: string;
-  options: string[];         // MCQ options
-  answer: string;            // correct answer (teacher copy only)
+  options: string[];
+  answer: string;
   marks: number;
   imageUrl?: string;
-  answerLines: number;       // dotted lines for short/essay/label
-  subParts: SubPart[];       // a, b, c sub-questions
-  // fill_blank: blanks are marked as ___ in text
-  // table type
+  imageCaption: string;
+  imagePosition: 'above' | 'right';
+  answerLines: number;
+  subParts: SubPart[];
   tableHeaders: string[];
-  tableRows: string[][];     // pre-filled content per cell (empty = student fills)
+  tableRows: string[][];
   tableCols: number;
   tableRowCount: number;
+  // code_block
+  codeText: string;
+  codeLanguage: string;
+  // draw_box
+  boxHeight: number;
+  // rubric
+  rubric: RubricItem[];
+}
+
+interface PaperPart {
+  id: string;
+  title: string;
+  instruction: string;
+  style: 'normal' | 'italic-underline';
+  questions: PaperQuestion[];
 }
 
 interface PaperSection {
   id: string;
-  title: string;       // e.g. "Section A"
-  marks: number;       // marks for this section
-  instruction: string; // e.g. "Answer all questions"
-  wordBank: string[];  // word bank options shown at top of section
+  title: string;
+  marks: number;
+  instruction: string;
+  wordBank: string[];
   questions: PaperQuestion[];
+  parts: PaperPart[];
 }
 
 interface AssessmentDraft {
   id: string;
   schoolName: string;
   subject: string;
-  term: string;         // "Term 1", "Term 2" etc.
-  assessmentType: string; // "CA1", "End of Term", "Mock" etc.
+  term: string;
+  assessmentType: string;
   title: string;
   className: string;
-  grade: string;        // "5", "9", "10" etc.
+  grade: string;
   date: string;
   duration: string;
   examiner: string;
@@ -80,6 +100,14 @@ interface AssessmentDraft {
   showPageNumbers: boolean;
   footerText: string;
   status: 'draft' | 'published';
+  // cover page
+  showCoverPage: boolean;
+  examType: string;
+  practicalMarks: number;
+  theoryMarks: number;
+  rollNumber: string;
+  invigilatorField: boolean;
+  coverInstructions: string;
 }
 
 /* ─── helpers ──────────────────────────────────────────────────────── */
@@ -91,11 +119,19 @@ function newQuestion(): PaperQuestion {
     answer: '', marks: 1, answerLines: 2, subParts: [],
     tableHeaders: ['Column 1', 'Column 2'], tableRows: [['', ''], ['', '']],
     tableCols: 2, tableRowCount: 2,
+    imageCaption: '', imagePosition: 'above',
+    codeText: '', codeLanguage: 'Python',
+    boxHeight: 60,
+    rubric: [],
   };
 }
 
+function newPart(): PaperPart {
+  return { id: uid(), title: 'Part 1', instruction: '', style: 'normal', questions: [] };
+}
+
 function newSection(label: string): PaperSection {
-  return { id: uid(), title: label, marks: 0, instruction: 'Answer all questions.', wordBank: [], questions: [] };
+  return { id: uid(), title: label, marks: 0, instruction: 'Answer all questions.', wordBank: [], questions: [], parts: [] };
 }
 
 const FONTS = [
@@ -115,6 +151,7 @@ const BORDER_STYLES = [
 
 const TERMS = ['Term 1', 'Term 2', 'Term 3'];
 const ASSESSMENT_TYPES = ['CA1', 'CA2', 'CA3', 'Mid-Term Exam', 'End of Term Exam', 'Mock Exam', 'Test', 'Quiz', 'Assignment'];
+const EXAM_TYPES = ['Theory Exam', 'Practical Exam', 'CA', 'Mid-Term Exam', 'End of Term Exam', 'Mock Exam'];
 
 const BG = [
   'radial-gradient(ellipse 80% 50% at 30% 0%,   rgba(56,189,248,0.13) 0%, transparent 55%)',
@@ -175,232 +212,484 @@ function FillBlankText({ text }: { text: string }) {
   );
 }
 
+/* ─── rubric preview ─────────────────────────────────────────────────── */
+function RubricPreview({ items }: { items: RubricItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div style={{ marginTop: 8, border: '1px solid #ccc', borderRadius: 4, overflow: 'hidden', fontSize: 11 }}>
+      {items.map((item, i) => (
+        <div key={item.id} style={{ display: 'flex', borderTop: i > 0 ? '1px solid #eee' : 'none' }}>
+          <div style={{ flex: 1, padding: '4px 8px' }}>✓ {item.text}</div>
+          <div style={{ padding: '4px 8px', borderLeft: '1px solid #eee', minWidth: 40, textAlign: 'right', fontWeight: 600 }}>{item.marks}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── single question preview ────────────────────────────────────────── */
+function QuestionPreview({ q, qNum, bodyFont, headerFont }: { q: PaperQuestion; qNum: number; bodyFont: string; headerFont: string }) {
+  const qMarks = q.marks + q.subParts.reduce((a, sp) => a + sp.marks, 0);
+  const hasRightImage = q.imageUrl && q.imagePosition === 'right';
+
+  const questionContent = (
+    <>
+      {q.type === 'fill_blank' ? (
+        <span><FillBlankText text={q.text || 'Question text…'} /><span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{qMarks}]</span></span>
+      ) : (
+        <span>
+          {q.text || <em style={{ color: '#bbb' }}>Question text…</em>}
+          <span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{qMarks}]</span>
+        </span>
+      )}
+
+      {/* image above */}
+      {q.imageUrl && q.imagePosition === 'above' && (
+        <div style={{ margin: '8px 0', textAlign: 'center' }}>
+          <img src={q.imageUrl} alt="" style={{ maxWidth: '80%', maxHeight: 150, objectFit: 'contain', border: '1px solid #ddd' }} />
+          {q.imageCaption && <div style={{ fontSize: 10, color: '#888', marginTop: 3, fontStyle: 'italic' }}>{q.imageCaption}</div>}
+        </div>
+      )}
+
+      {/* code_block */}
+      {q.type === 'code_block' && q.codeText && (
+        <div style={{ margin: '8px 0', position: 'relative' }}>
+          <div style={{ fontSize: 9, color: '#666', fontFamily: 'monospace', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{q.codeLanguage}</div>
+          <pre style={{ background: '#f5f5f5', border: '1px solid #ccc', borderRadius: 4, padding: '8px 10px', fontFamily: 'Courier New, monospace', fontSize: 11, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.5 }}>{q.codeText}</pre>
+        </div>
+      )}
+
+      {/* draw_box */}
+      {q.type === 'draw_box' && (
+        <div style={{ margin: '8px 0', border: '1.5px solid #555', borderRadius: 2, height: q.boxHeight, width: '100%', background: '#fafafa' }} />
+      )}
+
+      {/* MCQ options */}
+      {q.type === 'mcq' && (
+        <div style={{ marginTop: 4, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px' }}>
+          {q.options.filter(Boolean).map((opt, oi) => (
+            <div key={oi} style={{ display: 'flex', gap: 4 }}>
+              <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + oi)}.</span><span>{opt}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* True / False */}
+      {q.type === 'true_false' && (
+        <div style={{ marginTop: 4, display: 'flex', gap: 24 }}>
+          <span>○ True</span><span>○ False</span>
+        </div>
+      )}
+
+      {/* Table */}
+      {q.type === 'table' && (
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 6, fontSize: 11 }}>
+          <thead>
+            <tr>
+              {q.tableHeaders.map((h, hi) => (
+                <th key={hi} style={{ border: '1px solid #999', padding: '5px 8px', background: '#f0f0f0', fontWeight: 700, textAlign: 'left' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {q.tableRows.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{ border: '1px solid #999', padding: '6px 8px', minHeight: 24, height: 28 }}>{cell || ''}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Answer lines */}
+      {(q.type === 'short' || q.type === 'essay' || q.type === 'label') && q.subParts.length === 0 && (
+        <DottedLines count={q.answerLines} />
+      )}
+
+      {/* Rubric */}
+      <RubricPreview items={q.rubric} />
+
+      {/* Sub-parts */}
+      {q.subParts.length > 0 && (
+        <div style={{ marginTop: 6, paddingLeft: 12 }}>
+          {q.subParts.map((sp) => (
+            <div key={sp.id} style={{ marginBottom: 8 }}>
+              <span style={{ fontWeight: 600 }}>{sp.label}.</span>
+              <span style={{ marginLeft: 4 }}>{sp.text || <em style={{ color: '#bbb' }}>Sub-part text…</em>}</span>
+              <span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{sp.marks}]</span>
+              <DottedLines count={sp.answerLines} />
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div style={{ marginBottom: 14, fontSize: 12, lineHeight: 1.7 }}>
+      {hasRightImage ? (
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+              <span style={{ fontWeight: 700, flexShrink: 0 }}>{qNum}.</span>
+              <div style={{ flex: 1 }}>{questionContent}</div>
+            </div>
+          </div>
+          <div style={{ flexShrink: 0, maxWidth: '35%', textAlign: 'center' }}>
+            <img src={q.imageUrl!} alt="" style={{ maxWidth: '100%', maxHeight: 160, objectFit: 'contain', border: '1px solid #ddd' }} />
+            {q.imageCaption && <div style={{ fontSize: 10, color: '#888', marginTop: 3, fontStyle: 'italic' }}>{q.imageCaption}</div>}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+          <span style={{ fontWeight: 700, flexShrink: 0 }}>{qNum}.</span>
+          <div style={{ flex: 1 }}>{questionContent}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── cover page preview ─────────────────────────────────────────────── */
+function CoverPage({ draft }: { draft: AssessmentDraft }) {
+  const totalMarks = draft.sections.reduce((sum, s) => {
+    const sm = s.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
+    return sum + (s.marks || sm);
+  }, 0) || draft.totalMarks;
+
+  const showMarksRow = (draft.practicalMarks > 0 || draft.theoryMarks > 0);
+  const instructions = draft.coverInstructions
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const fieldLine: React.CSSProperties = {
+    borderBottom: '1px solid #444',
+    display: 'inline-block',
+    minWidth: 90,
+  };
+
+  return (
+    <div style={{
+      width: '100%', background: '#fff', color: '#111',
+      fontFamily: draft.bodyFont || 'Times New Roman, serif',
+      padding: '28px 32px',
+      boxShadow: '0 4px 32px rgba(0,0,0,0.35)',
+      minHeight: 700,
+      marginBottom: 18,
+      pageBreakAfter: 'always',
+    }}>
+      {/* School header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 10, gap: 12 }}>
+        {draft.logoUrl && (
+          <img src={draft.logoUrl} alt="" style={{ height: 56, objectFit: 'contain', flexShrink: 0 }} />
+        )}
+        <div style={{ flex: 1, textAlign: 'center' }}>
+          {draft.schoolName && (
+            <div style={{ fontFamily: draft.headerFont, fontSize: 14, fontWeight: 700, textTransform: 'uppercase' as const }}>
+              {draft.schoolName}
+            </div>
+          )}
+          {draft.subject && (
+            <div style={{ fontFamily: draft.headerFont, fontSize: 12, fontWeight: 700, marginTop: 2 }}>
+              {draft.subject.toUpperCase()}
+            </div>
+          )}
+          {(draft.examType || draft.assessmentType) && (
+            <div style={{ fontFamily: draft.headerFont, fontSize: 11, marginTop: 2 }}>
+              {draft.examType || draft.assessmentType}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ borderTop: '2px solid #111', borderBottom: '2px solid #111', margin: '8px 0 12px' }} />
+
+      {/* Student fields grid */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 12 }}>
+        <tbody>
+          {/* Row 1: Name full width */}
+          <tr>
+            <td colSpan={2} style={{ padding: '5px 0' }}>
+              Name of Student: <span style={{ ...fieldLine, minWidth: 240 }}>&nbsp;</span>
+            </td>
+          </tr>
+          {/* Row 2: Class | Section */}
+          <tr>
+            <td style={{ padding: '5px 0', width: '50%' }}>
+              Class: <b>{draft.className || '___'}</b>{draft.grade ? ` (Grade ${draft.grade})` : ''}
+            </td>
+            <td style={{ padding: '5px 0' }}>
+              Section: <span style={fieldLine}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            </td>
+          </tr>
+          {/* Row 3: Roll Number | Subject */}
+          <tr>
+            <td style={{ padding: '5px 0' }}>
+              Roll Number: <span style={{ ...fieldLine, minWidth: 80 }}>&nbsp;</span>
+            </td>
+            <td style={{ padding: '5px 0' }}>
+              Subject: <b>{draft.subject || '___'}</b>
+            </td>
+          </tr>
+          {/* Row 4: Date | Exam Type */}
+          <tr>
+            <td style={{ padding: '5px 0' }}>
+              Date of Examination: <span style={{ ...fieldLine, minWidth: 80 }}>&nbsp;</span>
+            </td>
+            <td style={{ padding: '5px 0' }}>
+              Exam Type: <b>{draft.examType || draft.assessmentType || '___'}</b>
+            </td>
+          </tr>
+          {/* Row 5: Invigilator | Duration */}
+          {draft.invigilatorField && (
+            <tr>
+              <td style={{ padding: '5px 0' }}>
+                Invigilator&apos;s Signature: <span style={{ ...fieldLine, minWidth: 80 }}>&nbsp;</span>
+              </td>
+              <td style={{ padding: '5px 0' }}>
+                Duration: <b>{draft.duration || '___'}</b>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      {/* Practical / Theory / Total marks row */}
+      {showMarksRow && (
+        <div style={{ display: 'flex', gap: 20, fontSize: 12, marginBottom: 12, padding: '6px 10px', border: '1px solid #ccc', borderRadius: 4 }}>
+          {draft.practicalMarks > 0 && (
+            <span>Practical marks: <span style={{ display: 'inline-block', borderBottom: '1px solid #444', minWidth: 24 }}>&nbsp;</span> / {draft.practicalMarks}</span>
+          )}
+          {draft.theoryMarks > 0 && (
+            <span>Theory marks: <span style={{ display: 'inline-block', borderBottom: '1px solid #444', minWidth: 24 }}>&nbsp;</span> / {draft.theoryMarks}</span>
+          )}
+          <span>Total marks: <span style={{ display: 'inline-block', borderBottom: '1px solid #444', minWidth: 24 }}>&nbsp;</span> / {totalMarks}</span>
+        </div>
+      )}
+
+      {/* Important Instructions */}
+      {instructions.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6, textDecoration: 'underline' }}>Important Instructions:</div>
+          <ul style={{ paddingLeft: 18, margin: 0, fontSize: 11, lineHeight: 1.8 }}>
+            {instructions.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* For Office Use Only */}
+      {draft.sections.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>For Office Use Only:</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead>
+              <tr>
+                {['Section Number', 'Marks Allotted', 'Marks Obtained', "Examiner's Initials"].map((h, i) => (
+                  <th key={i} style={{ border: '1px solid #888', padding: '5px 8px', background: '#f0f0f0', fontWeight: 700, textAlign: 'center' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {draft.sections.map((sec) => {
+                const sm = sec.marks || sec.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
+                return (
+                  <tr key={sec.id}>
+                    <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>{sec.title}</td>
+                    <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>{sm || ''}</td>
+                    <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>&nbsp;</td>
+                    <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>&nbsp;</td>
+                  </tr>
+                );
+              })}
+              <tr>
+                <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center', fontWeight: 700 }}>Total</td>
+                <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center', fontWeight: 700 }}>{totalMarks || ''}</td>
+                <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>&nbsp;</td>
+                <td style={{ border: '1px solid #888', padding: '6px 8px', textAlign: 'center' }}>&nbsp;</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── A4 paper preview ─────────────────────────────────────────────── */
 function PaperPreview({ draft }: { draft: AssessmentDraft }) {
   const borderMap: Record<string, string> = {
     none: 'none', single: '1.5px solid #222', double: '3px double #222', thick: '4px solid #111',
   };
 
-  const allQuestions = draft.sections.flatMap(s => s.questions);
   const totalMarks = draft.sections.reduce((sum, s) => {
     const sm = s.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
     return sum + (s.marks || sm);
   }, 0) || draft.totalMarks;
 
-  // build a header line from term + assessment type + subject
-  const headerLine = [draft.term, draft.assessmentType].filter(Boolean).join(' ');
-  const subjectLine = [draft.subject, headerLine].filter(Boolean).join(' – ');
-
   let qCounter = 0;
 
+  function renderQuestions(questions: PaperQuestion[]) {
+    return questions.map((q) => {
+      qCounter++;
+      const qNum = qCounter;
+      return (
+        <QuestionPreview key={q.id} q={q} qNum={qNum} bodyFont={draft.bodyFont} headerFont={draft.headerFont} />
+      );
+    });
+  }
+
   return (
-    <div style={{
-      width: '100%', maxWidth: 540, background: '#fff', color: '#111',
-      fontFamily: draft.bodyFont || 'Times New Roman, serif',
-      padding: '28px 32px',
-      border: borderMap[draft.borderStyle] || 'none',
-      boxShadow: '0 4px 32px rgba(0,0,0,0.35)',
-      minHeight: 700, position: 'relative',
-    }}>
-      {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 8, textAlign: 'center' }}>
-        {draft.logoPosition === 'left' && draft.logoUrl && (
-          <img src={draft.logoUrl} alt="" style={{ height: 56, objectFit: 'contain', marginRight: 14, flexShrink: 0 }} />
+    <>
+      {draft.showCoverPage && <CoverPage draft={draft} />}
+
+      <div style={{
+        width: '100%', background: '#fff', color: '#111',
+        fontFamily: draft.bodyFont || 'Times New Roman, serif',
+        padding: '28px 32px',
+        border: borderMap[draft.borderStyle] || 'none',
+        boxShadow: '0 4px 32px rgba(0,0,0,0.35)',
+        minHeight: 700, position: 'relative',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginBottom: 8, textAlign: 'center' }}>
+          {draft.logoPosition === 'left' && draft.logoUrl && (
+            <img src={draft.logoUrl} alt="" style={{ height: 56, objectFit: 'contain', marginRight: 14, flexShrink: 0 }} />
+          )}
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            {draft.logoPosition === 'center' && draft.logoUrl && (
+              <div style={{ marginBottom: 6 }}><img src={draft.logoUrl} alt="" style={{ height: 52, objectFit: 'contain' }} /></div>
+            )}
+            {draft.schoolName && (
+              <div style={{ fontFamily: draft.headerFont, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' as const }}>
+                {draft.schoolName}
+              </div>
+            )}
+            {draft.subject && (
+              <div style={{ fontFamily: draft.headerFont, fontSize: 12, fontWeight: 700, marginTop: 1 }}>
+                {draft.subject.toUpperCase()}
+              </div>
+            )}
+            {(draft.term || draft.assessmentType) && (
+              <div style={{ fontFamily: draft.headerFont, fontSize: 11, fontWeight: 600, marginTop: 1 }}>
+                {[draft.term, draft.assessmentType].filter(Boolean).join(' ')}
+                {draft.className || draft.grade ? ` (${[draft.className || ('Grade ' + draft.grade)].filter(Boolean).join('')})` : ''}
+              </div>
+            )}
+            {draft.title && (
+              <div style={{ fontFamily: draft.headerFont, fontSize: 11, marginTop: 2 }}>
+                {draft.title}
+              </div>
+            )}
+          </div>
+          {draft.logoPosition === 'right' && draft.logoUrl && (
+            <img src={draft.logoUrl} alt="" style={{ height: 56, objectFit: 'contain', marginLeft: 14, flexShrink: 0 }} />
+          )}
+        </div>
+
+        {/* Name / Grade / Section row */}
+        <div style={{ borderTop: '1.5px solid #111', borderBottom: '1.5px solid #111', padding: '5px 0', marginBottom: 8, fontSize: 11, display: 'flex', gap: 8 }}>
+          <span style={{ flex: 2 }}>Name: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 140 }}>&nbsp;</span></span>
+          <span>Grade: <b>{draft.grade || '___'}</b></span>
+          <span>Section: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 30 }}>&nbsp;</span></span>
+        </div>
+
+        {/* Date / Total marks row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 8 }}>
+          <span>Date: <b>{draft.date ? new Date(draft.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '___'}</b></span>
+          <span>Total mark: <b>{totalMarks || '___'}</b></span>
+        </div>
+
+        {/* Instructions */}
+        {draft.instructions && (
+          <div style={{ fontSize: 12, marginBottom: 10, textAlign: 'center' }}>
+            <span style={{ textDecoration: 'underline', fontWeight: 700 }}>INSTRUCTION</span>
+            <span style={{ fontWeight: 400 }}> : {draft.instructions}</span>
+          </div>
         )}
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          {draft.logoPosition === 'center' && draft.logoUrl && (
-            <div style={{ marginBottom: 6 }}><img src={draft.logoUrl} alt="" style={{ height: 52, objectFit: 'contain' }} /></div>
-          )}
-          {draft.schoolName && (
-            <div style={{ fontFamily: draft.headerFont, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' as const }}>
-              {draft.schoolName}
-            </div>
-          )}
-          {draft.subject && (
-            <div style={{ fontFamily: draft.headerFont, fontSize: 12, fontWeight: 700, marginTop: 1 }}>
-              {draft.subject.toUpperCase()}
-            </div>
-          )}
-          {(draft.term || draft.assessmentType) && (
-            <div style={{ fontFamily: draft.headerFont, fontSize: 11, fontWeight: 600, marginTop: 1 }}>
-              {[draft.term, draft.assessmentType].filter(Boolean).join(' ')}
-              {draft.className || draft.grade ? ` (${[draft.className || ('Grade ' + draft.grade)].filter(Boolean).join('')})` : ''}
-            </div>
-          )}
-          {draft.title && (
-            <div style={{ fontFamily: draft.headerFont, fontSize: 11, marginTop: 2 }}>
-              {draft.title}
-            </div>
-          )}
-        </div>
-        {draft.logoPosition === 'right' && draft.logoUrl && (
-          <img src={draft.logoUrl} alt="" style={{ height: 56, objectFit: 'contain', marginLeft: 14, flexShrink: 0 }} />
-        )}
-      </div>
 
-      {/* ── Name / Grade / Section row ── */}
-      <div style={{ borderTop: '1.5px solid #111', borderBottom: '1.5px solid #111', padding: '5px 0', marginBottom: 8, fontSize: 11, display: 'flex', gap: 8 }}>
-        <span style={{ flex: 2 }}>Name: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 140 }}>&nbsp;</span></span>
-        <span>Grade: <b>{draft.grade || '___'}</b></span>
-        <span>Section: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 30 }}>&nbsp;</span></span>
-      </div>
-
-      {/* ── Date / Total marks row ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 8 }}>
-        <span>Date: <b>{draft.date ? new Date(draft.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '___'}</b></span>
-        <span>Total mark: <b>{totalMarks || '___'}</b></span>
-      </div>
-
-      {/* ── Instructions ── */}
-      {draft.instructions && (
-        <div style={{ fontSize: 12, marginBottom: 10, textAlign: 'center' }}>
-          <span style={{ textDecoration: 'underline', fontWeight: 700 }}>INSTRUCTION</span>
-          <span style={{ fontWeight: 400 }}> : {draft.instructions}</span>
-        </div>
-      )}
-
-      {/* ── Sections ── */}
-      {draft.sections.length === 0 ? (
-        <div style={{ color: '#aaa', fontSize: 12, textAlign: 'center', padding: '32px 0' }}>
-          No sections yet — add a section to begin
-        </div>
-      ) : (
-        draft.sections.map((sec) => {
-          const secMarks = sec.marks || sec.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
-          return (
-            <div key={sec.id} style={{ marginBottom: 18 }}>
-              {/* Section heading */}
-              {sec.title && (
-                <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, marginBottom: 4, fontFamily: draft.headerFont }}>
-                  {sec.title}{secMarks > 0 ? ` [${secMarks} Marks]` : ''}
-                </div>
-              )}
-              {sec.instruction && (
-                <div style={{ fontSize: 11, textAlign: 'center', marginBottom: 6, textDecoration: sec.instruction ? 'underline' : 'none' }}>
-                  {sec.instruction}
-                </div>
-              )}
-
-              {/* Word bank */}
-              {sec.wordBank.length > 0 && (
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10, fontSize: 11 }}>
-                  <tbody>
-                    <tr>
-                      {sec.wordBank.map((w, wi) => (
-                        <td key={wi} style={{ border: '1px solid #999', padding: '4px 8px', textAlign: 'center' }}>{w}</td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              )}
-
-              {/* Questions */}
-              {sec.questions.map((q) => {
-                qCounter++;
-                const qNum = qCounter;
-                const qMarks = q.marks + q.subParts.reduce((a, sp) => a + sp.marks, 0);
-                return (
-                  <div key={q.id} style={{ marginBottom: 14, fontSize: 12, lineHeight: 1.7 }}>
-                    <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
-                      <span style={{ fontWeight: 700, flexShrink: 0 }}>{qNum}.</span>
-                      <div style={{ flex: 1 }}>
-                        {q.type === 'fill_blank' ? (
-                          <span><FillBlankText text={q.text || 'Question text…'} /><span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{qMarks}]</span></span>
-                        ) : (
-                          <span>
-                            {q.text || <em style={{ color: '#bbb' }}>Question text…</em>}
-                            <span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{qMarks}]</span>
-                          </span>
-                        )}
-
-                        {/* image */}
-                        {q.imageUrl && (
-                          <div style={{ margin: '8px 0', textAlign: 'center' }}>
-                            <img src={q.imageUrl} alt="" style={{ maxWidth: '80%', maxHeight: 150, objectFit: 'contain', border: '1px solid #ddd' }} />
-                          </div>
-                        )}
-
-                        {/* MCQ options */}
-                        {q.type === 'mcq' && (
-                          <div style={{ marginTop: 4, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 20px' }}>
-                            {q.options.filter(Boolean).map((opt, oi) => (
-                              <div key={oi} style={{ display: 'flex', gap: 4 }}>
-                                <span style={{ fontWeight: 600 }}>{String.fromCharCode(65 + oi)}.</span><span>{opt}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* True / False */}
-                        {q.type === 'true_false' && (
-                          <div style={{ marginTop: 4, display: 'flex', gap: 24 }}>
-                            <span>○ True</span><span>○ False</span>
-                          </div>
-                        )}
-
-                        {/* Table */}
-                        {q.type === 'table' && (
-                          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 6, fontSize: 11 }}>
-                            <thead>
-                              <tr>
-                                {q.tableHeaders.map((h, hi) => (
-                                  <th key={hi} style={{ border: '1px solid #999', padding: '5px 8px', background: '#f0f0f0', fontWeight: 700, textAlign: 'left' }}>{h}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {q.tableRows.map((row, ri) => (
-                                <tr key={ri}>
-                                  {row.map((cell, ci) => (
-                                    <td key={ci} style={{ border: '1px solid #999', padding: '6px 8px', minHeight: 24, height: 28 }}>{cell || ''}</td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-
-                        {/* Answer lines for short/essay/label */}
-                        {(q.type === 'short' || q.type === 'essay' || q.type === 'label') && q.subParts.length === 0 && (
-                          <DottedLines count={q.answerLines} />
-                        )}
-
-                        {/* Sub-parts */}
-                        {q.subParts.length > 0 && (
-                          <div style={{ marginTop: 6, paddingLeft: 12 }}>
-                            {q.subParts.map((sp) => (
-                              <div key={sp.id} style={{ marginBottom: 8 }}>
-                                <span style={{ fontWeight: 600 }}>{sp.label}.</span>
-                                <span style={{ marginLeft: 4 }}>{sp.text || <em style={{ color: '#bbb' }}>Sub-part text…</em>}</span>
-                                <span style={{ marginLeft: 6, fontSize: 10, color: '#888' }}>[{sp.marks}]</span>
-                                <DottedLines count={sp.answerLines} />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+        {/* Sections */}
+        {draft.sections.length === 0 ? (
+          <div style={{ color: '#aaa', fontSize: 12, textAlign: 'center', padding: '32px 0' }}>
+            No sections yet — add a section to begin
+          </div>
+        ) : (
+          draft.sections.map((sec) => {
+            const secMarks = sec.marks || sec.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
+            const hasParts = sec.parts && sec.parts.length > 0;
+            return (
+              <div key={sec.id} style={{ marginBottom: 18 }}>
+                {/* Section heading */}
+                {sec.title && (
+                  <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 13, marginBottom: 4, fontFamily: draft.headerFont }}>
+                    {sec.title}{secMarks > 0 ? ` [${secMarks} Marks]` : ''}
                   </div>
-                );
-              })}
-            </div>
-          );
-        })
-      )}
+                )}
+                {sec.instruction && (
+                  <div style={{ fontSize: 11, textAlign: 'center', marginBottom: 6, textDecoration: 'underline' }}>
+                    {sec.instruction}
+                  </div>
+                )}
 
-      {/* End message */}
-      <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: '#444', borderTop: '1px solid #ccc', paddingTop: 10 }}>
-        {draft.endMessage || '— END OF PAPER —'}
-      </div>
+                {/* Word bank */}
+                {sec.wordBank.length > 0 && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 10, fontSize: 11 }}>
+                    <tbody>
+                      <tr>
+                        {sec.wordBank.map((w, wi) => (
+                          <td key={wi} style={{ border: '1px solid #999', padding: '4px 8px', textAlign: 'center' }}>{w}</td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
 
-      {/* Footer */}
-      {(draft.footerText || draft.examiner || draft.showPageNumbers) && (
-        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#888', borderTop: '1px solid #eee', paddingTop: 6 }}>
-          <span>{draft.footerText || (draft.examiner ? `By ${draft.examiner}` : '')}</span>
-          {draft.showPageNumbers && <span>Page 1</span>}
+                {/* Parts or direct questions */}
+                {hasParts ? (
+                  sec.parts.map((part) => (
+                    <div key={part.id} style={{ marginBottom: 14 }}>
+                      <div style={{
+                        fontWeight: 700, fontSize: 12, marginBottom: part.instruction ? 2 : 6,
+                        fontStyle: part.style === 'italic-underline' ? 'italic' : 'normal',
+                        textDecoration: part.style === 'italic-underline' ? 'underline' : 'none',
+                      }}>
+                        {part.title}
+                      </div>
+                      {part.instruction && (
+                        <div style={{ fontSize: 11, fontStyle: 'italic', marginBottom: 6, color: '#444' }}>
+                          {part.instruction}
+                        </div>
+                      )}
+                      {renderQuestions(part.questions)}
+                    </div>
+                  ))
+                ) : (
+                  renderQuestions(sec.questions)
+                )}
+              </div>
+            );
+          })
+        )}
+
+        {/* End message */}
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: '#444', borderTop: '1px solid #ccc', paddingTop: 10 }}>
+          {draft.endMessage || '— END OF PAPER —'}
         </div>
-      )}
-    </div>
+
+        {/* Footer */}
+        {(draft.footerText || draft.examiner || draft.showPageNumbers) && (
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#888', borderTop: '1px solid #eee', paddingTop: 6 }}>
+            <span>{draft.footerText || (draft.examiner ? `By ${draft.examiner}` : '')}</span>
+            {draft.showPageNumbers && <span>Page 1</span>}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -414,6 +703,7 @@ function QuestionRow({
   onImageUpload: (id: string, file: File) => void;
 }) {
   const [open, setOpen] = useState(true);
+  const [rubricOpen, setRubricOpen] = useState(false);
   const imgRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof PaperQuestion>(key: K, val: PaperQuestion[K]) {
@@ -434,7 +724,18 @@ function QuestionRow({
     set('subParts', q.subParts.filter(sp => sp.id !== id));
   }
 
-  // rebuild table when dimensions change
+  function addRubricItem() {
+    set('rubric', [...q.rubric, { id: uid(), text: '', marks: 1 }]);
+  }
+
+  function updateRubricItem(item: RubricItem) {
+    set('rubric', q.rubric.map(r => r.id === item.id ? item : r));
+  }
+
+  function removeRubricItem(id: string) {
+    set('rubric', q.rubric.filter(r => r.id !== id));
+  }
+
   function resizeTable(cols: number, rows: number) {
     const headers = Array.from({ length: cols }, (_, i) => q.tableHeaders[i] || `Column ${i + 1}`);
     const tableRows = Array.from({ length: rows }, (_, ri) =>
@@ -456,7 +757,8 @@ function QuestionRow({
 
   const typeLabels: Record<QType, string> = {
     mcq: 'Multiple Choice', true_false: 'True / False', short: 'Short Answer',
-    essay: 'Essay / Long', fill_blank: 'Fill in the Blank', table: 'Table Fill-in', label: 'Image / Label',
+    essay: 'Essay / Long', fill_blank: 'Fill in the Blank', table: 'Table Fill-in',
+    label: 'Image / Label', code_block: 'Code Block', draw_box: 'Draw Box',
   };
 
   return (
@@ -491,6 +793,8 @@ function QuestionRow({
                 <option value="fill_blank">Fill in the Blank</option>
                 <option value="table">Table Fill-in</option>
                 <option value="label">Image Identification / Label</option>
+                <option value="code_block">Code Block</option>
+                <option value="draw_box">Draw Box</option>
               </select>
             </div>
             <div style={{ width: 75 }}>
@@ -503,10 +807,17 @@ function QuestionRow({
           {/* question text */}
           <div>
             <FieldLabel>
-              {q.type === 'fill_blank' ? 'QUESTION TEXT (use ___ for each blank)' : 'QUESTION TEXT'}
+              {q.type === 'fill_blank' ? 'QUESTION TEXT (use ___ for each blank)' :
+               q.type === 'code_block' ? 'INSTRUCTION ABOVE CODE (optional)' :
+               q.type === 'draw_box' ? 'INSTRUCTION ABOVE BOX (optional)' : 'QUESTION TEXT'}
             </FieldLabel>
             <textarea value={q.text} onChange={e => set('text', e.target.value)}
-              placeholder={q.type === 'fill_blank' ? 'e.g. The CPU stands for ___ Processing Unit.' : 'Type your question here…'}
+              placeholder={
+                q.type === 'fill_blank' ? 'e.g. The CPU stands for ___ Processing Unit.' :
+                q.type === 'code_block' ? 'e.g. Study the code below and answer the questions.' :
+                q.type === 'draw_box' ? 'e.g. Draw and label the diagram.' :
+                'Type your question here…'
+              }
               rows={2} style={{ ...INPUT, resize: 'vertical', lineHeight: 1.5 }} />
             {q.type === 'fill_blank' && (
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>
@@ -515,21 +826,73 @@ function QuestionRow({
             )}
           </div>
 
-          {/* image upload */}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button onClick={() => imgRef.current?.click()}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer' }}>
-              <ImageIcon size={11} /> {q.type === 'label' ? 'Upload image to identify' : 'Add image'}
-            </button>
-            {q.imageUrl && (
-              <>
-                <img src={q.imageUrl} alt="" style={{ height: 36, borderRadius: 4, objectFit: 'contain' }} />
-                <button onClick={() => set('imageUrl', undefined)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,80,80,0.6)', fontSize: 11 }}>remove</button>
-              </>
-            )}
-            <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) onImageUpload(q.id, f); }} />
-          </div>
+          {/* code_block fields */}
+          {q.type === 'code_block' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
+                <div>
+                  <FieldLabel>CODE LANGUAGE</FieldLabel>
+                  <input value={q.codeLanguage} onChange={e => set('codeLanguage', e.target.value)}
+                    placeholder="Python, HTML, Small Basic…" style={INPUT} />
+                </div>
+              </div>
+              <div>
+                <FieldLabel>CODE CONTENT</FieldLabel>
+                <textarea value={q.codeText} onChange={e => set('codeText', e.target.value)}
+                  placeholder={'print("Hello World")\nfor i in range(5):\n    print(i)'}
+                  rows={6} style={{ ...INPUT, fontFamily: 'Courier New, monospace', fontSize: 12, resize: 'vertical', lineHeight: 1.6 }} />
+              </div>
+            </>
+          )}
+
+          {/* draw_box fields */}
+          {q.type === 'draw_box' && (
+            <div>
+              <FieldLabel>BOX HEIGHT (mm)</FieldLabel>
+              <input type="number" min={20} max={200} value={q.boxHeight} onChange={e => set('boxHeight', parseInt(e.target.value) || 60)}
+                style={{ ...INPUT, width: 100 }} />
+            </div>
+          )}
+
+          {/* image upload (not for code_block) */}
+          {q.type !== 'code_block' && (
+            <div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: q.imageUrl ? 8 : 0 }}>
+                <button onClick={() => imgRef.current?.click()}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 11, cursor: 'pointer' }}>
+                  <ImageIcon size={11} /> {q.type === 'label' ? 'Upload image to identify' : 'Add image'}
+                </button>
+                {q.imageUrl && (
+                  <>
+                    <img src={q.imageUrl} alt="" style={{ height: 36, borderRadius: 4, objectFit: 'contain' }} />
+                    <button onClick={() => set('imageUrl', undefined)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,80,80,0.6)', fontSize: 11 }}>remove</button>
+                  </>
+                )}
+                <input ref={imgRef} type="file" accept="image/*" style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) onImageUpload(q.id, f); }} />
+              </div>
+              {q.imageUrl && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
+                  <div>
+                    <FieldLabel>IMAGE CAPTION (optional)</FieldLabel>
+                    <input value={q.imageCaption} onChange={e => set('imageCaption', e.target.value)}
+                      placeholder="Fig. 1: …" style={INPUT} />
+                  </div>
+                  <div>
+                    <FieldLabel>POSITION</FieldLabel>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 5 }}>
+                      {(['above', 'right'] as const).map(p => (
+                        <button key={p} onClick={() => set('imagePosition', p)}
+                          style={{ padding: '5px 10px', borderRadius: 7, fontSize: 11, cursor: 'pointer', background: q.imagePosition === p ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)', border: `1.5px solid ${q.imagePosition === p ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.08)'}`, color: q.imagePosition === p ? '#c9a84c' : 'rgba(255,255,255,0.4)', textTransform: 'capitalize' }}>
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* MCQ options */}
           {q.type === 'mcq' && (
@@ -602,7 +965,7 @@ function QuestionRow({
             </div>
           )}
 
-          {/* Answer lines (short / essay / label) */}
+          {/* Answer lines */}
           {(q.type === 'short' || q.type === 'essay' || q.type === 'label') && (
             <div>
               <FieldLabel>ANSWER LINES (dotted lines on paper)</FieldLabel>
@@ -610,6 +973,35 @@ function QuestionRow({
                 style={{ ...INPUT, width: 80, display: 'inline-block' }} />
             </div>
           )}
+
+          {/* Rubric */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <button onClick={() => setRubricOpen(o => !o)}
+                style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <ChevronDown size={10} style={{ transform: rubricOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                RUBRIC / CRITERIA {q.rubric.length > 0 ? `(${q.rubric.length})` : ''}
+              </button>
+              {rubricOpen && (
+                <button onClick={addRubricItem}
+                  style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
+                  <Plus size={10} /> Add criterion
+                </button>
+              )}
+            </div>
+            {rubricOpen && q.rubric.map(item => (
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                <input value={item.text} onChange={e => updateRubricItem({ ...item, text: e.target.value })}
+                  placeholder="Criterion description…" style={INPUT} />
+                <input type="number" min={0} max={20} value={item.marks} onChange={e => updateRubricItem({ ...item, marks: parseInt(e.target.value) || 0 })}
+                  style={{ ...INPUT, width: 50, textAlign: 'center' }} />
+                <button onClick={() => removeRubricItem(item.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,80,80,0.5)' }}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
 
           {/* Sub-parts */}
           <div>
@@ -650,6 +1042,75 @@ function QuestionRow({
   );
 }
 
+/* ─── part editor ────────────────────────────────────────────────────── */
+function PartEditor({
+  part, partIndex, onChange, onRemove, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImageUpload,
+}: {
+  part: PaperPart; partIndex: number;
+  onChange: (p: PaperPart) => void;
+  onRemove: () => void;
+  onAddQuestion: () => void;
+  onUpdateQuestion: (q: PaperQuestion) => void;
+  onRemoveQuestion: (id: string) => void;
+  onImageUpload: (id: string, file: File) => void;
+}) {
+  const [open, setOpen] = useState(true);
+
+  function set<K extends keyof PaperPart>(key: K, val: PaperPart[K]) {
+    onChange({ ...part, [key]: val });
+  }
+
+  return (
+    <div style={{ border: '1px solid rgba(99,102,241,0.25)', borderRadius: 10, marginBottom: 10, overflow: 'hidden', background: 'rgba(99,102,241,0.03)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer', background: 'rgba(99,102,241,0.06)' }}
+        onClick={() => setOpen(o => !o)}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(99,102,241,0.9)', flex: 1 }}>{part.title || `Part ${partIndex + 1}`}</span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{part.questions.length} Q</span>
+        <ChevronDown size={11} color="rgba(99,102,241,0.5)" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        <button onClick={e => { e.stopPropagation(); onRemove(); }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,80,80,0.5)' }}>
+          <Trash2 size={11} />
+        </button>
+      </div>
+      {open && (
+        <div style={{ padding: '10px 12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, marginBottom: 8 }}>
+            <div>
+              <FieldLabel>PART TITLE</FieldLabel>
+              <input value={part.title} onChange={e => set('title', e.target.value)}
+                placeholder="e.g. Part 1: Fill in the Blanks" style={INPUT} />
+            </div>
+            <div style={{ width: 140 }}>
+              <FieldLabel>TITLE STYLE</FieldLabel>
+              <select value={part.style} onChange={e => set('style', e.target.value as PaperPart['style'])} style={{ ...INPUT, cursor: 'pointer' }}>
+                <option value="normal">Normal</option>
+                <option value="italic-underline">Italic + Underline</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <FieldLabel>PART INSTRUCTION (italic, shown below title)</FieldLabel>
+            <input value={part.instruction} onChange={e => set('instruction', e.target.value)}
+              placeholder="e.g. Answer all questions in this part." style={INPUT} />
+          </div>
+
+          {part.questions.map((q, qi) => (
+            <QuestionRow key={q.id} q={q} index={qi}
+              onChange={onUpdateQuestion}
+              onRemove={() => onRemoveQuestion(q.id)}
+              onImageUpload={onImageUpload} />
+          ))}
+
+          <button onClick={onAddQuestion}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px', borderRadius: 9, background: 'rgba(99,102,241,0.06)', border: '1.5px dashed rgba(99,102,241,0.25)', color: 'rgba(99,102,241,0.7)', fontSize: 11, cursor: 'pointer', marginTop: 6 }}>
+            <Plus size={11} /> Add question to this part
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── section editor ────────────────────────────────────────────────── */
 function SectionEditor({
   sec, index, onChange, onRemove, onAddQuestion, onUpdateQuestion, onRemoveQuestion, onImageUpload,
@@ -666,6 +1127,7 @@ function SectionEditor({
 }) {
   const [open, setOpen] = useState(true);
   const [wordBankInput, setWordBankInput] = useState('');
+  const hasParts = sec.parts && sec.parts.length > 0;
 
   function set<K extends keyof PaperSection>(key: K, val: PaperSection[K]) {
     onChange({ ...sec, [key]: val });
@@ -678,18 +1140,53 @@ function SectionEditor({
     setWordBankInput('');
   }
 
-  const secMarks = sec.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0);
+  function addPart() {
+    set('parts', [...(sec.parts || []), newPart()]);
+  }
+
+  function updatePart(part: PaperPart) {
+    set('parts', (sec.parts || []).map(p => p.id === part.id ? part : p));
+  }
+
+  function removePart(id: string) {
+    set('parts', (sec.parts || []).filter(p => p.id !== id));
+  }
+
+  function addQuestionToPart(partId: string) {
+    set('parts', (sec.parts || []).map(p =>
+      p.id === partId ? { ...p, questions: [...p.questions, newQuestion()] } : p
+    ));
+  }
+
+  function updateQuestionInPart(partId: string, q: PaperQuestion) {
+    set('parts', (sec.parts || []).map(p =>
+      p.id === partId ? { ...p, questions: p.questions.map(x => x.id === q.id ? q : x) } : p
+    ));
+  }
+
+  function removeQuestionFromPart(partId: string, qId: string) {
+    set('parts', (sec.parts || []).map(p =>
+      p.id === partId ? { ...p, questions: p.questions.filter(q => q.id !== qId) } : p
+    ));
+  }
+
+  const totalQInSection = hasParts
+    ? (sec.parts || []).reduce((a, p) => a + p.questions.length, 0)
+    : sec.questions.length;
+
+  const secMarks = sec.marks || (hasParts
+    ? (sec.parts || []).reduce((a, p) => a + p.questions.reduce((b, q) => b + q.marks + q.subParts.reduce((c, sp) => c + sp.marks, 0), 0), 0)
+    : sec.questions.reduce((a, q) => a + q.marks + q.subParts.reduce((b, sp) => b + sp.marks, 0), 0));
 
   return (
     <div style={{ border: '1.5px solid rgba(201,168,76,0.15)', borderRadius: 14, marginBottom: 14, overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-      {/* Section header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', cursor: 'pointer', background: 'rgba(201,168,76,0.05)' }}
         onClick={() => setOpen(o => !o)}>
         <Layers size={13} color="#c9a84c" />
         <span style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c', flex: 1 }}>
           {sec.title || `Section ${index + 1}`}
         </span>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{sec.questions.length} Q · {sec.marks || secMarks} marks</span>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{totalQInSection} Q · {sec.marks || secMarks} marks</span>
         <ChevronDown size={12} color="#c9a84c" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         <button onClick={e => { e.stopPropagation(); onRemove(); }}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,80,80,0.5)' }}>
@@ -743,24 +1240,56 @@ function SectionEditor({
             )}
           </div>
 
-          {/* Questions in this section */}
-          {sec.questions.map((q, qi) => (
-            <QuestionRow key={q.id} q={q} index={qi}
-              onChange={onUpdateQuestion}
-              onRemove={() => onRemoveQuestion(q.id)}
-              onImageUpload={onImageUpload} />
-          ))}
+          {/* Parts or direct questions */}
+          {hasParts ? (
+            <>
+              {(sec.parts || []).map((part, pi) => (
+                <PartEditor
+                  key={part.id}
+                  part={part}
+                  partIndex={pi}
+                  onChange={updatePart}
+                  onRemove={() => removePart(part.id)}
+                  onAddQuestion={() => addQuestionToPart(part.id)}
+                  onUpdateQuestion={q => updateQuestionInPart(part.id, q)}
+                  onRemoveQuestion={qId => removeQuestionFromPart(part.id, qId)}
+                  onImageUpload={onImageUpload}
+                />
+              ))}
+              <button onClick={addPart}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '7px', borderRadius: 9, background: 'rgba(99,102,241,0.06)', border: '1.5px dashed rgba(99,102,241,0.2)', color: 'rgba(99,102,241,0.6)', fontSize: 11, cursor: 'pointer', marginBottom: 8 }}>
+                <Plus size={11} /> Add another part
+              </button>
+            </>
+          ) : (
+            <>
+              {sec.questions.map((q, qi) => (
+                <QuestionRow key={q.id} q={q} index={qi}
+                  onChange={onUpdateQuestion}
+                  onRemove={() => onRemoveQuestion(q.id)}
+                  onImageUpload={onImageUpload} />
+              ))}
+            </>
+          )}
 
-          {/* Add question buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button onClick={onAddQuestion}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1.5px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)', fontSize: 12, cursor: 'pointer' }}>
-              <Plus size={12} /> Add question
+          {/* Add question / part / import buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            {!hasParts && (
+              <button onClick={onAddQuestion}
+                style={{ flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1.5px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)', fontSize: 12, cursor: 'pointer' }}>
+                <Plus size={12} /> Add question
+              </button>
+            )}
+            <button onClick={addPart}
+              style={{ flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 9, background: 'rgba(99,102,241,0.06)', border: '1.5px dashed rgba(99,102,241,0.2)', color: 'rgba(99,102,241,0.6)', fontSize: 12, cursor: 'pointer' }}>
+              <Layers size={12} /> Add part
             </button>
-            <button onClick={onShowBank}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 9, background: 'rgba(201,168,76,0.06)', border: '1.5px dashed rgba(201,168,76,0.25)', color: '#c9a84c', fontSize: 12, cursor: 'pointer' }}>
-              <BookOpen size={12} /> Import from bank
-            </button>
+            {!hasParts && (
+              <button onClick={onShowBank}
+                style={{ flex: 1, minWidth: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 9, background: 'rgba(201,168,76,0.06)', border: '1.5px dashed rgba(201,168,76,0.25)', color: '#c9a84c', fontSize: 12, cursor: 'pointer' }}>
+                <BookOpen size={12} /> Import from bank
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -794,11 +1323,15 @@ function BankImportModal({ onClose, onImport }: {
     const chosen = bankQs.filter(q => selected.has(q.id));
     const converted: PaperQuestion[] = chosen.map(q => ({
       id: uid(),
-      type: q.type === 'truefalse' ? 'true_false' : q.type === 'mcq' ? 'mcq' : 'short',
+      type: q.type === 'truefalse' ? 'true_false' as const : q.type === 'mcq' ? 'mcq' as const : 'short' as const,
       text: q.text, options: Array.isArray(q.options) ? q.options : [],
       answer: q.answer || '', marks: 1, answerLines: 2, subParts: [],
       tableHeaders: ['Column 1', 'Column 2'], tableRows: [['', ''], ['', '']],
       tableCols: 2, tableRowCount: 2,
+      imageCaption: '', imagePosition: 'above' as const,
+      codeText: '', codeLanguage: 'Python',
+      boxHeight: 60,
+      rubric: [],
     }));
     onImport(converted);
     onClose();
@@ -875,7 +1408,7 @@ function BankImportModal({ onClose, onImport }: {
 function ScaledPreview({ draft }: { draft: AssessmentDraft }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const PAPER_W = 540;
+  const PAPER_W = 794; // A4 at 96dpi ≈ 794px wide
 
   const rescale = useCallback(() => {
     const wrap = wrapRef.current; const inner = innerRef.current;
@@ -883,7 +1416,13 @@ function ScaledPreview({ draft }: { draft: AssessmentDraft }) {
     const avail = wrap.clientWidth - 4;
     const scale = Math.min(1, avail / PAPER_W);
     inner.style.transform = `scale(${scale})`;
-    inner.style.marginBottom = `${-(PAPER_W * (1 - scale) * 0.6)}px`;
+    inner.style.transformOrigin = 'top left';
+    // After scaling, the element still occupies its natural height in layout.
+    // We need to shrink the wrapper to the visually-rendered height.
+    const naturalH = inner.scrollHeight;
+    const scaledH = naturalH * scale;
+    inner.style.marginBottom = `${scaledH - naturalH}px`;
+    wrap.style.height = `${scaledH}px`;
   }, []);
 
   useEffect(() => {
@@ -895,11 +1434,24 @@ function ScaledPreview({ draft }: { draft: AssessmentDraft }) {
   useEffect(() => { rescale(); }, [draft, rescale]);
 
   return (
-    <div ref={wrapRef} style={{ width: '100%', overflow: 'hidden' }}>
-      <div ref={innerRef} style={{ width: PAPER_W, transformOrigin: 'top left', transition: 'transform 0.1s' }}>
+    <div ref={wrapRef} style={{ width: '100%', overflow: 'hidden', position: 'relative' }}>
+      <div ref={innerRef} style={{ width: PAPER_W, transition: 'transform 0.1s' }}>
         <PaperPreview draft={draft} />
       </div>
     </div>
+  );
+}
+
+/* ─── toggle switch ─────────────────────────────────────────────────── */
+function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; label: string }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+      <button type="button" onClick={onToggle}
+        style={{ flexShrink: 0, width: 36, height: 20, borderRadius: 999, position: 'relative', border: 'none', cursor: 'pointer', background: on ? '#059669' : 'rgba(255,255,255,0.1)', transition: 'background 0.2s' }}>
+        <span style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+      </button>
+      <span style={{ fontSize: 13, color: on ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)' }}>{label}</span>
+    </label>
   );
 }
 
@@ -927,6 +1479,14 @@ export default function AssessmentBuilderPage() {
     showPageNumbers: false,
     footerText: '',
     status: 'draft',
+    // cover page defaults
+    showCoverPage: false,
+    examType: '',
+    practicalMarks: 0,
+    theoryMarks: 0,
+    rollNumber: '',
+    invigilatorField: true,
+    coverInstructions: 'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.',
   });
 
   const [activeTab, setActiveTab] = useState<'details' | 'sections' | 'format'>('details');
@@ -982,7 +1542,12 @@ export default function AssessmentBuilderPage() {
       const url = e.target?.result as string;
       setDraft(d => ({
         ...d, sections: d.sections.map(s => ({
-          ...s, questions: s.questions.map(q => q.id === qId ? { ...q, imageUrl: url } : q),
+          ...s,
+          questions: s.questions.map(q => q.id === qId ? { ...q, imageUrl: url } : q),
+          parts: (s.parts || []).map(p => ({
+            ...p,
+            questions: p.questions.map(q => q.id === qId ? { ...q, imageUrl: url } : q),
+          })),
         })),
       }));
     };
@@ -1017,9 +1582,17 @@ export default function AssessmentBuilderPage() {
     finally { setSaving(false); }
   }, [draft, toast, router]);
 
-  const totalQs = draft.sections.reduce((a, s) => a + s.questions.length, 0);
+  const totalQs = draft.sections.reduce((a, s) => {
+    const directQs = s.questions.length;
+    const partQs = (s.parts || []).reduce((b, p) => b + p.questions.length, 0);
+    return a + directQs + partQs;
+  }, 0);
+
   const totalMarks = draft.sections.reduce((a, s) => {
-    const sm = s.questions.reduce((b, q) => b + q.marks + q.subParts.reduce((c, sp) => c + sp.marks, 0), 0);
+    const hasParts = s.parts && s.parts.length > 0;
+    const sm = hasParts
+      ? (s.parts || []).reduce((b, p) => b + p.questions.reduce((c, q) => c + q.marks + q.subParts.reduce((d, sp) => d + sp.marks, 0), 0), 0)
+      : s.questions.reduce((b, q) => b + q.marks + q.subParts.reduce((c, sp) => c + sp.marks, 0), 0);
     return a + (s.marks || sm);
   }, 0);
 
@@ -1079,7 +1652,7 @@ export default function AssessmentBuilderPage() {
 
         <div style={{ display: 'flex', gap: 0, width: '100%' }}>
 
-          {/* ── editor panel ── */}
+          {/* editor panel */}
           <div style={{ flex: '0 0 460px', minWidth: 0, padding: '22px 18px 80px', overflowY: 'auto', maxHeight: 'calc(100vh - 55px)' }}>
 
             {/* tabs */}
@@ -1095,7 +1668,7 @@ export default function AssessmentBuilderPage() {
               </button>
             </div>
 
-            {/* ── DETAILS tab ── */}
+            {/* DETAILS tab */}
             {activeTab === 'details' && (
               <>
                 <div style={CARD}>
@@ -1138,15 +1711,19 @@ export default function AssessmentBuilderPage() {
                     <FieldLabel>ADDITIONAL TITLE (optional)</FieldLabel>
                     <input style={INPUT} value={draft.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Chapter 1 & 2" />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                     <div>
                       <FieldLabel>DATE</FieldLabel>
                       <input type="date" style={INPUT} value={draft.date} onChange={e => set('date', e.target.value)} />
                     </div>
                     <div>
-                      <FieldLabel>EXAMINER / TEACHER</FieldLabel>
-                      <input style={INPUT} value={draft.examiner} onChange={e => set('examiner', e.target.value)} placeholder="WOW Sir" />
+                      <FieldLabel>DURATION</FieldLabel>
+                      <input style={INPUT} value={draft.duration} onChange={e => set('duration', e.target.value)} placeholder="1 hour" />
                     </div>
+                  </div>
+                  <div>
+                    <FieldLabel>EXAMINER / TEACHER</FieldLabel>
+                    <input style={INPUT} value={draft.examiner} onChange={e => set('examiner', e.target.value)} placeholder="WOW Sir" />
                   </div>
                 </div>
 
@@ -1194,10 +1771,65 @@ export default function AssessmentBuilderPage() {
                     <input style={INPUT} value={draft.endMessage} onChange={e => set('endMessage', e.target.value)} placeholder="— All the best! —" />
                   </div>
                 </div>
+
+                {/* Cover page section */}
+                <div style={CARD}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <SectionTitle icon={FileText}>Cover Page</SectionTitle>
+                    <Toggle on={draft.showCoverPage} onToggle={() => set('showCoverPage', !draft.showCoverPage)} label="Show cover page" />
+                  </div>
+
+                  {draft.showCoverPage && (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                        <div>
+                          <FieldLabel>EXAM TYPE</FieldLabel>
+                          <select value={draft.examType} onChange={e => set('examType', e.target.value)} style={{ ...INPUT, cursor: 'pointer' }}>
+                            <option value="">— same as assessment type —</option>
+                            {EXAM_TYPES.map(t => <option key={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <FieldLabel>CUSTOM EXAM TYPE</FieldLabel>
+                          <input style={INPUT} value={draft.examType} onChange={e => set('examType', e.target.value)} placeholder="e.g. Practical Exam" />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                        <div>
+                          <FieldLabel>PRACTICAL MARKS</FieldLabel>
+                          <input type="number" min={0} style={INPUT} value={draft.practicalMarks} onChange={e => set('practicalMarks', parseInt(e.target.value) || 0)} placeholder="0" />
+                        </div>
+                        <div>
+                          <FieldLabel>THEORY MARKS</FieldLabel>
+                          <input type="number" min={0} style={INPUT} value={draft.theoryMarks} onChange={e => set('theoryMarks', parseInt(e.target.value) || 0)} placeholder="0" />
+                        </div>
+                        <div>
+                          <FieldLabel>TOTAL MARKS</FieldLabel>
+                          <input type="number" min={0} style={INPUT} value={draft.totalMarks} onChange={e => set('totalMarks', parseInt(e.target.value) || 0)} placeholder="auto" />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: 10 }}>
+                        <Toggle on={draft.invigilatorField} onToggle={() => set('invigilatorField', !draft.invigilatorField)} label="Show invigilator's signature line" />
+                      </div>
+
+                      <div style={{ marginTop: 10 }}>
+                        <FieldLabel>COVER INSTRUCTIONS (each line becomes a bullet point)</FieldLabel>
+                        <textarea value={draft.coverInstructions} onChange={e => set('coverInstructions', e.target.value)}
+                          rows={5} placeholder={'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.'}
+                          style={{ ...INPUT, resize: 'vertical', lineHeight: 1.7, fontFamily: 'inherit' }} />
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 3 }}>
+                          One instruction per line. Each line appears as a bullet on the cover page.
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </>
             )}
 
-            {/* ── SECTIONS tab ── */}
+            {/* SECTIONS tab */}
             {activeTab === 'sections' && (
               <>
                 {draft.sections.map((sec, si) => (
@@ -1226,7 +1858,7 @@ export default function AssessmentBuilderPage() {
               </>
             )}
 
-            {/* ── FORMAT tab ── */}
+            {/* FORMAT tab */}
             {activeTab === 'format' && (
               <>
                 <div style={CARD}>
@@ -1269,13 +1901,7 @@ export default function AssessmentBuilderPage() {
                     <FieldLabel>FOOTER TEXT</FieldLabel>
                     <input style={INPUT} value={draft.footerText} onChange={e => set('footerText', e.target.value)} placeholder="e.g. By WOW Sir, Nana Sir" />
                   </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <button type="button" onClick={() => set('showPageNumbers', !draft.showPageNumbers)}
-                      style={{ flexShrink: 0, width: 36, height: 20, borderRadius: 999, position: 'relative', border: 'none', cursor: 'pointer', background: draft.showPageNumbers ? '#059669' : 'rgba(255,255,255,0.1)', transition: 'background 0.2s' }}>
-                      <span style={{ position: 'absolute', top: 2, left: draft.showPageNumbers ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-                    </button>
-                    <span style={{ fontSize: 13, color: draft.showPageNumbers ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)' }}>Show page numbers</span>
-                  </label>
+                  <Toggle on={draft.showPageNumbers} onToggle={() => set('showPageNumbers', !draft.showPageNumbers)} label="Show page numbers" />
                 </div>
 
                 <div style={{ ...CARD, marginBottom: 0 }}>
@@ -1288,7 +1914,7 @@ export default function AssessmentBuilderPage() {
             )}
           </div>
 
-          {/* ── live preview ── */}
+          {/* live preview */}
           <div style={{ flex: 1, minWidth: 0, position: 'sticky', top: 55, height: 'calc(100vh - 55px)', overflowY: 'auto', background: 'rgba(0,0,0,0.3)', borderLeft: '1px solid rgba(255,255,255,0.07)', padding: '16px 18px 40px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
