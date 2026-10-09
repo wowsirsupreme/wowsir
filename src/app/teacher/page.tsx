@@ -233,7 +233,7 @@ export default function TeacherPage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(5, 1fr)',
               gap: 12,
               marginBottom: 36,
             }}
