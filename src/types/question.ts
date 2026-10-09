@@ -209,9 +209,7 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
 
 const LEGACY_SUBJECTS = new Set([
   'Scratch', 'Word', 'HTML', 'CSS', 'Small Basic', 'Presentations', 'Excel',
-  'Grade 7 CS',          // old legacy CS keys (gr7-ch1-intro etc.)
-  'Grade 4 Computing', 'Grade 5 Computing', 'Grade 6 Computing',
-  'Grade 7 Computing', 'Grade 8 Computing',
+  'Grade 7 CS',   // old duplicate legacy keys (gr7-ch1-intro etc.) superseded by Grade 7 Computing
 ]);
 
 /** Returns topics grouped by their subject, preserving insertion order.
