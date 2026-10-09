@@ -1,12 +1,12 @@
 /**
  * audioEngine.ts
  * Singleton Web Audio API engine — no files needed, works offline.
- * All sound is synthesised on the fly.
+ * Supports synthesised themes + custom uploaded audio.
  */
 
 type OscType = OscillatorType;
 
-export type MusicTheme = 'battle' | 'chill' | 'retro' | 'lofi' | 'off';
+export type MusicTheme = 'battle' | 'chill' | 'retro' | 'lofi' | 'custom' | 'off';
 
 export const MUSIC_THEMES: MusicTheme[] = ['battle', 'chill', 'retro', 'lofi', 'off'];
 
@@ -15,6 +15,7 @@ export const MUSIC_THEME_LABELS: Record<MusicTheme, string> = {
   chill:  '🌊 Chill',
   retro:  '👾 Retro',
   lofi:   '☕ Lo-fi',
+  custom: '🎵 Custom',
   off:    '🔇 Off',
 };
 
@@ -23,16 +24,21 @@ interface NoteEvent {
   duration: number;
   gain: number;
   type?: OscType;
-  delay?: number; // seconds from now
+  delay?: number;
 }
 
 class AudioEngine {
   private ctx: AudioContext | null = null;
   private _muted = false;
+  private _paused = false;
   private musicGain: GainNode | null = null;
   private sfxGain: GainNode | null = null;
   private musicStop: (() => void) | null = null;
   private _musicTheme: MusicTheme = 'chill';
+
+  // Custom uploaded track
+  private _customAudio: HTMLAudioElement | null = null;
+  private _customLabel = '🎵 Custom';
 
   // ── Context ────────────────────────────────────────────────────────
   private getCtx(): AudioContext {
@@ -72,10 +78,13 @@ class AudioEngine {
     this._muted = val;
     const t = this.ctx ? this.ctx.currentTime : 0;
     if (this.musicGain) {
-      this.musicGain.gain.setTargetAtTime(val ? 0 : 0.12, t, 0.08);
+      this.musicGain.gain.setTargetAtTime(val ? 0 : (this._paused ? 0 : 0.12), t, 0.08);
     }
     if (this.sfxGain) {
       this.sfxGain.gain.setTargetAtTime(val ? 0 : 0.5, t, 0.08);
+    }
+    if (this._customAudio) {
+      this._customAudio.volume = val ? 0 : 0.5;
     }
     try { localStorage.setItem('wowsir_muted', val ? '1' : '0'); } catch { /* */ }
   }
@@ -93,7 +102,7 @@ class AudioEngine {
 
   setMusicTheme(t: MusicTheme) {
     this._musicTheme = t;
-    try { localStorage.setItem('wowsir_theme', t); } catch { /* */ }
+    try { if (t !== 'custom') localStorage.setItem('wowsir_theme', t); } catch { /* */ }
   }
 
   loadThemePref(): MusicTheme {
@@ -102,6 +111,53 @@ class AudioEngine {
       if (v && MUSIC_THEMES.includes(v)) this._musicTheme = v;
     } catch { /* */ }
     return this._musicTheme;
+  }
+
+  // ── Custom uploaded track ─────────────────────────────────────────
+  get customLabel() { return this._customLabel; }
+  get hasCustomTrack() { return !!this._customAudio; }
+
+  loadCustomTrack(objectUrl: string, filename: string) {
+    if (this._customAudio) {
+      this._customAudio.pause();
+      this._customAudio = null;
+    }
+    const audio = new Audio(objectUrl);
+    audio.loop = true;
+    audio.volume = this._muted ? 0 : 0.5;
+    this._customAudio = audio;
+    const base = filename.replace(/\.[^.]+$/, '');
+    this._customLabel = '🎵 ' + (base.length > 18 ? base.slice(0, 16) + '…' : base);
+    this.setMusicTheme('custom');
+  }
+
+  // ── Pause / resume ────────────────────────────────────────────────
+  get paused() { return this._paused; }
+
+  pauseMusic() {
+    if (this._paused) return;
+    this._paused = true;
+    if (this._customAudio) {
+      this._customAudio.pause();
+    } else if (this.musicGain && this.ctx) {
+      this.musicGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+    }
+  }
+
+  resumeMusic() {
+    if (!this._paused) return;
+    this._paused = false;
+    if (this._customAudio && !this._muted) {
+      this._customAudio.play().catch(() => {/* autoplay blocked */});
+    } else if (this.musicGain && this.ctx && !this._muted) {
+      this.musicGain.gain.setTargetAtTime(0.12, this.ctx.currentTime, 0.1);
+    }
+  }
+
+  togglePause(): boolean {
+    if (this._paused) this.resumeMusic();
+    else this.pauseMusic();
+    return this._paused;
   }
 
   // ── Primitive note player ─────────────────────────────────────────
@@ -166,15 +222,13 @@ class AudioEngine {
   tick() {
     if (this._muted) return;
     const ctx = this.getCtx();
-    const now = ctx.currentTime;
-    this.note(1200, 0.04, 0.15, 'square', now);
+    this.note(1200, 0.04, 0.15, 'square', ctx.currentTime);
   }
 
   urgentTick() {
     if (this._muted) return;
     const ctx = this.getCtx();
-    const now = ctx.currentTime;
-    this.note(1500, 0.06, 0.22, 'square', now);
+    this.note(1500, 0.06, 0.22, 'square', ctx.currentTime);
   }
 
   streak() {
@@ -212,13 +266,44 @@ class AudioEngine {
   }
 
   // ── Background Music ──────────────────────────────────────────────
-  // Simple 8-step sequencer with 4 theme flavours.
 
   startMusic(theme?: MusicTheme) {
     const th = theme ?? this._musicTheme;
-    this.stopMusic();
+    this._paused = false;
+
+    // Custom: HTMLAudioElement
+    if (th === 'custom') {
+      this.stopSynth();
+      if (this._customAudio) {
+        this._customAudio.volume = this._muted ? 0 : 0.5;
+        this._customAudio.currentTime = 0;
+        this._customAudio.play().catch(() => {/* autoplay blocked */});
+      }
+      return;
+    }
+
+    this.startSynth(th);
+  }
+
+  private stopSynth() {
+    if (this.musicStop) {
+      this.musicStop();
+      this.musicStop = null;
+    }
+  }
+
+  stopMusic() {
+    this.stopSynth();
+    if (this._customAudio) {
+      this._customAudio.pause();
+      this._customAudio.currentTime = 0;
+    }
+  }
+
+  private startSynth(th: MusicTheme) {
+    this.stopSynth();
     if (typeof window === 'undefined') return;
-    if (th === 'off') return; // theme "off" = no music
+    if (th === 'off' || th === 'custom') return;
 
     const ctx = this.getCtx();
     const dest = this.getMusicGain();
@@ -227,7 +312,7 @@ class AudioEngine {
 
     type Step = [number, number, number, OscType];
 
-    // ── Battle: fast, punchy square waves ───────────────────────────
+    // ── Battle: fast punchy square waves ──────────────────────────
     const BATTLE_BPM = 148;
     const battleMelody: Step[] = [
       [659, 0.5, 0.18, 'square'], [523, 0.5, 0.15, 'square'],
@@ -242,7 +327,7 @@ class AudioEngine {
       [146, 0.5, 0.12, 'sawtooth'], [130, 1.0, 0.12, 'sawtooth'],
     ];
 
-    // ── Chill: slow, breathy sines ───────────────────────────────────
+    // ── Chill: slow breathy sines ──────────────────────────────────
     const CHILL_BPM = 90;
     const chillMelody: Step[] = [
       [392, 1.0, 0.14, 'sine'], [440, 1.0, 0.13, 'sine'],
@@ -255,7 +340,7 @@ class AudioEngine {
       [196, 2.0, 0.08, 'triangle'], [174, 2.0, 0.07, 'triangle'],
     ];
 
-    // ── Retro: upbeat NES-style arpeggios ────────────────────────────
+    // ── Retro: NES-style arpeggios ─────────────────────────────────
     const RETRO_BPM = 160;
     const retroMelody: Step[] = [
       [1047, 0.25, 0.16, 'square'], [880,  0.25, 0.14, 'square'],
@@ -270,7 +355,7 @@ class AudioEngine {
       [131, 0.5, 0.13, 'square'], [131, 0.5, 0.11, 'square'],
     ];
 
-    // ── Lo-fi: slow, warm triangle jazz ─────────────────────────────
+    // ── Lo-fi: warm triangle jazz ──────────────────────────────────
     const LOFI_BPM = 72;
     const lofiMelody: Step[] = [
       [330, 1.5, 0.12, 'triangle'], [370, 0.5, 0.10, 'triangle'],
@@ -283,7 +368,6 @@ class AudioEngine {
       [165, 3.0, 0.07, 'sine'], [147, 3.0, 0.06, 'sine'],
     ];
 
-    // ── Pick active patterns by theme ────────────────────────────────
     let bpm: number;
     let melody: Step[];
     let bass: Step[];
@@ -295,7 +379,6 @@ class AudioEngine {
     } else if (th === 'lofi') {
       bpm = LOFI_BPM;   melody = lofiMelody;   bass = lofiPad;
     } else {
-      // 'chill' is default
       bpm = CHILL_BPM;  melody = chillMelody;  bass = chillPad;
     }
 
@@ -304,7 +387,7 @@ class AudioEngine {
     function schedulePattern(pattern: Step[], startTime: number) {
       let pos = startTime;
       for (const [freq, beats, gain, type] of pattern) {
-        const dur = beats * beat * 0.88; // slight gap between notes
+        const dur = beats * beat * 0.88;
         if (!stopped) {
           const osc = ctx.createOscillator();
           const g   = ctx.createGain();
@@ -321,15 +404,14 @@ class AudioEngine {
         }
         pos += beats * beat;
       }
-      return pos; // time after last note
+      return pos;
     }
 
     function loop() {
       if (stopped) return;
       const now = ctx.currentTime;
-      const endMel  = schedulePattern(melody, now);
+      const endMel = schedulePattern(melody, now);
       schedulePattern(bass, now);
-      // schedule next loop slightly before this one ends
       const loopDur = (endMel - now) * 1000 - 200;
       timeoutId = setTimeout(loop, Math.max(loopDur, 100));
     }
@@ -347,13 +429,6 @@ class AudioEngine {
         }, 1200);
       }
     };
-  }
-
-  stopMusic() {
-    if (this.musicStop) {
-      this.musicStop();
-      this.musicStop = null;
-    }
   }
 }
 

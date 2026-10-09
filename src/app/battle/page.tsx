@@ -252,7 +252,7 @@ export default function BattlePage() {
             alignItems: 'center', justifyContent: 'center',
             padding: '32px 16px',
           }}
-          className="animate-slideUp"
+          className="animate-slideUp setup-inner"
         >
           <div style={{ fontSize: 80, lineHeight: 1, marginBottom: 8 }} className="animate-swordsClash select-none">⚔️</div>
           <h2
@@ -292,7 +292,7 @@ export default function BattlePage() {
             </div>
 
             {/* Fighter cards */}
-            <div style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'flex-start' }}>
+            <div className="fighter-row" style={{ display: 'flex', gap: 16, marginBottom: 20, alignItems: 'flex-start' }}>
               {/* P1 */}
               <div className="fighter-card-p1" style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -303,7 +303,7 @@ export default function BattlePage() {
               </div>
 
               {/* VS */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 28, minWidth: 44 }}>
+              <div className="vs-divider" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 28, minWidth: 44 }}>
                 <span className="font-display animate-vsGlow" style={{ fontSize: 28, color: '#fff', lineHeight: 1, userSelect: 'none' }}>VS</span>
               </div>
 

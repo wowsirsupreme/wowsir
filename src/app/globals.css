@@ -471,3 +471,51 @@ body::before {
 ::-webkit-scrollbar { width: 6px }
 ::-webkit-scrollbar-track { background: transparent }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px }
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 600px) {
+  /* Battle setup: fighter cards stack vertically */
+  .fighter-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .fighter-row .vs-divider {
+    padding-top: 0 !important;
+    padding-bottom: 4px;
+    font-size: 20px !important;
+  }
+
+  /* Game nav: tighter */
+  .game-nav {
+    padding: 10px 14px;
+  }
+
+  /* Hotseat/Battle setup containers */
+  .setup-inner {
+    padding: 20px 14px !important;
+  }
+
+  /* Buttons: full touch target */
+  .btn-battle, .btn-ember {
+    font-size: 15px !important;
+    padding: 14px 20px !important;
+  }
+
+  /* Question cards: smaller font */
+  .question-text {
+    font-size: 16px !important;
+  }
+
+  /* Answer grid: single column on very narrow */
+  .answer-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Audio controls: don't overlap content */
+  .audio-controls-bar {
+    bottom: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+  }
+}
