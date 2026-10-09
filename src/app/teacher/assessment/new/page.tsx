@@ -1615,9 +1615,24 @@ export default function AssessmentBuilderPage() {
     <>
       <style>{`
         @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body, html { margin: 0 !important; padding: 0 !important; width: 100% !important; }
           body > *:not(#print-area) { display: none !important; }
-          #print-area { display: block !important; }
-          @page { margin: 15mm; }
+          #print-area {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          #print-area > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+            box-sizing: border-box !important;
+            font-size: 11pt !important;
+          }
+          @page { size: A4 portrait; margin: 0; }
         }
         #print-area { display: none; }
       `}</style>
