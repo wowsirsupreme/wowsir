@@ -569,23 +569,23 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
               <div style={{ marginBottom: 6 }}><img src={draft.logoUrl} alt="" style={{ height: 52, objectFit: 'contain' }} /></div>
             )}
             {draft.schoolName && (
-              <div style={{ fontFamily: draft.headerFont, fontSize: 13, fontWeight: 700, textTransform: 'uppercase' as const }}>
+              <div style={{ fontFamily: draft.headerFont, fontSize: draft.headerFontSize + 2, fontWeight: 700, textTransform: 'uppercase' as const }}>
                 {draft.schoolName}
               </div>
             )}
             {draft.subject && (
-              <div style={{ fontFamily: draft.headerFont, fontSize: 12, fontWeight: 700, marginTop: 1 }}>
+              <div style={{ fontFamily: draft.headerFont, fontSize: draft.headerFontSize, fontWeight: 700, marginTop: 1 }}>
                 {draft.subject.toUpperCase()}
               </div>
             )}
             {(draft.term || draft.assessmentType) && (
-              <div style={{ fontFamily: draft.headerFont, fontSize: 11, fontWeight: 600, marginTop: 1 }}>
+              <div style={{ fontFamily: draft.headerFont, fontSize: draft.headerFontSize - 1, fontWeight: 600, marginTop: 1 }}>
                 {[draft.term, draft.assessmentType].filter(Boolean).join(' ')}
                 {draft.className || draft.grade ? ` (${[draft.className || ('Grade ' + draft.grade)].filter(Boolean).join('')})` : ''}
               </div>
             )}
             {draft.title && (
-              <div style={{ fontFamily: draft.headerFont, fontSize: 11, marginTop: 2 }}>
+              <div style={{ fontFamily: draft.headerFont, fontSize: draft.headerFontSize - 1, marginTop: 2 }}>
                 {draft.title}
               </div>
             )}
@@ -596,21 +596,21 @@ function PaperPreview({ draft }: { draft: AssessmentDraft }) {
         </div>
 
         {/* Name / Grade / Section row */}
-        <div style={{ borderTop: '1.5px solid #111', borderBottom: '1.5px solid #111', padding: '5px 0', marginBottom: 8, fontSize: 11, display: 'flex', gap: 8 }}>
+        <div style={{ borderTop: '1.5px solid #111', borderBottom: '1.5px solid #111', padding: '5px 0', marginBottom: 8, fontSize: draft.bodyFontSize, display: 'flex', gap: 8 }}>
           <span style={{ flex: 2 }}>Name: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 140 }}>&nbsp;</span></span>
           <span>Grade: <b>{draft.grade || '___'}</b></span>
           <span>Section: <span style={{ display: 'inline-block', borderBottom: '1px solid #555', minWidth: 30 }}>&nbsp;</span></span>
         </div>
 
         {/* Date / Total marks row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: draft.bodyFontSize, marginBottom: 8 }}>
           <span>Date: <b>{draft.date ? new Date(draft.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '___'}</b></span>
           <span>Total mark: <b>{totalMarks || '___'}</b></span>
         </div>
 
         {/* Instructions */}
         {draft.instructions && (
-          <div style={{ fontSize: 12, marginBottom: 10, textAlign: 'center' }}>
+          <div style={{ fontSize: draft.bodyFontSize, marginBottom: 10, textAlign: 'center' }}>
             <span style={{ textDecoration: 'underline', fontWeight: 700 }}>INSTRUCTION</span>
             <span style={{ fontWeight: 400 }}> : {draft.instructions}</span>
           </div>
