@@ -7,6 +7,7 @@ import { TimerRing } from '@/components/quiz/TimerRing';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getRandomQuestions } from '@/lib/firebase/questions';
 import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
+import TopicPicker from '@/components/TopicPicker';
 import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
@@ -228,17 +229,7 @@ export default function HotSeatPage() {
             />
 
             <label className="section-label-light mb-2 block">Choose Topic</label>
-            <select
-              className="dark-select"
-              style={{ '--tw-ring-color': 'rgba(249,115,22,0.4)' } as React.CSSProperties}
-              value={topicKey}
-              onChange={e => { setTopicKey(e.target.value); setError(''); }}
-            >
-              <option value="">— Select a topic —</option>
-              {TOPIC_KEYS.map(k => (
-                <option key={k} value={k}>{TOPIC_LABELS[k].emoji} {TOPIC_LABELS[k].title}</option>
-              ))}
-            </select>
+            <TopicPicker value={topicKey} onChange={k => { setTopicKey(k); setError(''); }} />
 
             {!configured && (
               <p className="text-xs text-center mb-3" style={{ color: '#fb923c' }}>
