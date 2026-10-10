@@ -19,10 +19,19 @@ export function useAuth(): AuthState {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Ensure Firebase is initialized before checking instances.
+    // useFirebase() may not have run yet on a hard refresh, so we init here
+    // too — initFirebase is idempotent (getApps() guard prevents re-init).
     const { auth } = (() => {
       try {
-        const { getFirebaseInstances } = require('@/lib/firebase/config');
-        return getFirebaseInstances();
+        const { getFirebaseInstances, getFirebaseConfig, initFirebase } = require('@/lib/firebase/config');
+        let instances = getFirebaseInstances();
+        if (!instances.auth) {
+          const cfg = getFirebaseConfig();
+          if (cfg) initFirebase(cfg);
+          instances = getFirebaseInstances();
+        }
+        return instances;
       } catch { return { auth: null }; }
     })();
     if (!auth) { setLoading(false); setReady(false); return; }
