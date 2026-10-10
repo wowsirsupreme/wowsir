@@ -44,7 +44,12 @@ export default function TeacherPage() {
   useEffect(() => {
     if (ready && user && profile && profile.status === 'approved') {
       setQuizzesLoading(true);
-      getTeacherQuizzes(user.uid).then(q => { setQuizzes(q); setQuizzesLoading(false); });
+      getTeacherQuizzes(user.uid)
+        .then(q => { setQuizzes(q); setQuizzesLoading(false); })
+        .catch(err => {
+          console.error('getTeacherQuizzes failed:', err);
+          setQuizzesLoading(false);
+        });
     }
   }, [ready, user, profile]);
 

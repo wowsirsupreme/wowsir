@@ -2,7 +2,7 @@
 
 import {
   collection, doc, getDocs, getDoc, setDoc, deleteDoc,
-  query, where, orderBy,
+  query, where,
 } from 'firebase/firestore';
 import { getFirebaseInstances } from './config';
 import type { Quiz } from '@/types/quiz';
@@ -14,13 +14,16 @@ function fs() {
 }
 
 export async function getTeacherQuizzes(teacherId: string): Promise<Quiz[]> {
+  // Avoid composite index requirement by filtering only on teacherId,
+  // then sorting client-side.
   const q = query(
     collection(fs(), 'quizzes'),
     where('teacherId', '==', teacherId),
-    orderBy('createdAt', 'desc')
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ ...d.data(), id: d.id } as Quiz));
+  const quizzes = snap.docs.map(d => ({ ...d.data(), id: d.id } as Quiz));
+  // Sort newest first client-side — no composite index needed
+  return quizzes.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
 }
 
 export async function getQuiz(id: string): Promise<Quiz | null> {
