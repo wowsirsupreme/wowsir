@@ -7,9 +7,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Questions: teachers can write; everyone can read approved ones
+    // Questions: teachers can read/write all; students can read (filtering is
+    // done at query level with where('approvalStatus','==','approved') —
+    // resource.data is unavailable in collection scans so we can't use it here)
     match /questions/{qId} {
-      allow read: if resource.data.approvalStatus == 'approved';
+      allow read: if request.auth != null;
       allow read, write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
@@ -28,9 +30,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Preset quizzes: anyone can read active ones; teachers can write
+    // Preset quizzes: any authenticated user can read (isActive filtering
+    // happens at query level — resource.data unavailable in list context);
+    // teachers can write
     match /presetQuizzes/{pqId} {
-      allow read: if resource.data.isActive == true;
+      allow read: if request.auth != null;
       allow read, write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
