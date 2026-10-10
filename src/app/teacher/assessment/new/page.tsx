@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft, Plus, Trash2, Image as ImageIcon, Upload,
   FileText, Settings2, Type, Layout, Eye, Save, Send,
@@ -1493,38 +1493,50 @@ function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; la
 /* ─── main page ─────────────────────────────────────────────────────── */
 export default function AssessmentBuilderPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, ready, loading } = useAuth();
   useFirebase();
 
-  const [draft, setDraft] = useState<AssessmentDraft>({
-    id: uid(),
-    schoolName: '', subject: '', term: 'Term 1', assessmentType: 'CA1',
-    title: '', className: '', grade: '',
-    date: new Date().toISOString().slice(0, 10),
-    duration: '1 hour', examiner: '', totalMarks: 0,
-    instructions: 'Answer all questions clearly.',
-    endMessage: '— All the best! —',
-    assignedClass: '',
-    logoUrl: '', logoPosition: 'left',
-    sections: [newSection('Section A')],
-    headerFont: 'Times New Roman, serif',
-    bodyFont: 'Times New Roman, serif',
-    headerFontSize: 15,
-    bodyFontSize: 12,
-    borderStyle: 'single',
-    showPageNumbers: false,
-    footerText: '',
-    status: 'draft',
-    // cover page defaults
-    showCoverPage: false,
-    examType: '',
-    practicalMarks: 0,
-    theoryMarks: 0,
-    rollNumber: '',
-    invigilatorField: true,
-    coverInstructions: 'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.',
-  });
+  // Load existing paper if ?edit=<id> is in the URL
+  function loadInitialDraft(): AssessmentDraft {
+    const editId = searchParams?.get('edit');
+    if (editId) {
+      try {
+        const saved = localStorage.getItem(`assessment_${editId}`);
+        if (saved) return JSON.parse(saved) as AssessmentDraft;
+      } catch { /* fall through to default */ }
+    }
+    return {
+      id: uid(),
+      schoolName: '', subject: '', term: 'Term 1', assessmentType: 'CA1',
+      title: '', className: '', grade: '',
+      date: new Date().toISOString().slice(0, 10),
+      duration: '1 hour', examiner: '', totalMarks: 0,
+      instructions: 'Answer all questions clearly.',
+      endMessage: '— All the best! —',
+      assignedClass: '',
+      logoUrl: '', logoPosition: 'left',
+      sections: [newSection('Section A')],
+      headerFont: 'Times New Roman, serif',
+      bodyFont: 'Times New Roman, serif',
+      headerFontSize: 15,
+      bodyFontSize: 12,
+      borderStyle: 'single',
+      showPageNumbers: false,
+      footerText: '',
+      status: 'draft',
+      showCoverPage: false,
+      examType: '',
+      practicalMarks: 0,
+      theoryMarks: 0,
+      rollNumber: '',
+      invigilatorField: true,
+      coverInstructions: 'Write clearly and legibly.\nAnswer all questions unless otherwise instructed.\nDo not write in the margins.',
+    };
+  }
+
+  const [draft, setDraft] = useState<AssessmentDraft>(loadInitialDraft);
 
   const [activeTab, setActiveTab] = useState<'details' | 'sections' | 'format'>('details');
   const [bankTargetSection, setBankTargetSection] = useState<string | null>(null);

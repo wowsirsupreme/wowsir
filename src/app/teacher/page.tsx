@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, FileText, ChevronLeft, ShieldCheck, Clock } from 'lucide-react';
+import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, FileText, ChevronLeft, ShieldCheck, Clock, ScrollText, Pencil } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +13,103 @@ import FeedbackPrompt from '@/components/FeedbackPrompt';
 import type { Quiz } from '@/types/quiz';
 
 type AuthMode = 'login' | 'register';
+
+/* ── Paper type from localStorage ── */
+interface SavedPaper {
+  id: string;
+  title: string;
+  updatedAt?: number;
+  status?: string;
+  questions?: unknown[];
+}
+
+/* ── My Papers section (reads from localStorage) ── */
+function MyPapersSection() {
+  const router = useRouter();
+  const [papers, setPapers] = useState<SavedPaper[]>([]);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
+      const loaded: SavedPaper[] = idx
+        .map(id => {
+          try { return JSON.parse(localStorage.getItem(`assessment_${id}`) || 'null'); }
+          catch { return null; }
+        })
+        .filter(Boolean) as SavedPaper[];
+      setPapers(loaded);
+    } catch { /* ignore */ }
+  }, []);
+
+  if (papers.length === 0) return null;
+
+  return (
+    <div className="animate-fadeUp" style={{ animationDelay: '340ms', marginTop: 36 }}>
+      <div style={{ marginBottom: 16 }}>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: 4 }}>
+          MY PAPERS
+        </p>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: '#fff', lineHeight: 1 }}>
+          {papers.length} paper{papers.length !== 1 ? 's' : ''}
+        </h2>
+      </div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        {papers.map(p => {
+          const hov = hovered === p.id;
+          const date = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+          const qCount = Array.isArray(p.questions) ? p.questions.length : 0;
+          return (
+            <div
+              key={p.id}
+              onMouseEnter={() => setHovered(p.id)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                borderRadius: 16,
+                border: `1.5px solid ${hov ? 'rgba(139,92,246,0.45)' : 'rgba(139,92,246,0.15)'}`,
+                background: hov ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.05)',
+                padding: '16px 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+                  background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <ScrollText size={18} color="#a78bfa" strokeWidth={1.75} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {p.title || 'Untitled Paper'}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
+                    {qCount > 0 ? `${qCount} question${qCount !== 1 ? 's' : ''}` : 'No questions'}{date ? ` · ${date}` : ''}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.push(`/teacher/assessment/new?edit=${p.id}`)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '9px 18px', borderRadius: 10, flexShrink: 0,
+                  background: hov ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.12)',
+                  border: '1px solid rgba(139,92,246,0.3)',
+                  color: '#c4b5fd', fontWeight: 600, fontSize: 13,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                <Pencil size={13} strokeWidth={2} /> Edit
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /* ── shared dark-sky background (blue-indigo, professional but atmospheric) ── */
 const BG = [
@@ -38,16 +135,22 @@ export default function TeacherPage() {
   const [busy, setBusy]   = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
+  const [quizzesError, setQuizzesError] = useState<string | null>(null);
   const [hoveredAction, setHoveredAction] = useState<string | null>(null);
   const [hoveredQuiz, setHoveredQuiz] = useState<string | null>(null);
 
   useEffect(() => {
     if (ready && user && profile && profile.status === 'approved') {
       setQuizzesLoading(true);
+      setQuizzesError(null);
       getTeacherQuizzes(user.uid)
         .then(q => { setQuizzes(q); setQuizzesLoading(false); })
         .catch(err => {
           console.error('getTeacherQuizzes failed:', err);
+          const msg = err?.code === 'permission-denied'
+            ? 'Permission denied — Firestore rules need updating. Go to Firebase Console → Firestore → Rules and publish the updated rules from firestore.rules in the repo.'
+            : `Failed to load quizzes: ${err?.message ?? err}`;
+          setQuizzesError(msg);
           setQuizzesLoading(false);
         });
     }
@@ -391,8 +494,25 @@ export default function TeacherPage() {
               </div>
             )}
 
+            {/* Error state */}
+            {!quizzesLoading && quizzesError && (
+              <div
+                style={{
+                  borderRadius: 16,
+                  border: '1.5px solid rgba(239,68,68,0.3)',
+                  padding: '20px 24px',
+                  background: 'rgba(239,68,68,0.08)',
+                  marginBottom: 16,
+                }}
+              >
+                <p style={{ fontSize: 13, color: 'rgba(255,100,100,0.9)', lineHeight: 1.6, margin: 0 }}>
+                  ⚠️ {quizzesError}
+                </p>
+              </div>
+            )}
+
             {/* Empty state */}
-            {!quizzesLoading && quizzes.length === 0 && (
+            {!quizzesLoading && !quizzesError && quizzes.length === 0 && (
               <div
                 style={{
                   borderRadius: 20,
@@ -498,6 +618,10 @@ export default function TeacherPage() {
               </div>
             )}
           </div>
+
+          {/* ── my papers section ── */}
+          <MyPapersSection />
+
         </div>
       </div>
     );
