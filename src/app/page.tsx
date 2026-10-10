@@ -64,11 +64,18 @@ export default function LandingPage() {
 
   const [mounted, setMounted] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === '1') setAdminOpen(true);
+
+    const mq = window.matchMedia('(max-width: 600px)');
+    setMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, [setAdminOpen]);
 
   if (!mounted) return null;
@@ -111,10 +118,25 @@ export default function LandingPage() {
       />
 
       {/* ── Two-column layout: sidebar + cards ── */}
-      <div className="home-layout" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 980, display: 'flex', alignItems: 'center', gap: 32 }}>
+      <div style={{
+        position: 'relative', zIndex: 1, width: '100%', maxWidth: 980,
+        display: 'flex',
+        flexDirection: mobile ? 'column' : 'row',
+        alignItems: 'center',
+        gap: mobile ? 20 : 32,
+      }}>
 
         {/* ── Left sidebar: logo & branding ── */}
-        <div className="home-sidebar" style={{ flexShrink: 0, width: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        <div style={{
+          flexShrink: 0,
+          width: mobile ? '100%' : 180,
+          display: 'flex',
+          flexDirection: mobile ? 'row' : 'column',
+          flexWrap: mobile ? 'wrap' : 'nowrap',
+          alignItems: 'center',
+          justifyContent: mobile ? 'center' : 'flex-start',
+          gap: mobile ? 14 : 20,
+        }}>
           {/* Logo icon */}
           <button
             onClick={handleTap}
@@ -124,14 +146,14 @@ export default function LandingPage() {
             <div
               className="animate-float"
               style={{
-                width: 72, height: 72, borderRadius: 22,
+                width: mobile ? 52 : 72, height: mobile ? 52 : 72, borderRadius: mobile ? 16 : 22,
                 background: 'rgba(201,168,76,0.12)',
                 border: '1.5px solid rgba(201,168,76,0.25)',
                 filter: 'drop-shadow(0 0 20px rgba(201,168,76,0.45))',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <GraduationCap size={36} color="#c9a84c" strokeWidth={1.5} />
+              <GraduationCap size={mobile ? 26 : 36} color="#c9a84c" strokeWidth={1.5} />
             </div>
           </button>
 
@@ -140,7 +162,7 @@ export default function LandingPage() {
             <h1
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 36,
+                fontSize: mobile ? 28 : 36,
                 color: '#fff',
                 margin: 0, lineHeight: 1,
               }}
@@ -183,14 +205,13 @@ export default function LandingPage() {
         </div>
 
         {/* ── Right: card grid ── */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, width: mobile ? '100%' : undefined }}>
         {/* ── 6-card grid ── */}
         <div
-          className="home-cards"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 14,
+            gridTemplateColumns: mobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+            gap: mobile ? 10 : 14,
           }}
         >
           {MODES.map((mode, i) => {
@@ -204,8 +225,8 @@ export default function LandingPage() {
                 className="animate-slideUp"
                 style={{
                   animationDelay: `${i * 60}ms`,
-                  padding: '20px 18px',
-                  borderRadius: 20,
+                  padding: mobile ? '14px 12px' : '20px 18px',
+                  borderRadius: mobile ? 16 : 20,
                   background: isHov
                     ? mode.bg.replace(/[\d.]+\)$/, v => String(Math.min(parseFloat(v) * 2, 0.18)) + ')')
                     : mode.bg,
@@ -221,7 +242,7 @@ export default function LandingPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
-                  minHeight: 130,
+                  minHeight: mobile ? 108 : 130,
                   position: 'relative',
                 }}
               >
