@@ -104,6 +104,10 @@ function QuizBuilderInner() {
         for (const qs of results) for (const q of qs) if (!seen.has(q.id)) { seen.add(q.id); merged.push(q); }
         setQuestions(merged);
       })
+      .catch(err => {
+        console.error('getQuestionsByTopic failed:', err);
+        toast(`Questions failed to load: ${(err as { code?: string })?.code ?? (err as Error)?.message ?? String(err)}`, 'error');
+      })
       .finally(() => setLoadingQ(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTopicKeys.join(',')]);
@@ -208,9 +212,17 @@ ${qHtml}
       await saveQuiz(quiz);
       toast(status === 'published' ? 'Quiz published!' : 'Saved as draft', 'success');
       router.push('/teacher');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('saveQuiz error:', err);
-      toast('Failed to save quiz', 'error');
+      const code = (err as { code?: string })?.code;
+      const msg  = (err as { message?: string })?.message ?? String(err);
+      if (code === 'permission-denied') {
+        toast('Permission denied — check Firestore rules (quizzes write)', 'error');
+      } else if (code === 'unavailable' || code === 'network-request-failed') {
+        toast('Network error — check your connection', 'error');
+      } else {
+        toast(`Save failed: ${code ?? msg}`, 'error');
+      }
     } finally {
       setSaving(false);
     }
