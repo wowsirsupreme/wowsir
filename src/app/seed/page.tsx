@@ -28,7 +28,8 @@ export default function SeedPage() {
     const now = Date.now();
     const uid = user.uid;
 
-    const quizzes = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const quizzes: any[] = [
       {
         title: 'IGCSE CS — Binary & Hex',
         description: 'Number systems: binary, denary and hexadecimal conversions.',
@@ -101,6 +102,77 @@ export default function SeedPage() {
     } catch (e: unknown) {
       addLog(`✗ Profile update failed: ${e instanceof Error ? e.message : String(e)}`, 'err');
     }
+
+    // Question-type showcase quiz
+    const typeQuiz = {
+      title: 'Question Types Showcase',
+      description: 'Demo quiz testing all question types: MCQ, True/False, Short Answer, Fill-in-Blank, Ordering, and Matching.',
+      subject: 'Computer Science',
+      grade: '9',
+      teacherId: uid,
+      isPublished: true,
+      status: 'published',
+      createdAt: now - 3600000,
+      updatedAt: now,
+      questionCount: 6,
+      questions: [
+        {
+          id: 'qt1', type: 'mcq',
+          text: 'Which layer of the OSI model handles IP addressing?',
+          options: ['Data Link', 'Network', 'Transport', 'Application'],
+          answer: '1', // Network = index 1
+          explanation: 'The Network layer (Layer 3) handles IP addressing and routing.',
+          points: 100,
+        },
+        {
+          id: 'qt2', type: 'truefalse',
+          text: 'RAM is non-volatile storage — its contents survive a power-off.',
+          options: [], answer: 'false',
+          explanation: 'RAM is volatile; it loses its contents when power is removed.',
+          points: 100,
+        },
+        {
+          id: 'qt3', type: 'shortanswer',
+          text: 'What is the full form of "CPU"?',
+          options: [], answer: 'Central Processing Unit',
+          explanation: 'CPU stands for Central Processing Unit, the brain of the computer.',
+          points: 100,
+        },
+        {
+          id: 'qt4', type: 'fillinblank',
+          text: 'The default port number for HTTP (unencrypted web traffic) is ___.',
+          options: [], answer: '80',
+          explanation: 'HTTP runs on port 80; HTTPS (secure) runs on port 443.',
+          points: 100,
+        },
+        {
+          id: 'qt5', type: 'ordering',
+          // options[0..3] in scrambled order; correct sequence = indices 3,0,1,2 (Boot → POST → OS Load → Desktop)
+          // answer = "3,0,1,2" means options[3] first, then options[0], options[1], options[2]
+          text: 'Put the computer boot sequence in the correct order (first → last):',
+          options: ['Operating system loads from disk', 'User desktop appears', 'Power button pressed', 'POST (Power-On Self-Test) runs'],
+          answer: '2,3,0,1',
+          // correct: Power button pressed → POST → OS loads → Desktop appears
+          explanation: 'Boot sequence: Power button → POST → OS loads → Desktop appears.',
+          points: 100,
+        },
+        {
+          id: 'qt6', type: 'matching',
+          text: 'Match each storage type to its correct description:',
+          // Each option is "Term|Definition" — correct pair = same index on both sides
+          options: [
+            'HDD|Uses spinning magnetic platters to store data',
+            'SSD|Uses NAND flash chips with no moving parts',
+            'ROM|Read-only memory that holds firmware permanently',
+            'Cache|Ultra-fast memory built directly into the CPU',
+          ],
+          answer: '0,1,2,3',
+          explanation: 'HDD = spinning platters, SSD = flash chips, ROM = firmware, Cache = CPU-side fast memory.',
+          points: 100,
+        },
+      ],
+    };
+    quizzes.push(typeQuiz);
 
     addLog('Seeding quizzes to Firestore…');
     for (const q of quizzes) {
