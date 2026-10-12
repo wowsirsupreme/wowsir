@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft, Plus, Trash2, Image as ImageIcon, Upload,
@@ -1491,7 +1491,7 @@ function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; la
 }
 
 /* ─── main page ─────────────────────────────────────────────────────── */
-export default function AssessmentBuilderPage() {
+function AssessmentBuilderInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -2038,5 +2038,13 @@ export default function AssessmentBuilderPage() {
         />
       )}
     </>
+  );
+}
+
+export default function AssessmentBuilderPage() {
+  return (
+    <Suspense fallback={null}>
+      <AssessmentBuilderInner />
+    </Suspense>
   );
 }

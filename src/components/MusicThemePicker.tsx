@@ -76,7 +76,7 @@ export default function MusicThemePicker({ onChange }: Props) {
               key={theme}
               onClick={() => pick(theme)}
               aria-pressed={active}
-              title={theme === 'custom' && !audioEngine.hasCustomTrack ? 'Upload a music file' : undefined}
+              title={theme === 'custom' && !audioEngine?.hasCustomTrack ? 'Upload a music file' : undefined}
               style={{
                 padding: '5px 12px',
                 borderRadius: 20,
