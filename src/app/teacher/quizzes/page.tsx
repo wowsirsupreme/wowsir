@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Pencil, BarChart2, Plus, BookOpen, Zap, Users, StopCircle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Pencil, BarChart2, Plus, BookOpen, Zap, Users, StopCircle, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
+import { getTeacherQuizzes, deleteQuiz } from '@/lib/firebase/quizzes';
 import { getTeacherActiveSessions, endSession, clearTeacherSession, type TeacherActiveSession } from '@/lib/firebase/sessions';
 import type { Quiz } from '@/types/quiz';
 
@@ -333,6 +333,23 @@ export default function MyQuizzesPage() {
                         }}
                       >
                         <Pencil size={13} strokeWidth={2} /> Edit
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Delete "${q.title}"? This cannot be undone.`)) return;
+                          await deleteQuiz(q.id);
+                          setQuizzes(prev => prev.filter(x => x.id !== q.id));
+                        }}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          padding: '9px 14px', borderRadius: 10,
+                          background: hov ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.07)',
+                          border: '1px solid rgba(239,68,68,0.2)',
+                          color: '#f87171', fontWeight: 600, fontSize: 13,
+                          cursor: 'pointer', transition: 'all 0.15s',
+                        }}
+                      >
+                        <Trash2 size={13} strokeWidth={2} /> Delete
                       </button>
                     </div>
                   </div>
