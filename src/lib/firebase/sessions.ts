@@ -43,7 +43,6 @@ export async function createSession(
     currentQ: 0,
     totalQ: questions.length,
     question: null,
-    startedAt: undefined,
     settings,
   };
 

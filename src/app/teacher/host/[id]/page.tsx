@@ -72,7 +72,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
       setSessionId(sid);
       setPhase('lobby');
       toast('Session created! Waiting for players…', 'success');
-    } catch { toast('Failed to create session', 'error'); }
+    } catch (err) { console.error('createSession failed:', err); toast('Failed to create session', 'error'); }
   }
 
   async function handleStart() {
