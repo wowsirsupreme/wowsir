@@ -35,6 +35,36 @@
         ".read": "auth != null && auth.uid == $teacherId",
         ".write": "auth != null && auth.uid == $teacherId"
       }
+    },
+    "battle_lobby": {
+      "$sessionCode": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "battles": {
+      "$battleId": {
+        "meta": {
+          ".read": true,
+          ".write": true
+        },
+        "questions": {
+          ".read": true,
+          ".write": true
+        },
+        "scores": {
+          ".read": true,
+          "$playerId": {
+            ".write": true
+          }
+        }
+      }
+    },
+    "battle_invites": {
+      "$playerId": {
+        ".read": true,
+        ".write": true
+      }
     }
   }
 }

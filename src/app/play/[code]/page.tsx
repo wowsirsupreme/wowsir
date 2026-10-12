@@ -314,6 +314,30 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               The teacher will start the quiz shortly
             </p>
           )}
+
+          {/* Battle Mode entry */}
+          {ready && (
+            <div style={{ marginTop: 20, width: '100%', maxWidth: 280 }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, textAlign: 'center' }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 10, letterSpacing: '0.08em' }}>
+                  OR CHALLENGE CLASSMATES
+                </p>
+                <button
+                  onClick={() => router.push(`/battle/${code}?name=${encodeURIComponent(playerName)}`)}
+                  style={{
+                    width: '100%', padding: '14px', borderRadius: 14,
+                    background: 'rgba(239,68,68,0.12)',
+                    border: '1.5px solid rgba(239,68,68,0.3)',
+                    color: '#f87171', fontWeight: 700, fontSize: 15,
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  ⚔️ Battle Mode
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
