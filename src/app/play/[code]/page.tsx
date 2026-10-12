@@ -352,10 +352,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const totalQ = selfPaced ? localQuestions.length : (session?.totalQ || localQuestions.length);
 
   return (
-    <div className="play-screen flex flex-col items-center min-h-screen">
+    <div className="play-screen flex flex-col min-h-screen">
       {/* Top bar */}
       <div
-        className="flex items-center justify-between px-5 py-3 w-full"
+        className="flex items-center justify-between px-5 py-3"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(2,10,6,0.5)', position: 'sticky', top: 0, zIndex: 10 }}
       >
         <div className="flex items-center gap-3">
@@ -376,8 +376,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         {phase === 'reveal' && <div className="w-12" />}
       </div>
 
-      {/* Question area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-2xl mx-auto w-full">
+      {/* Question area — full-width wrapper centres the constrained inner column */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full px-4 py-8">
+      <div style={{ width: '100%', maxWidth: 720 }}>
         {q && (
           <>
             <p className="text-xs font-mono tracking-widest uppercase mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -410,7 +411,8 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
             <Leaderboard players={leaderboard} currentPlayerId={playerId || undefined} compact />
           </div>
         )}
-      </div>
+      </div>{/* end inner constrained column */}
+      </div>{/* end full-width wrapper */}
     </div>
   );
 }
