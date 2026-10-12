@@ -139,7 +139,7 @@ export default function TeacherPage() {
   const [hoveredAction, setHoveredAction] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && user && profile && profile.status === 'approved') {
+    if (ready && user && profile && (profile.status === 'approved' || !profile.status)) {
       setQuizzesLoading(true);
       setQuizzesError(null);
       getTeacherQuizzes(user.uid)
