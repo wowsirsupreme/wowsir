@@ -7,8 +7,6 @@ import {
   BookOpen, Layers,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Modal } from '@/components/ui/Modal';
-import { AdminPanel, useAdminTap } from '@/components/admin/AdminPanel';
 import { useFirebase } from '@/hooks/useFirebase';
 
 // ── Mode cards ────────────────────────────────────────────────────────────────
@@ -60,23 +58,18 @@ const MODES: {
 export default function LandingPage() {
   const router = useRouter();
   const { configured, checking } = useFirebase();
-  const { open: adminOpen, setOpen: setAdminOpen, handleTap } = useAdminTap();
-
   const [mounted, setMounted] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('admin') === '1') setAdminOpen(true);
-
     const mq = window.matchMedia('(max-width: 600px)');
     setMobile(mq.matches);
     const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, [setAdminOpen]);
+  }, []);
 
   if (!mounted) return null;
 
@@ -138,11 +131,7 @@ export default function LandingPage() {
           gap: mobile ? 14 : 20,
         }}>
           {/* Logo icon */}
-          <button
-            onClick={handleTap}
-            aria-label="WOW Sir"
-            style={{ background: 'none', border: 'none', cursor: 'default', padding: 0 }}
-          >
+          <div aria-label="WOW Sir" style={{ padding: 0 }}>
             <div
               className="animate-float"
               style={{
@@ -155,7 +144,7 @@ export default function LandingPage() {
             >
               <GraduationCap size={mobile ? 26 : 36} color="#c9a84c" strokeWidth={1.5} />
             </div>
-          </button>
+          </div>
 
           {/* Title */}
           <div style={{ textAlign: 'center' }}>
@@ -194,7 +183,7 @@ export default function LandingPage() {
             ) : configured ? (
               <><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block', boxShadow: '0 0 6px #4ade80', flexShrink: 0 }} /> connected</>
             ) : (
-              <><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'inline-block', flexShrink: 0 }} /> tap 5× to setup</>
+              <><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'inline-block', flexShrink: 0 }} /> not connected</>
             )}
           </div>
 
@@ -313,10 +302,6 @@ export default function LandingPage() {
 
       </div>
 
-      {/* Admin Modal */}
-      <Modal open={adminOpen} onClose={() => setAdminOpen(false)}>
-        <AdminPanel onClose={() => setAdminOpen(false)} />
-      </Modal>
     </div>
   );
 }
