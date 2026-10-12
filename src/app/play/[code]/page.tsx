@@ -24,7 +24,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const { code } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { configured } = useFirebase();
+  const { configured, checking } = useFirebase();
 
   const playerName = searchParams.get('name') || 'Player';
   const avatarId = parseInt(searchParams.get('avatar') || '0', 10);
@@ -43,7 +43,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const { session, players, leaderboard } = useSession(sessionId);
 
   useEffect(() => {
+    if (checking) return; // wait until Firebase init has been attempted
     if (!configured) { setError('Firebase not configured'); setPhase('ended'); return; }
+    setError('');
     findSessionByCode(code).then(async result => {
       if (!result) { setError('Room not found'); setPhase('ended'); return; }
       const sid = result.sessionId;
@@ -56,7 +58,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       setPhase('ended');
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configured, code]);
+  }, [configured, checking, code]);
 
   useEffect(() => {
     if (!session) return;
