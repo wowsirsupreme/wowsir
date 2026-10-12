@@ -482,6 +482,22 @@ export default function TeacherPage() {
                   {quizzes.length > 0 ? `${quizzes.length} quiz${quizzes.length > 1 ? 'zes' : ''}` : 'My Quizzes'}
                 </h2>
               </div>
+              <button
+                onClick={() => router.push('/teacher/quiz/new')}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '9px 18px', borderRadius: 10,
+                  background: 'rgba(201,168,76,0.12)',
+                  border: '1.5px solid rgba(201,168,76,0.3)',
+                  color: '#e6c84a', fontWeight: 600, fontSize: 13,
+                  cursor: 'pointer', flexShrink: 0,
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.22)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.12)'; }}
+              >
+                <Plus size={14} strokeWidth={2.5} /> New Quiz
+              </button>
             </div>
 
             {/* Loading */}
@@ -513,38 +529,9 @@ export default function TeacherPage() {
 
             {/* Empty state */}
             {!quizzesLoading && !quizzesError && quizzes.length === 0 && (
-              <div
-                style={{
-                  borderRadius: 20,
-                  border: '2px dashed rgba(255,255,255,0.1)',
-                  padding: '56px 24px',
-                  textAlign: 'center',
-                  background: 'rgba(255,255,255,0.02)',
-                }}
-              >
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
-                  <FileText size={48} color="rgba(255,255,255,0.2)" strokeWidth={1.25} />
-                </div>
-                <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>
-                  No quizzes yet
-                </p>
-                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.35)', marginBottom: 28, lineHeight: 1.6 }}>
-                  Create your first quiz to start hosting sessions.
-                </p>
-                <button
-                  onClick={() => router.push('/teacher/quiz/new')}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '13px 28px', borderRadius: 14, minHeight: 52,
-                    background: 'linear-gradient(135deg, #c9a84c 0%, #e8d08a 50%, #c9a84c 100%)',
-                    color: '#0d0d14', fontWeight: 700, fontSize: 16,
-                    border: 'none', cursor: 'pointer',
-                    boxShadow: '0 4px 20px rgba(201,168,76,0.35)',
-                  }}
-                >
-                  Create your first quiz →
-                </button>
-              </div>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.25)', padding: '20px 0', fontFamily: 'var(--font-mono)' }}>
+                No quizzes yet — tap New Quiz above to get started.
+              </p>
             )}
 
             {/* Quiz list */}
