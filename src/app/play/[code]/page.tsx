@@ -352,10 +352,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const totalQ = selfPaced ? localQuestions.length : (session?.totalQ || localQuestions.length);
 
   return (
-    <div className="play-screen flex flex-col min-h-screen">
+    <div className="play-screen flex flex-col items-center min-h-screen">
       {/* Top bar */}
       <div
-        className="flex items-center justify-between px-5 py-3"
+        className="flex items-center justify-between px-5 py-3 w-full"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(2,10,6,0.5)', position: 'sticky', top: 0, zIndex: 10 }}
       >
         <div className="flex items-center gap-3">
