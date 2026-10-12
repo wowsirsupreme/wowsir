@@ -1,6 +1,6 @@
 'use client';
 
-import { ref, set, get, update, onValue, push, remove, off, type DatabaseReference } from 'firebase/database';
+import { ref, set, get, update, remove, onValue, off, type DatabaseReference } from 'firebase/database';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { getFirebaseInstances } from './config';
 import type { LiveSession, SessionPlayer, SessionResult } from '@/types/session';
@@ -50,11 +50,15 @@ export async function createSession(
 
   // Store full questions (with answers) in a secured path (teacher/admin only)
   await set(ref(db(), `sessions/${sessionId}/meta`), session);
-  await set(ref(db(), `sessions_questions/${sessionId}`), questions);
-  // Store publicly-readable questions (answers included — students self-score locally)
-  await set(ref(db(), `session_pub_questions/${sessionId}`), questions);
+  if (questions.length > 0) {
+    await set(ref(db(), `sessions_questions/${sessionId}`), questions);
+    // Store publicly-readable questions (answers included — students self-score locally)
+    await set(ref(db(), `session_pub_questions/${sessionId}`), questions);
+  }
   // Register code → sessionId index for student lookup
   await set(ref(db(), `session_codes/${code}`), sessionId);
+  // Register under teacher's active sessions index for quick lookup on quizzes page
+  await set(ref(db(), `teacher_sessions/${teacherId}/${sessionId}`), { quizId, code, createdAt: Date.now() });
 
   return sessionId;
 }
@@ -213,4 +217,48 @@ export function listenPlayers(sessionId: string, cb: (players: Record<string, Se
 
 export async function saveSessionResult(result: SessionResult): Promise<void> {
   await setDoc(doc(fs(), 'results', result.id), result);
+}
+
+// ── Teacher session index ─────────────────────────────────────────────────────
+
+/** Remove a session from the teacher's active-session index (call on end/complete) */
+export async function clearTeacherSession(teacherId: string, sessionId: string): Promise<void> {
+  try {
+    await remove(ref(db(), `teacher_sessions/${teacherId}/${sessionId}`));
+  } catch { /* best-effort */ }
+}
+
+export interface TeacherActiveSession {
+  sessionId: string;
+  quizId: string;
+  code: string;
+  session: LiveSession;
+  playerCount: number;
+}
+
+/** Return all non-ended sessions for a teacher, enriched with live meta */
+export async function getTeacherActiveSessions(teacherId: string): Promise<TeacherActiveSession[]> {
+  const snap = await get(ref(db(), `teacher_sessions/${teacherId}`));
+  if (!snap.exists()) return [];
+
+  const entries = snap.val() as Record<string, { quizId: string; code: string; createdAt?: number }>;
+  const results: TeacherActiveSession[] = [];
+
+  await Promise.all(
+    Object.entries(entries).map(async ([sessionId, { quizId, code }]) => {
+      try {
+        const [metaSnap, playersSnap] = await Promise.all([
+          get(ref(db(), `sessions/${sessionId}/meta`)),
+          get(ref(db(), `sessions/${sessionId}/players`)),
+        ]);
+        if (!metaSnap.exists()) return;
+        const session = metaSnap.val() as LiveSession;
+        if (session.status === 'ended') return;
+        const playerCount = playersSnap.exists() ? Object.keys(playersSnap.val()).length : 0;
+        results.push({ sessionId, quizId, code: session.code || code, session, playerCount });
+      } catch { /* skip broken entries */ }
+    })
+  );
+
+  return results.sort((a, b) => (b.session.startedAt ?? 0) - (a.session.startedAt ?? 0));
 }

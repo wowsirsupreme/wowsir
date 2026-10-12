@@ -15,6 +15,7 @@ import {
   endSession,
   updateSessionCloseAt,
   findSessionByCode,
+  clearTeacherSession,
 } from '@/lib/firebase/sessions';
 import type { Quiz } from '@/types/quiz';
 import type { Question } from '@/types/question';
@@ -149,6 +150,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     const nextIdx = currentQIdx + 1;
     if (nextIdx >= questions.length) {
       await endSession(sessionId!);
+      if (user) clearTeacherSession(user.uid, sessionId!);
       clearActiveSession(quizId);
       setPhase('ended');
       return;
@@ -170,6 +172,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   async function handleEndSession() {
     if (!sessionId) return;
     await endSession(sessionId);
+    if (user) clearTeacherSession(user.uid, sessionId);
     clearActiveSession(quizId);
     setPhase('ended');
   }
