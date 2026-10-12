@@ -549,67 +549,82 @@ export default function TeacherPage() {
 
             {/* Quiz list */}
             {!quizzesLoading && quizzes.length > 0 && (
-              <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 10 }}>
                 {quizzes.map((q, i) => {
                   const hov = hoveredQuiz === q.id;
+                  const qCount = q.questionIds?.length || q.questions?.length || 0;
+                  const isPublished = q.status === 'published';
+                  const date = q.updatedAt ? new Date(q.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
                   return (
                     <div
                       key={q.id}
                       className="animate-fadeUp"
-                      style={{
-                        animationDelay: `${320 + i * 50}ms`,
-                        borderRadius: 18,
-                        background: hov ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
-                        border: `1.5px solid ${hov ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'}`,
-                        padding: '18px 20px',
-                        transition: 'background 0.18s, border-color 0.18s',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                      }}
                       onMouseEnter={() => setHoveredQuiz(q.id!)}
                       onMouseLeave={() => setHoveredQuiz(null)}
+                      style={{
+                        animationDelay: `${320 + i * 50}ms`,
+                        borderRadius: 16,
+                        border: `1.5px solid ${hov ? 'rgba(201,168,76,0.45)' : 'rgba(201,168,76,0.15)'}`,
+                        background: hov ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.04)',
+                        padding: '16px 18px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        transition: 'all 0.15s',
+                      }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-                        <div style={{ flex: 1, minWidth: 0, marginRight: 12 }}>
-                          <h3 style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {/* icon + title */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: 1 }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+                          background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Rocket size={18} color="#e6c84a" strokeWidth={1.75} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {q.title}
-                          </h3>
-                          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', fontFamily: 'var(--font-mono)' }}>
-                            {q.questionIds?.length || 0} questions · {q.topicKey}
+                          </p>
+                          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {qCount > 0 ? `${qCount} question${qCount !== 1 ? 's' : ''}` : 'No questions'}
+                            {date ? ` · ${date}` : ''}
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999,
+                              background: isPublished ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
+                              color: isPublished ? '#34d399' : 'rgba(255,255,255,0.3)',
+                              border: `1px solid ${isPublished ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                            }}>
+                              {isPublished ? 'Published' : 'Draft'}
+                            </span>
                           </p>
                         </div>
-                        <span
-                          style={{
-                            fontSize: 11, fontWeight: 700, letterSpacing: '0.07em',
-                            padding: '4px 10px', borderRadius: 999, flexShrink: 0,
-                            background: q.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
-                            color: q.status === 'published' ? '#34d399' : 'rgba(255,255,255,0.3)',
-                            border: `1px solid ${q.status === 'published' ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                          }}
-                        >
-                          {q.status?.toUpperCase()}
-                        </span>
                       </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
+                      {/* actions */}
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                         <button
                           onClick={() => router.push(`/teacher/host/${q.id}`)}
                           style={{
-                            flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            padding: '11px 0', borderRadius: 12, minHeight: 46,
-                            background: 'linear-gradient(135deg, #c9a84c 0%, #e8d08a 50%, #c9a84c 100%)',
-                            color: '#0d0d14', fontWeight: 700, fontSize: 14,
-                            border: 'none', cursor: 'pointer',
-                            boxShadow: '0 3px 14px rgba(201,168,76,0.3)',
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            padding: '9px 16px', borderRadius: 10,
+                            background: hov ? 'rgba(201,168,76,0.35)' : 'rgba(201,168,76,0.2)',
+                            border: '1px solid rgba(201,168,76,0.4)',
+                            color: '#e6c84a', fontWeight: 700, fontSize: 13,
+                            cursor: 'pointer', transition: 'all 0.15s',
                           }}
                         >
-                          <Rocket size={15} strokeWidth={2} /> Host
+                          <Rocket size={13} strokeWidth={2} /> Host
                         </button>
                         <button
                           onClick={() => router.push(`/teacher/quiz/new?edit=${q.id}`)}
-                          className="btn-glass"
-                          style={{ fontSize: 14, padding: '11px 20px', minHeight: 46, borderRadius: 12 }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            padding: '9px 16px', borderRadius: 10,
+                            background: hov ? 'rgba(201,168,76,0.15)' : 'rgba(201,168,76,0.07)',
+                            border: '1px solid rgba(201,168,76,0.2)',
+                            color: '#c4a84a', fontWeight: 600, fontSize: 13,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
                         >
-                          Edit
+                          <Pencil size={13} strokeWidth={2} /> Edit
                         </button>
                       </div>
                     </div>
