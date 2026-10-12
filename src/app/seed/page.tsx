@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getFirebaseInstances } from '@/lib/firebase/config';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function SeedPage() {
   const { user, loading } = useAuth();
@@ -80,6 +80,27 @@ export default function SeedPage() {
         ],
       },
     ];
+
+    // Ensure teacher profile exists and is approved
+    addLog('Checking teacher profile…');
+    try {
+      const profileRef = doc(db, 'users', uid);
+      const profileSnap = await getDoc(profileRef);
+      const existing = profileSnap.exists() ? profileSnap.data() : {};
+      await setDoc(profileRef, {
+        uid,
+        email: user.email,
+        role: 'teacher',
+        status: 'approved',
+        displayName: existing.displayName || user.displayName || 'WOW Sir',
+        school: existing.school || 'WOW Sir School',
+        createdAt: existing.createdAt || now,
+        updatedAt: now,
+      }, { merge: true });
+      addLog(`✓ Profile status set to approved`, 'ok');
+    } catch (e: unknown) {
+      addLog(`✗ Profile update failed: ${e instanceof Error ? e.message : String(e)}`, 'err');
+    }
 
     addLog('Seeding quizzes to Firestore…');
     for (const q of quizzes) {
