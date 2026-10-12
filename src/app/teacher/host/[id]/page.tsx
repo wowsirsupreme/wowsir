@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
@@ -13,11 +13,29 @@ import {
   nextQuestion,
   pauseSession,
   endSession,
+  updateSessionCloseAt,
+  findSessionByCode,
 } from '@/lib/firebase/sessions';
 import type { Quiz } from '@/types/quiz';
 import type { Question } from '@/types/question';
 
 type HostPhase = 'setup' | 'lobby' | 'question' | 'reveal' | 'ended';
+
+/** localStorage key for persisting active session per quiz */
+function sessionStorageKey(quizId: string) { return `wq_session_${quizId}`; }
+
+function saveActiveSession(quizId: string, sessionId: string, code: string) {
+  try { localStorage.setItem(sessionStorageKey(quizId), JSON.stringify({ sessionId, code })); } catch {}
+}
+function clearActiveSession(quizId: string) {
+  try { localStorage.removeItem(sessionStorageKey(quizId)); } catch {}
+}
+function loadActiveSession(quizId: string): { sessionId: string; code: string } | null {
+  try {
+    const raw = localStorage.getItem(sessionStorageKey(quizId));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
 
 export default function HostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: quizId } = use(params);
@@ -31,7 +49,15 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   const [currentQIdx, setCurrentQIdx] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [revealTimer, setRevealTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
-  const [antiCheatAlerts, setAntiCheatAlerts] = useState<{ name: string; type: string; time: number }[]>([]);
+  const [savedSession, setSavedSession] = useState<{ sessionId: string; code: string } | null>(null);
+
+  // Close-date picker state (shown on setup screen)
+  const [closeAt, setCloseAt] = useState<number | null>(null);
+  const [closeAtInput, setCloseAtInput] = useState('');
+
+  // Leaderboard screenshot modal
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const leaderboardRef = useRef<HTMLDivElement>(null);
 
   const { session, players, leaderboard } = useSession(sessionId);
 
@@ -42,18 +68,20 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
       setQuiz(q);
       setQuestions(q.questions || []);
     });
+    // Check for a previously saved session
+    const saved = loadActiveSession(quizId);
+    if (saved) setSavedSession(saved);
   }, [ready, user, quizId]);
 
-  useEffect(() => {
-    players.forEach(p => {
-      if (p.tabSwitches > 0) {
-        const existing = antiCheatAlerts.find(a => a.name === p.name && a.type === 'tab');
-        if (!existing) {
-          setAntiCheatAlerts(prev => [...prev, { name: p.name, type: 'Tab Switch', time: Date.now() }]);
-        }
-      }
-    });
-  }, [players]);
+  function scheduleReveal() {
+    const limit = (quiz?.settings?.timeLimit || 20) * 1000 + 2000;
+    const t = setTimeout(() => setPhase('reveal'), limit);
+    setRevealTimer(t);
+  }
+
+  function clearRevealTimer() {
+    if (revealTimer) { clearTimeout(revealTimer); setRevealTimer(null); }
+  }
 
   async function handleLaunch() {
     if (!user || !quiz) return;
@@ -67,12 +95,45 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
           showLeaderboard: quiz.settings?.showLeaderboard ?? true,
           shuffleQuestions: quiz.settings?.shuffleQuestions ?? false,
           shuffleOptions: quiz.settings?.shuffleOptions ?? false,
-        }
+        },
+        closeAt ?? undefined
       );
       setSessionId(sid);
       setPhase('lobby');
+      saveActiveSession(quizId, sid, '');   // code filled once session loads
       toast('Session created! Waiting for players…', 'success');
     } catch (err) { console.error('createSession failed:', err); toast('Failed to create session', 'error'); }
+  }
+
+  // Save code once session meta loads
+  useEffect(() => {
+    if (sessionId && session?.code) saveActiveSession(quizId, sessionId, session.code);
+  }, [sessionId, session?.code]);
+
+  async function handleResumeSession() {
+    if (!savedSession) return;
+    // Verify it's still active
+    try {
+      const result = await findSessionByCode(savedSession.code);
+      if (!result || result.session.status === 'ended') {
+        clearActiveSession(quizId);
+        setSavedSession(null);
+        toast('That session has ended', 'info');
+        return;
+      }
+      setSessionId(result.sessionId);
+      setCurrentQIdx(result.session.currentQ || 0);
+      const status = result.session.status;
+      if (status === 'lobby') setPhase('lobby');
+      else if (status === 'active' || status === 'paused') {
+        setPhase('question');
+      } else {
+        setPhase('ended');
+      }
+      toast('Session resumed', 'success');
+    } catch {
+      toast('Could not resume session', 'error');
+    }
   }
 
   async function handleStart() {
@@ -83,21 +144,14 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     scheduleReveal();
   }
 
-  function scheduleReveal() {
-    const limit = (quiz?.settings?.timeLimit || 20) * 1000 + 2000;
-    const t = setTimeout(() => setPhase('reveal'), limit);
-    setRevealTimer(t);
-  }
-
-  function clearRevealTimer() {
-    if (revealTimer) { clearTimeout(revealTimer); setRevealTimer(null); }
-  }
-
   async function handleNext() {
     clearRevealTimer();
     const nextIdx = currentQIdx + 1;
     if (nextIdx >= questions.length) {
-      await endSession(sessionId!); setPhase('ended'); return;
+      await endSession(sessionId!);
+      clearActiveSession(quizId);
+      setPhase('ended');
+      return;
     }
     await nextQuestion(sessionId!, nextIdx, questions);
     setCurrentQIdx(nextIdx);
@@ -106,12 +160,120 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   }
 
   async function handleReveal() { clearRevealTimer(); setPhase('reveal'); }
+
   async function handlePause(paused: boolean) {
     if (!sessionId) return;
     await pauseSession(sessionId, paused);
     toast(paused ? 'Session paused' : 'Session resumed', 'info');
   }
 
+  async function handleEndSession() {
+    if (!sessionId) return;
+    await endSession(sessionId);
+    clearActiveSession(quizId);
+    setPhase('ended');
+  }
+
+  /** Leave the session running — students can keep playing self-paced */
+  function handleLeaveRunning() {
+    toast('Session left running — students can continue. Return here to resume.', 'info');
+    router.push('/teacher');
+  }
+
+  /** Update close-at from the picker input */
+  function handleCloseAtChange(val: string) {
+    setCloseAtInput(val);
+    if (!val) { setCloseAt(null); return; }
+    const ts = new Date(val).getTime();
+    if (!isNaN(ts)) setCloseAt(ts);
+  }
+
+  /** Update close-at for a live session */
+  async function handleUpdateCloseAt() {
+    if (!sessionId) return;
+    await updateSessionCloseAt(sessionId, closeAt);
+    toast(closeAt ? `Session closes at ${new Date(closeAt).toLocaleString()}` : 'Close date removed', 'success');
+  }
+
+  /** Download leaderboard as a PNG image using Canvas API */
+  function downloadLeaderboard() {
+    const top = leaderboard.slice(0, 15);
+    const scale = 2;
+    const W = 560;
+    const rowH = 50;
+    const headerH = 100;
+    const H = headerH + top.length * rowH + 40;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = H * scale;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
+
+    // Background
+    ctx.fillStyle = '#050e08';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle border glow
+    ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+    // Title
+    ctx.fillStyle = '#fcd34d';
+    ctx.font = `bold ${26 * 1}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(quiz?.title || 'Quiz Results', W / 2, 44);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `${13}px system-ui, sans-serif`;
+    ctx.fillText(`${players.length} players · ${new Date().toLocaleDateString()}`, W / 2, 68);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(201,168,76,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(24, 84);
+    ctx.lineTo(W - 24, 84);
+    ctx.stroke();
+
+    // Rows
+    const medals = ['🥇', '🥈', '🥉'];
+    top.forEach((p, i) => {
+      const y = headerH + i * rowH;
+      const isFirst = i === 0;
+
+      if (isFirst) {
+        ctx.fillStyle = 'rgba(201,168,76,0.1)';
+        ctx.fillRect(16, y + 3, W - 32, rowH - 6);
+      }
+
+      // Rank
+      ctx.textAlign = 'left';
+      ctx.font = `${18}px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(i < 3 ? medals[i] : `${i + 1}`, 30, y + rowH / 2 + 7);
+
+      // Name
+      ctx.font = `${15}px system-ui, sans-serif`;
+      ctx.fillStyle = isFirst ? '#fff' : 'rgba(255,255,255,0.8)';
+      const name = p.name.length > 22 ? p.name.slice(0, 21) + '…' : p.name;
+      ctx.fillText(name, 72, y + rowH / 2 + 6);
+
+      // Score
+      ctx.textAlign = 'right';
+      ctx.font = `bold ${15}px monospace`;
+      ctx.fillStyle = '#fcd34d';
+      ctx.fillText(p.score.toLocaleString(), W - 30, y + rowH / 2 + 6);
+    });
+
+    const link = document.createElement('a');
+    link.download = `leaderboard-${session?.code || 'quiz'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // ── LOADING ──
   if (!ready || !quiz) {
     return (
       <div className="host-screen min-h-screen flex items-center justify-center">
@@ -135,6 +297,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             {questions.length} questions · {quiz.settings?.timeLimit || 20}s per question
           </p>
 
+          {/* Stats */}
           <div className="flex gap-4 justify-center mb-8">
             {[
               { icon: '❓', val: `${questions.length}`, label: 'Questions' },
@@ -152,6 +315,50 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
               </div>
             ))}
           </div>
+
+          {/* Optional close date */}
+          <div className="mb-6 text-left">
+            <label className="block text-xs font-mono uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              Close Date (optional)
+            </label>
+            <input
+              type="datetime-local"
+              value={closeAtInput}
+              onChange={e => handleCloseAtChange(e.target.value)}
+              className="w-full rounded-xl px-4 py-3 text-[14px] font-mono"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.5)',
+                outline: 'none',
+              }}
+            />
+            {closeAt && (
+              <p className="text-xs mt-1.5" style={{ color: 'rgba(201,168,76,0.7)' }}>
+                Students can't join after {new Date(closeAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {/* Resume saved session */}
+          {savedSession && (
+            <div
+              className="mb-5 rounded-xl px-4 py-3.5 flex items-center justify-between gap-3"
+              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
+            >
+              <div>
+                <p className="text-sm font-medium" style={{ color: '#34d399' }}>Session in progress</p>
+                <p className="text-xs font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Code: {savedSession.code || '…'}</p>
+              </div>
+              <button
+                className="btn-glass btn-glass-green"
+                style={{ fontSize: 13, padding: '8px 16px', minHeight: 38 }}
+                onClick={handleResumeSession}
+              >
+                Resume →
+              </button>
+            </div>
+          )}
 
           <button className="btn-gold-solid" onClick={handleLaunch}>
             ⚡ Launch Session
@@ -202,7 +409,14 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             </div>
           ))}
         </div>
-        <div className="flex gap-3 w-full max-w-md">
+        <div className="flex gap-3 w-full max-w-md flex-wrap">
+          <button
+            className="btn-glass"
+            style={{ flex: 1, fontSize: 14, minWidth: 120 }}
+            onClick={downloadLeaderboard}
+          >
+            📥 Save Scores
+          </button>
           <button
             className="btn-glass btn-glass-gold"
             style={{ flex: 1, fontSize: 15 }}
@@ -223,6 +437,10 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const currentQ = questions[currentQIdx];
+  // Students with tab switches, sorted by count desc
+  const tabSwitchers = players
+    .filter(p => p.tabSwitches > 0)
+    .sort((a, b) => b.tabSwitches - a.tabSwitches);
 
   // ── LIVE SESSION ──
   return (
@@ -234,7 +452,6 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', background: 'rgba(8,6,0,0.6)', position: 'sticky', top: 0, zIndex: 10 }}
       >
         <div className="flex items-center gap-4">
-          {/* Code badge */}
           <div
             className="px-3 py-1.5 rounded-lg"
             style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)' }}
@@ -258,8 +475,15 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
           </button>
           <button
             className="btn-glass"
+            style={{ fontSize: 13, padding: '8px 16px', minHeight: 40, color: 'rgba(255,255,255,0.5)' }}
+            onClick={handleLeaveRunning}
+          >
+            Leave
+          </button>
+          <button
+            className="btn-glass"
             style={{ fontSize: 13, padding: '8px 16px', minHeight: 40, borderColor: 'rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.12)', color: '#fca5a5' }}
-            onClick={async () => { await endSession(sessionId!); setPhase('ended'); }}
+            onClick={handleEndSession}
           >
             End
           </button>
@@ -294,6 +518,35 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                 ))}
               </div>
+
+              {/* Close-at picker in lobby */}
+              <div className="mb-5 text-left max-w-xs mx-auto">
+                <label className="block text-xs font-mono uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Auto-close at
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="datetime-local"
+                    value={closeAtInput}
+                    onChange={e => handleCloseAtChange(e.target.value)}
+                    className="flex-1 rounded-xl px-3 py-2 text-[13px] font-mono"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.4)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    className="btn-glass"
+                    style={{ fontSize: 12, padding: '8px 14px', minHeight: 0 }}
+                    onClick={handleUpdateCloseAt}
+                  >
+                    Set
+                  </button>
+                </div>
+              </div>
+
               <button
                 className="btn-gold-solid"
                 style={{ maxWidth: 320, margin: '0 auto' }}
@@ -312,7 +565,6 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 Question {currentQIdx + 1} / {questions.length}
               </p>
 
-              {/* Progress bar */}
               <div className="w-full h-1.5 rounded-full mb-6 overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <div
                   className="h-full rounded-full transition-all duration-500"
@@ -378,10 +630,26 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
           style={{ borderLeft: '1px solid rgba(255,255,255,0.07)' }}
         >
           {/* Leaderboard */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              🏆 Leaderboard
-            </p>
+          <div className="flex-1 overflow-y-auto p-4" ref={leaderboardRef}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                🏆 Leaderboard
+              </p>
+              {leaderboard.length > 0 && (
+                <button
+                  title="Download leaderboard as image"
+                  onClick={downloadLeaderboard}
+                  className="text-xs px-2 py-1 rounded-lg transition-colors"
+                  style={{
+                    background: 'rgba(201,168,76,0.08)',
+                    border: '1px solid rgba(201,168,76,0.2)',
+                    color: 'rgba(201,168,76,0.7)',
+                  }}
+                >
+                  📥
+                </button>
+              )}
+            </div>
             {leaderboard.slice(0, 10).map((p, i) => (
               <div
                 key={p.id}
@@ -403,21 +671,29 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             )}
           </div>
 
-          {/* Anti-cheat */}
-          {antiCheatAlerts.length > 0 && (
+          {/* Tab-switch tracker — live counts from player data */}
+          {tabSwitchers.length > 0 && (
             <div className="p-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="text-xs font-mono uppercase tracking-widest mb-3" style={{ color: '#f87171' }}>
-                ⚠️ Anti-Cheat ({antiCheatAlerts.length})
+                ⚠️ Tab Switches
               </p>
-              <div className="flex flex-col gap-2 max-h-36 overflow-y-auto">
-                {antiCheatAlerts.map((a, i) => (
+              <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
+                {tabSwitchers.map(p => (
                   <div
-                    key={i}
-                    className="text-xs px-3 py-2 rounded-lg"
-                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                    key={p.id}
+                    className="flex items-center justify-between text-xs px-3 py-2 rounded-lg"
+                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
                   >
-                    <span className="font-medium" style={{ color: 'rgba(255,255,255,0.9)' }}>{a.name}</span>
-                    {' — '}{a.type}
+                    <span style={{ color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
+                    <span
+                      className="font-mono font-bold ml-2 px-1.5 py-0.5 rounded"
+                      style={{
+                        background: p.tabSwitches >= 5 ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.15)',
+                        color: p.tabSwitches >= 5 ? '#fca5a5' : 'rgba(255,255,255,0.6)',
+                      }}
+                    >
+                      ×{p.tabSwitches}
+                    </span>
                   </div>
                 ))}
               </div>

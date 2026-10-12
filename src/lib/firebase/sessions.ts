@@ -28,7 +28,8 @@ export async function createSession(
   quizTitle: string,
   teacherId: string,
   questions: Question[],
-  settings: LiveSession['settings']
+  settings: LiveSession['settings'],
+  closeAt?: number
 ): Promise<string> {
   const code = genCode();
   const sessionId = `${code.toLowerCase()}_${Date.now().toString(36)}`;
@@ -44,11 +45,14 @@ export async function createSession(
     totalQ: questions.length,
     question: null,
     settings,
+    ...(closeAt ? { closeAt } : {}),
   };
 
-  // Store full questions (with answers) in a separate secured path
+  // Store full questions (with answers) in a secured path (teacher/admin only)
   await set(ref(db(), `sessions/${sessionId}/meta`), session);
   await set(ref(db(), `sessions_questions/${sessionId}`), questions);
+  // Store publicly-readable questions (answers included — students self-score locally)
+  await set(ref(db(), `session_pub_questions/${sessionId}`), questions);
   // Register code → sessionId index for student lookup
   await set(ref(db(), `session_codes/${code}`), sessionId);
 
@@ -157,13 +161,28 @@ export async function submitAnswer(
   });
 }
 
-export async function reportTabSwitch(sessionId: string, playerId: string): Promise<void> {
+export async function reportTabSwitch(sessionId: string, playerId: string, qIndex?: number): Promise<void> {
   const playerRef = ref(db(), `sessions/${sessionId}/players/${playerId}`);
   const snap = await get(playerRef);
   if (snap.exists()) {
     const player: SessionPlayer = snap.val();
-    await update(playerRef, { tabSwitches: (player.tabSwitches || 0) + 1 });
+    const updates: Record<string, unknown> = { tabSwitches: (player.tabSwitches || 0) + 1 };
+    if (qIndex !== undefined) {
+      const byQ = player.tabSwitchesByQ || {};
+      updates[`tabSwitchesByQ/${qIndex}`] = (byQ[qIndex] || 0) + 1;
+    }
+    await update(playerRef, updates);
   }
+}
+
+export async function getSessionPublicQuestions(sessionId: string): Promise<Question[] | null> {
+  const snap = await get(ref(db(), `session_pub_questions/${sessionId}`));
+  if (!snap.exists()) return null;
+  return snap.val() as Question[];
+}
+
+export async function updateSessionCloseAt(sessionId: string, closeAt: number | null): Promise<void> {
+  await update(ref(db(), `sessions/${sessionId}/meta`), { closeAt: closeAt ?? null });
 }
 
 export async function findSessionByCode(code: string): Promise<{ sessionId: string; session: LiveSession } | null> {

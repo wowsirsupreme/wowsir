@@ -23,6 +23,12 @@
     "session_codes": {
       ".read": true,
       ".write": "auth != null"
+    },
+    "session_pub_questions": {
+      "$sessionId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
     }
   }
 }

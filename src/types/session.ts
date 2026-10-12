@@ -10,6 +10,7 @@ export interface SessionPlayer {
   correct: number;
   total: number;
   tabSwitches: number;
+  tabSwitchesByQ?: Record<number, number>;   // per-question tab-switch counts
   windowResizes: number;
   lastSeen: number;
   answers?: Record<number, { choice: string; correct: boolean; timeMs: number }>;
@@ -27,6 +28,7 @@ export interface LiveSession {
   question?: Question | null;  // current question (answer stripped for students)
   startedAt?: number;
   endedAt?: number;
+  closeAt?: number;      // optional expiry — students can't join after this time
   settings: {
     antiCheat: boolean;
     showLeaderboard: boolean;

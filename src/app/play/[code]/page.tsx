@@ -14,6 +14,7 @@ import {
   submitAnswer,
   reportTabSwitch,
   joinSession,
+  getSessionPublicQuestions,
 } from '@/lib/firebase/sessions';
 import { calcTimeBonus } from '@/lib/utils';
 import type { Question } from '@/types/question';
@@ -40,18 +41,39 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [error, setError] = useState('');
   const [finalRank, setFinalRank] = useState<number | null>(null);
 
+  // Self-paced mode state
+  const [localQuestions, setLocalQuestions] = useState<Question[]>([]);
+  const [localQIdx, setLocalQIdx] = useState(0);
+  const [selfPaced, setSelfPaced] = useState(false);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
   const { session, players, leaderboard } = useSession(sessionId);
 
+  // ── Join on mount ──
   useEffect(() => {
-    if (checking) return; // wait until Firebase init has been attempted
+    if (checking) return;
     if (!configured) { setError('Firebase not configured'); setPhase('ended'); return; }
     setError('');
     findSessionByCode(code).then(async result => {
       if (!result) { setError('Room not found'); setPhase('ended'); return; }
       const sid = result.sessionId;
+
+      // Check expiry
+      const meta = result.session;
+      if (meta.closeAt && Date.now() > meta.closeAt) {
+        setError('This session has ended'); setPhase('ended'); return;
+      }
+
       setSessionId(sid);
       const pid = await joinSession(sid, playerName, avatarId);
       setPlayerId(pid);
+
+      // Load questions for self-paced play
+      setQuestionsLoading(true);
+      const qs = await getSessionPublicQuestions(sid);
+      if (qs && qs.length > 0) setLocalQuestions(qs);
+      setQuestionsLoading(false);
+
       setPhase('lobby');
     }).catch(() => {
       setError('Connection error');
@@ -60,8 +82,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configured, checking, code]);
 
+  // ── Teacher-driven session state changes (only when not self-pacing) ──
   useEffect(() => {
-    if (!session) return;
+    if (selfPaced || !session) return;
     if (session.status === 'active') {
       if (phase === 'lobby' || phase === 'leaderboard') {
         setPhase('question');
@@ -75,37 +98,61 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       const me = leaderboard.find(p => p.id === playerId);
       if (me) { setFinalRank(me.rank); setScore(me.score); }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.status, session?.currentQ]);
 
+  // ── Teacher advances question (only when not self-pacing) ──
   useEffect(() => {
-    if (!sessionId || !playerId) return;
-    const handle = () => {
-      if (document.hidden && sessionId && playerId) reportTabSwitch(sessionId, playerId);
-    };
-    document.addEventListener('visibilitychange', handle);
-    return () => document.removeEventListener('visibilitychange', handle);
-  }, [sessionId, playerId]);
-
-  useEffect(() => {
+    if (selfPaced) return;
     if (session?.status === 'active') {
       setSelected(null);
       setAnswerTime(null);
       setQuestionStartTime(Date.now());
       setPhase('question');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.currentQ]);
 
+  // ── Tab visibility anti-cheat ──
+  useEffect(() => {
+    if (!sessionId || !playerId) return;
+    const handle = () => {
+      if (document.hidden && sessionId && playerId) {
+        const qIdx = selfPaced ? localQIdx : (session?.currentQ ?? 0);
+        reportTabSwitch(sessionId, playerId, qIdx);
+      }
+    };
+    document.addEventListener('visibilitychange', handle);
+    return () => document.removeEventListener('visibilitychange', handle);
+  }, [sessionId, playerId, selfPaced, localQIdx, session?.currentQ]);
+
+  // ── Self-paced start ──
+  function handleStartSelfPaced() {
+    setSelfPaced(true);
+    setLocalQIdx(0);
+    setSelected(null);
+    setAnswerTime(null);
+    setQuestionStartTime(Date.now());
+    setPhase('question');
+  }
+
+  // ── Answer handler (both modes) ──
   const handleAnswer = useCallback(async (index: number) => {
-    if (!sessionId || !playerId || !session?.question || selected !== null) return;
+    if (!sessionId || !playerId || selected !== null) return;
+
+    const q: Question | null = selfPaced
+      ? (localQuestions[localQIdx] || null)
+      : (session?.question as Question | null) || null;
+    if (!q) return;
+
     const timeMs = Date.now() - questionStartTime;
     setSelected(index);
     setAnswerTime(timeMs);
     setPhase('reveal');
 
-    const q: Question = session.question;
     const correctIndex = parseInt(q.answer, 10);
     const isCorrect = index === correctIndex;
-    const timeLimit = session.settings?.timeLimit || 20;
+    const timeLimit = session?.settings?.timeLimit || 20;
     const timeBonus = isCorrect ? calcTimeBonus(timeMs, timeLimit * 1000) : 0;
     const basePoints = q.points || 100;
     const scored = isCorrect ? basePoints + timeBonus : 0;
@@ -113,8 +160,24 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     if (isCorrect) { setScore(s => s + scored); setStreak(s => s + 1); }
     else { setStreak(0); }
 
-    await submitAnswer(sessionId, playerId, session.currentQ, index, isCorrect, scored, timeMs);
-  }, [sessionId, playerId, session, selected, questionStartTime]);
+    const qIdx = selfPaced ? localQIdx : (session?.currentQ || 0);
+    await submitAnswer(sessionId, playerId, qIdx, index, isCorrect, scored, timeMs);
+  }, [sessionId, playerId, session, selected, questionStartTime, selfPaced, localQuestions, localQIdx]);
+
+  // ── Self-paced: advance to next question ──
+  function handleNextSelfPaced() {
+    const next = localQIdx + 1;
+    if (next >= localQuestions.length) {
+      // All questions done
+      setPhase('ended');
+      return;
+    }
+    setLocalQIdx(next);
+    setSelected(null);
+    setAnswerTime(null);
+    setQuestionStartTime(Date.now());
+    setPhase('question');
+  }
 
   function handleTimerEnd() {
     if (selected === null) handleAnswer(-1);
@@ -156,7 +219,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               >
                 {finalRank === 1 ? '🏆' : '🎉'}
               </div>
-              <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>Game Over!</h2>
+              <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
+                {selfPaced ? 'Quiz Complete!' : 'Game Over!'}
+              </h2>
               <p className="text-[15px] mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Final score</p>
               <p
                 className="font-mono text-6xl font-bold mb-3 animate-scoreSlide"
@@ -164,6 +229,14 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               >
                 {score.toLocaleString()}
               </p>
+              {selfPaced && (
+                <p className="text-[14px] mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {localQuestions.filter((_, i) => {
+                    // We can't easily check after-the-fact, just show what was answered
+                    return true;
+                  }).length} questions completed
+                </p>
+              )}
               {finalRank && (
                 <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.45)' }}>
                   You finished{' '}
@@ -191,16 +264,19 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
   // ── LOBBY ──
   if (phase === 'lobby') {
+    const ready = localQuestions.length > 0;
     return (
       <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
-        <div className="text-center animate-fadeUp">
-          <div className="text-7xl mb-5 animate-float">⏳</div>
+        <div className="text-center animate-fadeUp max-w-sm w-full">
+          <div className="text-7xl mb-5 animate-float">{questionsLoading ? '⏳' : '🎮'}</div>
           <h2 className="font-display text-4xl mb-2" style={{ color: '#fff' }}>
-            Waiting for teacher…
+            {questionsLoading ? 'Loading quiz…' : ready ? 'Ready to play!' : 'Waiting for teacher…'}
           </h2>
           <p className="text-[15px] mb-5" style={{ color: 'rgba(255,255,255,0.4)' }}>Room code</p>
-          <div className="code-display-dark mb-8">{code}</div>
-          <div className="flex flex-col items-center gap-3">
+          <div className="code-display-dark mb-6">{code}</div>
+
+          {/* Player info */}
+          <div className="flex flex-col items-center gap-3 mb-8">
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center"
               style={{ background: 'rgba(16,185,129,0.12)', border: '1.5px solid rgba(16,185,129,0.3)' }}
@@ -213,15 +289,44 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               {players.length} player{players.length !== 1 ? 's' : ''} joined
             </p>
           </div>
+
+          {/* Start button */}
+          {ready && (
+            <button
+              className="btn-glass btn-glass-green"
+              style={{ width: '100%', maxWidth: 280, fontSize: 17, padding: '16px 24px' }}
+              onClick={handleStartSelfPaced}
+            >
+              🚀 Start Quiz ({localQuestions.length} questions)
+            </button>
+          )}
+
+          {questionsLoading && (
+            <div className="flex justify-center gap-1.5 mt-4">
+              {[0,1,2].map(i => (
+                <div key={i} className="w-2 h-2 rounded-full animate-pulseDot" style={{ background: '#10b981', animationDelay: `${i * 0.2}s` }} />
+              ))}
+            </div>
+          )}
+
+          {!questionsLoading && !ready && (
+            <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              The teacher will start the quiz shortly
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
-  const q: Question | null = session?.question || null;
-  const timeLimit = session?.settings?.timeLimit || 20;
-
   // ── QUESTION / REVEAL ──
+  const q: Question | null = selfPaced
+    ? (localQuestions[localQIdx] || null)
+    : ((session?.question as Question) || null);
+  const timeLimit = session?.settings?.timeLimit || 20;
+  const currentQNum = selfPaced ? localQIdx : (session?.currentQ || 0);
+  const totalQ = selfPaced ? localQuestions.length : (session?.totalQ || localQuestions.length);
+
   return (
     <div className="play-screen flex flex-col min-h-screen">
       {/* Top bar */}
@@ -252,7 +357,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         {q && (
           <>
             <p className="text-xs font-mono tracking-widest uppercase mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              Question {(session?.currentQ || 0) + 1}
+              Question {currentQNum + 1}{totalQ > 0 ? ` / ${totalQ}` : ''}
             </p>
             <QuestionCard
               question={q}
@@ -261,6 +366,17 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               onAnswer={handleAnswer}
               disabled={phase === 'reveal'}
             />
+
+            {/* Self-paced: next button after reveal */}
+            {phase === 'reveal' && selfPaced && (
+              <button
+                className="btn-glass btn-glass-green mt-6"
+                style={{ minWidth: 200, fontSize: 16 }}
+                onClick={handleNextSelfPaced}
+              >
+                {localQIdx + 1 >= localQuestions.length ? '🏁 See Results' : 'Next Question →'}
+              </button>
+            )}
           </>
         )}
 
