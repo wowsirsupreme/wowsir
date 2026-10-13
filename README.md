@@ -1,6 +1,6 @@
 # WOW Sir — Assessment Platform
 
-> A production-quality quiz & assessment platform built for DPS International Ghana — Grade 7 Computer Science.
+> A production-quality quiz & assessment platform built for DPS International Ghana — Computing, Computer Science(0478) and Design and Technology(0445).
 
 **Live demo flow:** Students join via session code on any device → teacher hosts a live quiz → real-time leaderboard → results exported to CSV.
 
