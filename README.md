@@ -189,4 +189,4 @@ src/
 
 ## License
 
-Built for DPSI Ghana · Grade 7 Computer Science · 2024
+Built for DPS International Ghana — Computing, Computer Science(0478) and Design and Technology(0445). · 2024
