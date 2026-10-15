@@ -1369,7 +1369,7 @@ function BankImportModal({ onClose, onImport }: {
   useEffect(() => {
     if (!topicKey) return;
     setLoading(true);
-    getQuestionsByTopic(topicKey).then(qs => { setBankQs(qs); setLoading(false); });
+    getQuestionsByTopic(topicKey, ['approved', 'pending']).then(qs => { setBankQs(qs); setLoading(false); });
   }, [topicKey]);
 
   function toggle(id: string) {
@@ -1410,7 +1410,7 @@ function BankImportModal({ onClose, onImport }: {
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
           {loading && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>Loading…</p>}
-          {!loading && bankQs.length === 0 && topicKey && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No approved questions for this topic.</p>}
+          {!loading && bankQs.length === 0 && topicKey && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No questions found for this topic.</p>}
           {!loading && bankQs.map(q => {
             const checked = selected.has(q.id);
             return (

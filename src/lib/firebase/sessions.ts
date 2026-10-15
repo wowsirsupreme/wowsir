@@ -221,24 +221,41 @@ export async function saveSessionResult(result: SessionResult): Promise<void> {
 
 export async function getResultsByTeacher(teacherId: string): Promise<SessionResult[]> {
   const { collection, query, where, getDocs, orderBy } = await import('firebase/firestore');
-  const q = query(
-    collection(fs(), 'results'),
-    where('teacherId', '==', teacherId),
-    orderBy('completedAt', 'desc')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => d.data() as SessionResult);
+  try {
+    const q = query(
+      collection(fs(), 'results'),
+      where('teacherId', '==', teacherId),
+      orderBy('completedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as SessionResult);
+  } catch {
+    // Fallback: fetch without ordering (composite index may not exist yet)
+    const q = query(collection(fs(), 'results'), where('teacherId', '==', teacherId));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => d.data() as SessionResult)
+      .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+  }
 }
 
 export async function getResultsByQuiz(quizId: string): Promise<SessionResult[]> {
   const { collection, query, where, getDocs, orderBy } = await import('firebase/firestore');
-  const q = query(
-    collection(fs(), 'results'),
-    where('quizId', '==', quizId),
-    orderBy('completedAt', 'desc')
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => d.data() as SessionResult);
+  try {
+    const q = query(
+      collection(fs(), 'results'),
+      where('quizId', '==', quizId),
+      orderBy('completedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => d.data() as SessionResult);
+  } catch {
+    const q = query(collection(fs(), 'results'), where('quizId', '==', quizId));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(d => d.data() as SessionResult)
+      .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+  }
 }
 
 // ── Teacher session index ─────────────────────────────────────────────────────
