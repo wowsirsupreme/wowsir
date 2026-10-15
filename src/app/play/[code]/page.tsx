@@ -19,6 +19,7 @@ import {
 import { getQuiz } from '@/lib/firebase/quizzes';
 import { calcTimeBonus } from '@/lib/utils';
 import type { Question } from '@/types/question';
+import type { SessionPlayer } from '@/types/session';
 
 type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'next-round';
 
@@ -44,6 +45,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [error, setError] = useState('');
   const [finalRank, setFinalRank] = useState<number | null>(null);
   const [quizId, setQuizId] = useState<string | null>(null);
+  // Per-question result tracking for review screen
+  const [questionResults, setQuestionResults] = useState<
+    Array<{ question: Question; selected: number; correct: boolean }>
+  >([]);
   // Round-based progression through the full question bank
   const [fullBank, setFullBank] = useState<Question[]>([]);
   const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
@@ -180,6 +185,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     if (isCorrect) { setScore(s => s + scored); setStreak(s => s + 1); setNumCorrect(n => n + 1); }
     else { setStreak(0); }
     setNumAnswered(n => n + 1);
+    setQuestionResults(prev => [...prev, { question: q, selected: index, correct: isCorrect }]);
 
     const qIdx = selfPaced ? localQIdx : (session?.currentQ || 0);
     await submitAnswer(sessionId, playerId, qIdx, index, isCorrect, scored, timeMs);
@@ -248,122 +254,29 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
   // ── ENDED / ERROR ──
   if (phase === 'ended' || error) {
-    return (
-      <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
-        <div className="text-center animate-slideUp">
-          {error ? (
-            <>
-              <div className="text-7xl mb-5">😬</div>
-              <h2 className="font-display text-4xl mb-3" style={{ color: '#fff' }}>Oops!</h2>
-              <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>{error}</p>
-            </>
-          ) : (
-            <>
-              {(() => {
-                const isPerfect = numAnswered > 0 && numCorrect === numAnswered;
-                return (
-                  <>
-                    <div
-                      className="text-7xl mb-5 animate-crownPop"
-                      style={{ filter: `drop-shadow(0 0 24px ${isPerfect ? 'rgba(201,168,76,1)' : finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})` }}
-                    >
-                      {isPerfect ? '⭐' : finalRank === 1 ? '🏆' : '🎉'}
-                    </div>
-                    <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
-                      {isPerfect ? 'Perfect Score!' : selfPaced ? 'Quiz Complete!' : 'Game Over!'}
-                    </h2>
-                    {isPerfect && (
-                      <p className="text-[15px] mb-3 font-semibold" style={{ color: '#fcd34d', textShadow: '0 0 12px rgba(201,168,76,0.6)' }}>
-                        {numCorrect}/{numAnswered} correct — flawless! 🌟
-                      </p>
-                    )}
-                  </>
-                );
-              })()}
-              <p className="text-[15px] mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Final score</p>
-              <p
-                className="font-mono text-6xl font-bold mb-3 animate-scoreSlide"
-                style={{ color: '#34d399', textShadow: '0 0 24px rgba(52,211,153,0.6)' }}
-              >
-                {score.toLocaleString()}
-              </p>
-              {selfPaced && (
-                <p className="text-[14px] mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                  {localQuestions.filter((_, i) => {
-                    // We can't easily check after-the-fact, just show what was answered
-                    return true;
-                  }).length} questions completed
-                </p>
-              )}
-              {finalRank && (
-                <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  You finished{' '}
-                  <span className="font-bold" style={{ color: '#fcd34d' }}>#{finalRank}</span>
-                </p>
-              )}
-              {leaderboard.length > 0 && (
-                <div className="mb-8 w-full max-w-sm">
-                  <Leaderboard players={leaderboard} currentPlayerId={playerId || undefined} compact />
-                </div>
-              )}
-            </>
-          )}
-          {/* Post-quiz navigation */}
-          <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
-            {/* Retake — restart from the beginning of the full bank */}
-            {selfPaced && fullBank.length > 0 && (
-              <button
-                onClick={() => {
-                  setScore(0); setStreak(0); setNumCorrect(0); setNumAnswered(0);
-                  setSelected(null); setFinalRank(null); setRoundNum(1);
-                  setUsedIndices(new Set());
-                  setLocalQuestions(fullBank);
-                  setLocalQIdx(0); setPhase('question');
-                }}
-                className="btn-glass btn-glass-green"
-                style={{ width: '100%', fontSize: 16 }}
-              >
-                🔄 Retake from Start ({fullBank.length} questions)
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/study')}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 14,
-                background: 'rgba(6,182,212,0.1)',
-                border: '1.5px solid rgba(6,182,212,0.25)',
-                color: '#22d3ee', fontWeight: 600, fontSize: 15,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              📚 Study Resources
-            </button>
-            <button
-              onClick={() => router.push('/practice')}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 14,
-                background: 'rgba(139,92,246,0.1)',
-                border: '1.5px solid rgba(139,92,246,0.25)',
-                color: '#a78bfa', fontWeight: 600, fontSize: 15,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              🎯 Practice Mode
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              style={{
-                width: '100%', padding: '12px',
-                color: 'rgba(255,255,255,0.3)', fontWeight: 500, fontSize: 14,
-                cursor: 'pointer', background: 'none', border: 'none',
-              }}
-            >
-              ← Back to Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <EndedScreen
+      error={error}
+      score={score}
+      numCorrect={numCorrect}
+      numAnswered={numAnswered}
+      finalRank={finalRank}
+      selfPaced={selfPaced}
+      fullBank={fullBank}
+      questionResults={questionResults}
+      leaderboard={leaderboard}
+      playerId={playerId}
+      onRetake={() => {
+        setScore(0); setStreak(0); setNumCorrect(0); setNumAnswered(0);
+        setSelected(null); setFinalRank(null); setRoundNum(1);
+        setUsedIndices(new Set()); setQuestionResults([]);
+        setLocalQuestions(fullBank); setLocalQIdx(0); setPhase('question');
+      }}
+      onStudy={() => router.push('/study')}
+      onPractice={() => router.push('/practice')}
+      onBattle={() => router.push(`/battle/${code}?name=${encodeURIComponent(playerName)}`)}
+      onHotseat={() => router.push('/hotseat')}
+      onHome={() => router.push('/')}
+    />;
   }
 
   // ── NEXT ROUND PROMPT ──
@@ -675,6 +588,239 @@ function LobbyView({
             The teacher will start the quiz shortly
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Ended Screen Component ────────────────────────────────────────────────────
+
+function EndedScreen({
+  error, score, numCorrect, numAnswered, finalRank, selfPaced,
+  fullBank, questionResults, leaderboard, playerId,
+  onRetake, onStudy, onPractice, onBattle, onHotseat, onHome,
+}: {
+  error: string;
+  score: number; numCorrect: number; numAnswered: number;
+  finalRank: number | null; selfPaced: boolean;
+  fullBank: Question[];
+  questionResults: Array<{ question: Question; selected: number; correct: boolean }>;
+  leaderboard: (SessionPlayer & { rank: number })[];
+  playerId: string | null;
+  onRetake: () => void; onStudy: () => void; onPractice: () => void;
+  onBattle: () => void; onHotseat: () => void; onHome: () => void;
+}) {
+  const [tab, setTab] = useState<'results' | 'leaderboard' | 'review'>('results');
+
+  if (error) {
+    return (
+      <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
+        <div className="text-7xl mb-5">😬</div>
+        <h2 className="font-display text-4xl mb-3" style={{ color: '#fff' }}>Oops!</h2>
+        <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>{error}</p>
+        <button onClick={onHome} style={{ color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15 }}>← Back to Home</button>
+      </div>
+    );
+  }
+
+  const isPerfect = numAnswered > 0 && numCorrect === numAnswered;
+  const numWrong = numAnswered - numCorrect;
+
+  return (
+    <div className="play-screen flex flex-col min-h-screen">
+
+      {/* ── Hero section ── */}
+      <div className="flex flex-col items-center pt-10 pb-6 px-4 text-center animate-slideUp">
+        <div
+          className="text-7xl mb-4 animate-crownPop"
+          style={{ filter: `drop-shadow(0 0 24px ${isPerfect ? 'rgba(201,168,76,1)' : finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})` }}
+        >
+          {isPerfect ? '⭐' : finalRank === 1 ? '🏆' : '🎉'}
+        </div>
+        <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
+          {isPerfect ? 'Perfect Score!' : selfPaced ? 'Quiz Complete!' : 'Game Over!'}
+        </h2>
+        {isPerfect && (
+          <p className="text-[15px] mb-2 font-semibold" style={{ color: '#fcd34d', textShadow: '0 0 12px rgba(201,168,76,0.6)' }}>
+            {numCorrect}/{numAnswered} correct — flawless! 🌟
+          </p>
+        )}
+        <p className="font-mono text-5xl font-bold mb-1 animate-scoreSlide" style={{ color: '#34d399', textShadow: '0 0 24px rgba(52,211,153,0.6)' }}>
+          {score.toLocaleString()}
+        </p>
+        <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>points</p>
+        {finalRank && (
+          <p className="text-[15px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            Rank <span className="font-bold" style={{ color: '#fcd34d' }}>#{finalRank}</span>
+          </p>
+        )}
+
+        {/* Quick stats row */}
+        <div className="flex gap-4 mt-5">
+          {[
+            { label: 'Correct', value: numCorrect, color: '#34d399' },
+            { label: 'Wrong', value: numWrong, color: '#f87171' },
+            { label: 'Total', value: numAnswered, color: 'rgba(255,255,255,0.5)' },
+          ].map(s => (
+            <div key={s.label} className="text-center px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="font-mono text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tab bar ── */}
+      <div className="flex gap-1 mx-4 mb-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        {([
+          { id: 'results', label: '📊 Results' },
+          { id: 'leaderboard', label: '🏆 Board' },
+          { id: 'review', label: '📝 Review' },
+        ] as const).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: tab === t.id ? 'rgba(52,211,153,0.15)' : 'transparent',
+              color: tab === t.id ? '#34d399' : 'rgba(255,255,255,0.4)',
+              border: tab === t.id ? '1px solid rgba(52,211,153,0.3)' : '1px solid transparent',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tab content ── */}
+      <div className="flex-1 px-4 py-4 overflow-y-auto">
+
+        {/* RESULTS TAB */}
+        {tab === 'results' && (
+          <div className="flex flex-col gap-3 max-w-sm mx-auto animate-slideUp">
+
+            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: '0.07em' }}>CONTINUE LEARNING</p>
+
+            {/* Nav cards grid */}
+            {[
+              { emoji: '📖', label: 'Flashcards',  sub: 'Study key terms',        color: '#22d3ee',  bg: 'rgba(6,182,212,0.1)',   border: 'rgba(6,182,212,0.25)',   action: onStudy },
+              { emoji: '⚔️', label: 'Battle Mode',  sub: 'Challenge classmates',   color: '#f87171',  bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)',   action: onBattle },
+              { emoji: '🔥', label: 'Hot Seat',     sub: 'Answer live questions',   color: '#fb923c',  bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)',  action: onHotseat },
+              { emoji: '📝', label: 'Read Notes',   sub: 'Review the topic',        color: '#a78bfa',  bg: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.25)', action: onStudy },
+              { emoji: '🔑', label: 'Keywords',     sub: 'Glance key vocabulary',   color: '#fcd34d',  bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)', action: onStudy },
+              { emoji: '🎯', label: 'Practice',     sub: 'Drill more questions',    color: '#34d399',  bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)', action: onPractice },
+            ].map(c => (
+              <button
+                key={c.label}
+                onClick={c.action}
+                className="flex items-center gap-4 w-full text-left rounded-2xl px-4 py-3.5 transition-all"
+                style={{ background: c.bg, border: `1.5px solid ${c.border}` }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                <span style={{ fontSize: 28 }}>{c.emoji}</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-[15px]" style={{ color: c.color }}>{c.label}</p>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{c.sub}</p>
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 18 }}>›</span>
+              </button>
+            ))}
+
+            {/* Retake */}
+            {selfPaced && fullBank.length > 0 && (
+              <button
+                onClick={onRetake}
+                className="flex items-center gap-4 w-full text-left rounded-2xl px-4 py-3.5 transition-all"
+                style={{ background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.2)' }}
+              >
+                <span style={{ fontSize: 28 }}>🔄</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-[15px]" style={{ color: '#34d399' }}>Retake Quiz</p>
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{fullBank.length} questions from the start</p>
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 18 }}>›</span>
+              </button>
+            )}
+
+            <button onClick={onHome} style={{ color: 'rgba(255,255,255,0.25)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: '8px', textAlign: 'center' }}>
+              ← Back to Home
+            </button>
+          </div>
+        )}
+
+        {/* LEADERBOARD TAB */}
+        {tab === 'leaderboard' && (
+          <div className="max-w-sm mx-auto animate-slideUp">
+            {leaderboard.length > 0 ? (
+              <Leaderboard players={leaderboard} currentPlayerId={playerId || undefined} compact />
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-5xl mb-3">🏆</div>
+                <p style={{ color: 'rgba(255,255,255,0.3)' }}>No leaderboard data yet</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* REVIEW TAB */}
+        {tab === 'review' && (
+          <div className="flex flex-col gap-3 max-w-lg mx-auto animate-slideUp">
+            {questionResults.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-5xl mb-3">📝</div>
+                <p style={{ color: 'rgba(255,255,255,0.3)' }}>No questions to review</p>
+              </div>
+            ) : (
+              questionResults.map((r, i) => {
+                const correctIndex = parseInt(r.question.answer, 10);
+                const opts = r.question.options || [];
+                return (
+                  <div
+                    key={i}
+                    className="rounded-2xl p-4"
+                    style={{
+                      background: r.correct ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)',
+                      border: `1.5px solid ${r.correct ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}`,
+                    }}
+                  >
+                    <div className="flex items-start gap-2 mb-3">
+                      <span style={{ fontSize: 20, lineHeight: 1, marginTop: 2 }}>{r.correct ? '✅' : '❌'}</span>
+                      <p className="text-[15px] font-medium leading-snug" style={{ color: '#fff' }}>
+                        <span className="text-xs font-mono mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Q{i + 1}</span>
+                        {r.question.text}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1.5 pl-7">
+                      {opts.map((opt, oi) => {
+                        const isCorrectOpt = oi === correctIndex;
+                        const isSelected = oi === r.selected;
+                        let bg = 'rgba(255,255,255,0.04)';
+                        let border = 'rgba(255,255,255,0.08)';
+                        let color = 'rgba(255,255,255,0.55)';
+                        if (isCorrectOpt) { bg = 'rgba(16,185,129,0.12)'; border = 'rgba(52,211,153,0.35)'; color = '#34d399'; }
+                        if (isSelected && !isCorrectOpt) { bg = 'rgba(239,68,68,0.12)'; border = 'rgba(248,113,113,0.35)'; color = '#f87171'; }
+                        return (
+                          <div
+                            key={oi}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm"
+                            style={{ background: bg, border: `1px solid ${border}`, color }}
+                          >
+                            <span style={{ fontSize: 12, opacity: 0.6 }}>{String.fromCharCode(65 + oi)}.</span>
+                            <span className="flex-1">{opt}</span>
+                            {isCorrectOpt && <span style={{ fontSize: 14 }}>✓</span>}
+                            {isSelected && !isCorrectOpt && <span style={{ fontSize: 14 }}>✗</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
