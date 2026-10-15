@@ -388,7 +388,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
   // ── Ch 10: Python Lists & Strings ────────────────────────────────
   {
     id: 'gr8-ch10-python-lists-q001',
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'In Python, what is the index of the FIRST element in a list?',
     options: ['1', '0', '-1', '2'],
@@ -401,7 +401,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr8-ch10-python-lists-q002',
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Which method adds an item to the END of a Python list?',
     options: ['list.add()', 'list.insert()', 'list.append()', 'list.push()'],
@@ -436,7 +436,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
   // ── Ch 12: Python Projects ───────────────────────────────────────
   {
     id: 'gr8-ch12-python-proj-q001',
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'When writing a Python program, what does it mean to "debug" code?',
     options: [
@@ -505,7 +505,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 2: Latest Technologies (extra) ────────────────────────────
   {
-    id: 'gr8-ch2-cybersafety-q004', topicKey: 'gr8-ch2-cybersafety', type: 'mcq',
+    id: 'gr8-ch2-cybersafety-q004', topicKey: 'gr8-ch2-tech', type: 'mcq',
     text: 'What is the Internet of Things (IoT)?',
     options: ['A new social media platform','A network of everyday physical devices (appliances, vehicles, wearables) connected to the internet and able to collect and exchange data','A type of fibre-optic cable','A programming language for web development'],
     answer: '1', explanation: 'IoT refers to billions of "smart" devices — thermostats, watches, fridges, cars — that connect to the internet to share data and be controlled remotely.',
@@ -513,7 +513,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch2-cybersafety-q005', topicKey: 'gr8-ch2-cybersafety', type: 'mcq',
+    id: 'gr8-ch2-cybersafety-q005', topicKey: 'gr8-ch2-tech', type: 'mcq',
     text: 'What is cloud computing?',
     options: ['Computing done during cloudy weather','Delivering computing services (storage, software, servers) over the internet instead of on a local machine','A type of weather-forecasting AI','Computing using atmospheric data'],
     answer: '1', explanation: 'Cloud computing means using remote servers on the internet for storage, processing, and software rather than your own PC — e.g. Google Drive, Netflix, Office 365.',
@@ -521,7 +521,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch2-cybersafety-q006', topicKey: 'gr8-ch2-cybersafety', type: 'mcq',
+    id: 'gr8-ch2-cybersafety-q006', topicKey: 'gr8-ch2-tech', type: 'mcq',
     text: 'What is augmented reality (AR)?',
     options: ['A completely artificial virtual world','Technology that overlays digital content (images, data) onto the real world, viewed through a camera or headset','A type of 3D animation software','High-resolution photography'],
     answer: '1', explanation: 'AR adds digital content on top of the real world — like Snapchat filters, Pokemon GO, or IKEA\'s furniture placement app.',
@@ -529,7 +529,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch2-cybersafety-q007', topicKey: 'gr8-ch2-cybersafety', type: 'truefalse',
+    id: 'gr8-ch2-cybersafety-q007', topicKey: 'gr8-ch2-tech', type: 'truefalse',
     text: '5G is the fifth generation of mobile network technology and offers much faster speeds than 4G.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. 5G delivers speeds up to 100× faster than 4G with lower latency, enabling IoT, autonomous vehicles, and real-time streaming.',
@@ -537,7 +537,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch2-cybersafety-q008', topicKey: 'gr8-ch2-cybersafety', type: 'mcq',
+    id: 'gr8-ch2-cybersafety-q008', topicKey: 'gr8-ch2-tech', type: 'mcq',
     text: 'What is blockchain technology?',
     options: ['A method for blocking spam emails','A distributed, tamper-proof digital ledger that records transactions across many computers','A type of social media network','A cloud storage system'],
     answer: '1', explanation: 'Blockchain stores records in "blocks" chained together chronologically. Copies exist on many computers, making it nearly impossible to alter records secretly.',
@@ -545,7 +545,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch2-cybersafety-q009', topicKey: 'gr8-ch2-cybersafety', type: 'mcq',
+    id: 'gr8-ch2-cybersafety-q009', topicKey: 'gr8-ch2-tech', type: 'mcq',
     text: 'What is virtual reality (VR)?',
     options: ['An improved version of the internet','A computer-generated, fully immersive digital environment experienced through a headset that replaces the real world','A type of video-conferencing software','A 3D drawing application'],
     answer: '1', explanation: 'VR creates a fully immersive artificial environment. Wearing a VR headset blocks out the real world and replaces it with a digital one.',
@@ -555,7 +555,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 3: Access Databases (extra) ───────────────────────────────
   {
-    id: 'gr8-ch3-excel-adv-q003', topicKey: 'gr8-ch3-excel-adv', type: 'mcq',
+    id: 'gr8-ch3-excel-adv-q003', topicKey: 'gr8-ch3-access1', type: 'mcq',
     text: 'What is a database?',
     options: ['A collection of web pages','An organised collection of structured data, usually stored electronically and managed by a database management system','A type of spreadsheet chart','A programming language'],
     answer: '1', explanation: 'A database is an organised collection of data. A Database Management System (DBMS) like Microsoft Access lets you store, query, and manage the data.',
@@ -563,7 +563,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch3-excel-adv-q004', topicKey: 'gr8-ch3-excel-adv', type: 'mcq',
+    id: 'gr8-ch3-excel-adv-q004', topicKey: 'gr8-ch4-access2', type: 'mcq',
     text: 'In a relational database, what is a primary key?',
     options: ['The first column in a table','A field whose value uniquely identifies each record in a table','The password to open the database','A key on the keyboard used to access the database'],
     answer: '1', explanation: 'A primary key uniquely identifies each record. No two records can have the same primary key value and it cannot be null.',
@@ -571,7 +571,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch3-excel-adv-q005', topicKey: 'gr8-ch3-excel-adv', type: 'mcq',
+    id: 'gr8-ch3-excel-adv-q005', topicKey: 'gr8-ch4-access2', type: 'mcq',
     text: 'What is a query in a database?',
     options: ['A form used to enter data','A report printed from the database','A request to retrieve, add, update, or delete specific data based on criteria','A type of data validation rule'],
     answer: '2', explanation: 'A query filters and retrieves data from one or more tables based on specified conditions. In Access, queries can be designed visually or written in SQL.',
@@ -579,7 +579,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch3-excel-adv-q006', topicKey: 'gr8-ch3-excel-adv', type: 'truefalse',
+    id: 'gr8-ch3-excel-adv-q006', topicKey: 'gr8-ch4-access2', type: 'truefalse',
     text: 'In Microsoft Access, a Table stores the data, and a Form is used to enter and view that data more easily.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Tables hold the raw data. Forms provide a user-friendly interface for entering, editing, and viewing one record at a time.',
@@ -587,7 +587,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch3-excel-adv-q007', topicKey: 'gr8-ch3-excel-adv', type: 'mcq',
+    id: 'gr8-ch3-excel-adv-q007', topicKey: 'gr8-ch3-access1', type: 'mcq',
     text: 'What does the data type "Text/Short Text" in Access store?',
     options: ['Numbers only','Dates and times','Alphanumeric characters (letters, numbers, symbols) up to 255 characters','Images and files'],
     answer: '2', explanation: 'Text/Short Text stores up to 255 alphanumeric characters — used for names, addresses, codes, and other text values.',
@@ -595,7 +595,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch3-excel-adv-q008', topicKey: 'gr8-ch3-excel-adv', type: 'mcq',
+    id: 'gr8-ch3-excel-adv-q008', topicKey: 'gr8-ch3-access1', type: 'mcq',
     text: 'What is a validation rule in a database?',
     options: ['A password protecting the database','A rule that restricts the values that can be entered into a field to maintain data accuracy and consistency','A way to sort records','A backup setting'],
     answer: '1', explanation: 'Validation rules define constraints on data entry — e.g. a number must be between 1 and 100, or a date must not be in the future.',
@@ -605,7 +605,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 4: Networks (extra) ────────────────────────────────────────
   {
-    id: 'gr8-ch4-networks-q004', topicKey: 'gr8-ch4-networks', type: 'mcq',
+    id: 'gr8-ch4-networks-q004', topicKey: 'gr8-ch6-networks', type: 'mcq',
     text: 'What is the difference between a LAN and a WAN?',
     options: ['LAN is wireless, WAN is wired','LAN covers a small local area (e.g. school or home); WAN covers a large geographic area (e.g. the internet)','LAN uses fibre; WAN uses copper','LAN is faster than WAN because LAN is newer technology'],
     answer: '1', explanation: 'LAN (Local Area Network) connects devices in one building or site. WAN (Wide Area Network) connects multiple sites across large distances.',
@@ -613,7 +613,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch4-networks-q005', topicKey: 'gr8-ch4-networks', type: 'mcq',
+    id: 'gr8-ch4-networks-q005', topicKey: 'gr8-ch6-networks', type: 'mcq',
     text: 'What is an IP address?',
     options: ['A physical port on a router','A unique numerical label assigned to each device on a network used to identify and locate it','The username of a network administrator','The speed of a network connection'],
     answer: '1', explanation: 'An IP (Internet Protocol) address uniquely identifies a device on a network. IPv4 addresses look like 192.168.1.1.',
@@ -621,7 +621,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch4-networks-q006', topicKey: 'gr8-ch4-networks', type: 'mcq',
+    id: 'gr8-ch4-networks-q006', topicKey: 'gr8-ch6-networks', type: 'mcq',
     text: 'What does a router do in a network?',
     options: ['Amplifies Wi-Fi signals','Directs network packets between different networks, choosing the best path','Converts digital signals to analogue','Stores all network data'],
     answer: '1', explanation: 'A router forwards data packets between networks and to the internet, selecting the most efficient path for each packet.',
@@ -629,7 +629,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch4-networks-q007', topicKey: 'gr8-ch4-networks', type: 'truefalse',
+    id: 'gr8-ch4-networks-q007', topicKey: 'gr8-ch6-networks', type: 'truefalse',
     text: 'The Internet and the World Wide Web (WWW) are the same thing.',
     options: ['True', 'False'],
     answer: '1', explanation: 'False. The internet is the global network infrastructure. The WWW is a service that runs ON the internet — a collection of web pages accessed via HTTP.',
@@ -637,7 +637,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch4-networks-q008', topicKey: 'gr8-ch4-networks', type: 'mcq',
+    id: 'gr8-ch4-networks-q008', topicKey: 'gr8-ch6-networks', type: 'mcq',
     text: 'What is bandwidth in networking?',
     options: ['The physical width of a network cable','The maximum rate of data transfer across a network connection, usually measured in Mbps or Gbps','The distance a network signal can travel','The number of devices on a network'],
     answer: '1', explanation: 'Bandwidth is the capacity of a network connection — the maximum amount of data that can be transmitted per second.',
@@ -645,7 +645,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch4-networks-q009', topicKey: 'gr8-ch4-networks', type: 'mcq',
+    id: 'gr8-ch4-networks-q009', topicKey: 'gr8-ch6-networks', type: 'mcq',
     text: 'What is a network protocol?',
     options: ['A type of network cable','A set of rules and standards that govern how data is transmitted and received between devices on a network','A hardware device in a network','The physical layout of a network'],
     answer: '1', explanation: 'Protocols define communication rules: format, timing, sequencing, and error control. Examples include TCP/IP, HTTP, FTP, and SMTP.',
@@ -655,7 +655,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 5: DB Forms & Reports (extra) ─────────────────────────────
   {
-    id: 'gr8-ch5-database-q003', topicKey: 'gr8-ch5-database', type: 'mcq',
+    id: 'gr8-ch5-database-q003', topicKey: 'gr8-ch5-access3', type: 'mcq',
     text: 'What is the purpose of a Report in Microsoft Access?',
     options: ['To enter new records','To display and print selected data in a formatted, professional layout','To create a new table','To write database queries'],
     answer: '1', explanation: 'Reports in Access format and present query results or table data for printing or sharing — e.g. invoices, summaries, and mailing lists.',
@@ -663,7 +663,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch5-database-q004', topicKey: 'gr8-ch5-database', type: 'mcq',
+    id: 'gr8-ch5-database-q004', topicKey: 'gr8-ch4-access2', type: 'mcq',
     text: 'What is a foreign key in a relational database?',
     options: ['The primary key of the same table','A field in one table that references the primary key of another table, creating a link between them','A key imported from a different language database','A backup copy of the primary key'],
     answer: '1', explanation: 'A foreign key links two tables. It contains the same values as the primary key of the referenced table, establishing a relationship.',
@@ -671,7 +671,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch5-database-q005', topicKey: 'gr8-ch5-database', type: 'truefalse',
+    id: 'gr8-ch5-database-q005', topicKey: 'gr8-ch5-access3', type: 'truefalse',
     text: 'In Access, a Wizard can be used to quickly create forms and reports without writing code.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Access provides Form Wizard and Report Wizard to guide you through creating them step by step without programming.',
@@ -679,7 +679,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch5-database-q006', topicKey: 'gr8-ch5-database', type: 'mcq',
+    id: 'gr8-ch5-database-q006', topicKey: 'gr8-ch5-access3', type: 'mcq',
     text: 'What does normalisation in database design aim to achieve?',
     options: ['Make all values the same data type','Reduce data redundancy (duplication) and improve data integrity by organising tables and relationships efficiently','Speed up network connections','Encrypt the database data'],
     answer: '1', explanation: 'Normalisation restructures tables to minimise repetition. For example, storing a customer\'s address once rather than in every order record.',
@@ -687,7 +687,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch5-database-q007', topicKey: 'gr8-ch5-database', type: 'mcq',
+    id: 'gr8-ch5-database-q007', topicKey: 'gr8-ch5-access3', type: 'mcq',
     text: 'In an Access query, what does the asterisk (*) in "SELECT * FROM Students" mean?',
     options: ['Multiply all values','Select all records that start with a number','Select all fields (columns) from the Students table','Select the first record only'],
     answer: '2', explanation: 'In SQL and Access, * in SELECT means "all fields". SELECT * FROM Students retrieves every column for every row in Students.',
@@ -697,7 +697,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 6: Google Apps (extra) ─────────────────────────────────────
   {
-    id: 'gr8-ch6-css-q004', topicKey: 'gr8-ch6-css', type: 'mcq',
+    id: 'gr8-ch6-css-q004', topicKey: 'gr8-ch7-google', type: 'mcq',
     text: 'What is Google Drive?',
     options: ['Google\'s web browser','A cloud-based file storage and collaboration service where you can store, share, and edit documents online','Google\'s email service','A video streaming platform'],
     answer: '1', explanation: 'Google Drive provides online storage and hosts Google Docs, Sheets, and Slides — letting multiple users view and edit files simultaneously.',
@@ -705,7 +705,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch6-css-q005', topicKey: 'gr8-ch6-css', type: 'mcq',
+    id: 'gr8-ch6-css-q005', topicKey: 'gr8-ch7-google', type: 'mcq',
     text: 'What is a key advantage of Google Docs over a traditional word processor?',
     options: ['It has more fonts','Real-time collaboration — multiple users can edit the same document simultaneously from different locations','It works without internet','It can print on larger paper'],
     answer: '1', explanation: 'Google Docs autosaves to the cloud and allows multiple people to edit together in real-time, with changes visible immediately to all.',
@@ -713,7 +713,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch6-css-q006', topicKey: 'gr8-ch6-css', type: 'truefalse',
+    id: 'gr8-ch6-css-q006', topicKey: 'gr8-ch7-google', type: 'truefalse',
     text: 'Google Forms can automatically collect responses into a Google Sheets spreadsheet.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. When you link a Google Form to a Google Sheet, every submission is recorded as a new row automatically.',
@@ -721,7 +721,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch6-css-q007', topicKey: 'gr8-ch6-css', type: 'mcq',
+    id: 'gr8-ch6-css-q007', topicKey: 'gr8-ch7-google', type: 'mcq',
     text: 'What does "sharing a file with view only" mean in Google Drive?',
     options: ['The recipient can edit the file','The recipient can delete the file','The recipient can see the file but cannot make changes to it','The file is publicly searchable'],
     answer: '2', explanation: 'View only means recipients can open and read the file but cannot edit, comment, or delete anything.',
@@ -729,7 +729,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch6-css-q008', topicKey: 'gr8-ch6-css', type: 'mcq',
+    id: 'gr8-ch6-css-q008', topicKey: 'gr8-ch7-google', type: 'mcq',
     text: 'What is the purpose of Google Classroom?',
     options: ['A social media platform for students','An online learning management system where teachers can distribute assignments, give feedback, and communicate with students','A video game for learning','A programming environment'],
     answer: '1', explanation: 'Google Classroom is an LMS (Learning Management System) that streamlines assigning work, collecting submissions, grading, and class communication.',
@@ -739,7 +739,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 7: Malware & HTML Tables (extra) ──────────────────────────
   {
-    id: 'gr8-ch7-python-sel-q003', topicKey: 'gr8-ch7-python-sel', type: 'mcq',
+    id: 'gr8-ch7-python-sel-q003', topicKey: 'gr8-ch8-malware', type: 'mcq',
     text: 'What is ransomware?',
     options: ['Software that speeds up your computer','Malicious software that encrypts a victim\'s files and demands a ransom payment for the decryption key','A type of spam email filter','An antivirus program'],
     answer: '1', explanation: 'Ransomware infects a computer, encrypts files to make them inaccessible, then demands payment (ransom) for the decryption key.',
@@ -747,7 +747,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch7-python-sel-q004', topicKey: 'gr8-ch7-python-sel', type: 'mcq',
+    id: 'gr8-ch7-python-sel-q004', topicKey: 'gr8-ch8-malware', type: 'mcq',
     text: 'What is a Trojan horse in cybersecurity?',
     options: ['A firewall component','A virus that attacks Greek websites','Malware disguised as legitimate software that secretly performs harmful actions when installed','A strong encryption algorithm'],
     answer: '2', explanation: 'A Trojan appears to be useful software but secretly contains malicious code that activates once installed — like the mythological wooden horse.',
@@ -755,7 +755,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch7-python-sel-q005', topicKey: 'gr8-ch7-python-sel', type: 'mcq',
+    id: 'gr8-ch7-python-sel-q005', topicKey: 'gr8-ch8-malware', type: 'mcq',
     text: 'What is a firewall?',
     options: ['Physical fireproof wall in a data centre','A security system that monitors and controls incoming and outgoing network traffic based on rules','Antivirus software','A method of encrypting email'],
     answer: '1', explanation: 'A firewall filters network traffic — blocking unauthorised access while allowing legitimate communication. It can be hardware, software, or both.',
@@ -763,7 +763,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch7-python-sel-q006', topicKey: 'gr8-ch7-python-sel', type: 'truefalse',
+    id: 'gr8-ch7-python-sel-q006', topicKey: 'gr8-ch8-malware', type: 'truefalse',
     text: 'Installing software from untrusted sources and clicking unknown email links are common ways malware spreads.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Malware commonly spreads through malicious downloads, infected email attachments, drive-by downloads, and phishing links.',
@@ -771,7 +771,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch7-python-sel-q007', topicKey: 'gr8-ch7-python-sel', type: 'mcq',
+    id: 'gr8-ch7-python-sel-q007', topicKey: 'gr8-ch9-html-tables', type: 'mcq',
     text: 'In HTML, what tag creates a table row?',
     options: ['<td>', '<th>', '<tr>', '<table-row>'],
     answer: '2', explanation: '<tr> (table row) wraps one horizontal row of cells. Inside each row, use <td> for data cells or <th> for header cells.',
@@ -781,7 +781,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 8: Social Networking (extra) ──────────────────────────────
   {
-    id: 'gr8-ch8-python-loops-q003', topicKey: 'gr8-ch8-python-loops', type: 'mcq',
+    id: 'gr8-ch8-python-loops-q003', topicKey: 'gr8-ch10-social', type: 'mcq',
     text: 'What is cyberbullying?',
     options: ['Physically bullying someone at a computer lab','Using digital technology such as social media, messaging, or online gaming to harass, threaten, or humiliate someone','A type of computer virus spread through social media','Hacking into someone\'s accounts'],
     answer: '1', explanation: 'Cyberbullying involves using technology to bully — sending threatening messages, posting humiliating content, or spreading rumours online.',
@@ -789,7 +789,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch8-python-loops-q004', topicKey: 'gr8-ch8-python-loops', type: 'mcq',
+    id: 'gr8-ch8-python-loops-q004', topicKey: 'gr8-ch10-social', type: 'mcq',
     text: 'What is a digital footprint?',
     options: ['The size of your hard drive','The trail of data you leave behind when you use the internet — including posts, searches, and sites visited','A type of barcode','Your typing speed'],
     answer: '1', explanation: 'Your digital footprint is all the data recorded about your online activity — social media posts, browsing history, purchases, and location data.',
@@ -797,7 +797,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch8-python-loops-q005', topicKey: 'gr8-ch8-python-loops', type: 'truefalse',
+    id: 'gr8-ch8-python-loops-q005', topicKey: 'gr8-ch10-social', type: 'truefalse',
     text: 'Once something is posted online, it can be very difficult to permanently delete, even if you remove it yourself.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Screenshots, server backups, and search engine caches can preserve content even after you delete it.',
@@ -805,7 +805,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch8-python-loops-q006', topicKey: 'gr8-ch8-python-loops', type: 'mcq',
+    id: 'gr8-ch8-python-loops-q006', topicKey: 'gr8-ch10-social', type: 'mcq',
     text: 'What is two-factor authentication (2FA)?',
     options: ['Using two different passwords for the same account','A security process requiring two forms of verification (e.g. password + a code sent to your phone) before granting access','Logging in from two devices simultaneously','Having two email addresses linked to one account'],
     answer: '1', explanation: '2FA adds a second layer of security. Even if someone steals your password, they cannot log in without the second factor (usually a code sent to your phone).',
@@ -813,7 +813,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch8-python-loops-q007', topicKey: 'gr8-ch8-python-loops', type: 'mcq',
+    id: 'gr8-ch8-python-loops-q007', topicKey: 'gr8-ch10-social', type: 'mcq',
     text: 'What does it mean to respect intellectual property online?',
     options: ['Only download files using fast internet','Not copying, sharing, or using others\' creative work (images, music, text, code) without permission or proper credit','Keeping your computer clean and organised','Using licensed antivirus software'],
     answer: '1', explanation: 'Intellectual property laws protect creators\' work. Using someone else\'s content without permission may be copyright infringement.',
@@ -823,7 +823,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 9: Troubleshooting (extra) ────────────────────────────────
   {
-    id: 'gr8-ch9-python-func-q003', topicKey: 'gr8-ch9-python-func', type: 'mcq',
+    id: 'gr8-ch9-python-func-q003', topicKey: 'gr8-ch11-troubleshoot', type: 'mcq',
     text: 'What is the first step in a systematic troubleshooting approach?',
     options: ['Reinstall the operating system','Identify and clearly define the problem — what is wrong and when it occurs','Buy a new computer','Blame the network',],
     answer: '1', explanation: 'Good troubleshooting starts with identifying the exact problem: what is happening, when it happens, what changed recently, and who is affected.',
@@ -831,7 +831,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch9-python-func-q004', topicKey: 'gr8-ch9-python-func', type: 'mcq',
+    id: 'gr8-ch9-python-func-q004', topicKey: 'gr8-ch11-troubleshoot', type: 'mcq',
     text: 'A computer will not turn on. Which of the following should you check first?',
     options: ['The operating system files','Whether the power cable is properly connected and the power source is working','The antivirus software settings','The internet connection'],
     answer: '1', explanation: 'Always check the simplest possible cause first — an unplugged or loose power cable is a common cause of a computer that won\'t power on.',
@@ -839,7 +839,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch9-python-func-q005', topicKey: 'gr8-ch9-python-func', type: 'truefalse',
+    id: 'gr8-ch9-python-func-q005', topicKey: 'gr8-ch11-troubleshoot', type: 'truefalse',
     text: 'Restarting a computer can often fix minor software errors and is a common first troubleshooting step.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Restarting clears RAM, ends frozen processes, applies pending updates, and often resolves minor glitches.',
@@ -847,7 +847,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch9-python-func-q006', topicKey: 'gr8-ch9-python-func', type: 'mcq',
+    id: 'gr8-ch9-python-func-q006', topicKey: 'gr8-ch11-troubleshoot', type: 'mcq',
     text: 'What is a blue screen of death (BSOD) on Windows?',
     options: ['A screensaver that turns the screen blue','A critical system error screen that appears when Windows encounters a fatal error it cannot recover from','A display settings bug','An intentional security feature'],
     answer: '1', explanation: 'A BSOD indicates a serious kernel-level error in Windows. It often includes an error code (e.g. MEMORY_MANAGEMENT) to help diagnose the cause.',
@@ -855,7 +855,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch9-python-func-q007', topicKey: 'gr8-ch9-python-func', type: 'mcq',
+    id: 'gr8-ch9-python-func-q007', topicKey: 'gr8-ch11-troubleshoot', type: 'mcq',
     text: 'Why is it important to keep operating systems and software updated?',
     options: ['Updates make the screen brighter','Updates often include security patches that fix vulnerabilities, protecting your system from new threats','Updates delete unwanted files automatically','Updates speed up the internet'],
     answer: '1', explanation: 'Security patches close vulnerabilities that malware could exploit. Staying updated is one of the most important steps in keeping a system safe.',
@@ -865,7 +865,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 10: Python Lists (extra) ───────────────────────────────────
   {
-    id: 'gr8-ch10-python-lists-q003', topicKey: 'gr8-ch10-python-lists', type: 'mcq',
+    id: 'gr8-ch10-python-lists-q003', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What is a Python list?',
     options: ['A dictionary with numbered keys','An ordered, mutable (changeable) collection of items enclosed in square brackets, e.g. [1, 2, 3]','A single variable that can only hold numbers','A set of unique items'],
     answer: '1', explanation: 'A list is an ordered collection: ["Alice", "Bob", "Charlie"]. You can add, remove, and change items. Lists maintain insertion order.',
@@ -873,7 +873,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch10-python-lists-q004', topicKey: 'gr8-ch10-python-lists', type: 'mcq',
+    id: 'gr8-ch10-python-lists-q004', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'How do you access the third element of a list called "scores" in Python?',
     options: ['scores[3]', 'scores[2]', 'scores(2)', 'scores.item(3)'],
     answer: '1', explanation: 'Python lists use zero-based indexing. The third element has index 2, so scores[2] retrieves it.',
@@ -881,7 +881,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch10-python-lists-q005', topicKey: 'gr8-ch10-python-lists', type: 'mcq',
+    id: 'gr8-ch10-python-lists-q005', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does the .append() method do to a Python list?',
     options: ['Removes the last item','Sorts the list','Adds a new item to the end of the list','Returns the length of the list'],
     answer: '2', explanation: 'list.append(item) adds the item to the end of the list. E.g. scores.append(95) adds 95 as the last element.',
@@ -889,7 +889,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch10-python-lists-q006', topicKey: 'gr8-ch10-python-lists', type: 'truefalse',
+    id: 'gr8-ch10-python-lists-q006', topicKey: 'gr8-ch12-python', type: 'truefalse',
     text: 'In Python, len(myList) returns the number of items in myList.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. len() is a built-in function that returns the number of elements in a sequence (list, string, tuple, etc.).',
@@ -897,7 +897,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch10-python-lists-q007', topicKey: 'gr8-ch10-python-lists', type: 'mcq',
+    id: 'gr8-ch10-python-lists-q007', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does the following Python code print?\n\nfruits = ["apple", "banana", "cherry"]\nfor f in fruits:\n    print(f)',
     options: ['0 1 2','apple banana cherry (all on one line)','apple\nbanana\ncherry (each on its own line)','3'],
     answer: '2', explanation: 'The for loop iterates over each item in the list, and print(f) outputs each fruit on a new line.',
@@ -905,7 +905,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch10-python-lists-q008', topicKey: 'gr8-ch10-python-lists', type: 'mcq',
+    id: 'gr8-ch10-python-lists-q008', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does the .sort() method do to a Python list?',
     options: ['Reverses the list','Adds items in alphabetical order','Sorts the list in ascending order (in place)','Creates a copy of the list'],
     answer: '2', explanation: 'list.sort() sorts the list in place (modifies the original). Use sorted(list) if you want a new sorted copy.',
@@ -949,7 +949,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 12: Python Project (extra) ─────────────────────────────────
   {
-    id: 'gr8-ch12-python-proj-q002', topicKey: 'gr8-ch12-python-proj', type: 'mcq',
+    id: 'gr8-ch12-python-proj-q002', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What is a function in Python?',
     options: ['A built-in command only','A named, reusable block of code that performs a specific task and can be called whenever needed','A type of loop','A variable that stores multiple values'],
     answer: '1', explanation: 'A function is defined with def name(): and contains code that runs when the function is called. Functions promote reuse and organisation.',
@@ -957,7 +957,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch12-python-proj-q003', topicKey: 'gr8-ch12-python-proj', type: 'mcq',
+    id: 'gr8-ch12-python-proj-q003', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does the return statement in a Python function do?',
     options: ['Restarts the function','Exits the function and sends a value back to the calling code','Prints a value to the screen','Imports a module'],
     answer: '1', explanation: 'return value exits the function and passes the value back to wherever the function was called. If omitted, the function returns None.',
@@ -965,7 +965,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch12-python-proj-q004', topicKey: 'gr8-ch12-python-proj', type: 'mcq',
+    id: 'gr8-ch12-python-proj-q004', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does a while loop do in Python?',
     options: ['Runs a block of code exactly 10 times','Runs a block of code repeatedly as long as a condition is True','Runs a block of code for each item in a list','Runs a block of code once and then stops'],
     answer: '1', explanation: 'while condition: repeats the block indefinitely until the condition becomes False. If the condition is never False, it loops forever (infinite loop).',
@@ -973,7 +973,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch12-python-proj-q005', topicKey: 'gr8-ch12-python-proj', type: 'truefalse',
+    id: 'gr8-ch12-python-proj-q005', topicKey: 'gr8-ch12-python', type: 'truefalse',
     text: 'In Python, you can open and read a text file using the open() function.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. with open("file.txt", "r") as f: content = f.read() opens a file for reading and stores its contents in a variable.',
@@ -981,7 +981,7 @@ export const gr8Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr8-ch12-python-proj-q006', topicKey: 'gr8-ch12-python-proj', type: 'mcq',
+    id: 'gr8-ch12-python-proj-q006', topicKey: 'gr8-ch12-python', type: 'mcq',
     text: 'What does it mean to "test" a program?',
     options: ['Show the program to a friend','Run the program with various inputs to check it produces the correct outputs and handles edge cases','Delete old code','Add more comments'],
     answer: '1', explanation: 'Testing verifies that a program works correctly. Good testing includes normal inputs, boundary values, and invalid inputs to expose bugs.',
