@@ -17,7 +17,9 @@ import {
   findSessionByCode,
   findActiveSessionForQuiz,
   clearTeacherSession,
+  saveSessionResult,
 } from '@/lib/firebase/sessions';
+import type { SessionResult } from '@/types/session';
 import type { Quiz } from '@/types/quiz';
 import type { Question } from '@/types/question';
 
@@ -157,10 +159,54 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     scheduleReveal();
   }
 
+  async function persistResult() {
+    if (!sessionId || !session || !user || !quiz) return;
+    try {
+      const result: SessionResult = {
+        id: sessionId,
+        sessionId,
+        quizId,
+        quizTitle: quiz.title,
+        teacherId: user.uid,
+        completedAt: Date.now(),
+        code: session.code,
+        summary: {
+          totalPlayers: players.length,
+          avgScore: players.length ? players.reduce((a, p) => a + p.score, 0) / players.length : 0,
+          avgAccuracy: players.length ? players.reduce((a, p) => a + (p.total > 0 ? p.correct / p.total : 0), 0) / players.length : 0,
+          topScore: players.length ? Math.max(...players.map(p => p.score)) : 0,
+        },
+        playerResults: players.map(p => ({
+          name: p.name,
+          score: p.score,
+          correct: p.correct,
+          total: p.total,
+          accuracy: p.total > 0 ? p.correct / p.total : 0,
+          streak: p.bestStreak,
+          tabSwitches: p.tabSwitches || 0,
+        })),
+        questionStats: questions.map((q, qIndex) => {
+          const answers = players
+            .map(p => p.answers?.[qIndex])
+            .filter(Boolean) as { correct: boolean; timeMs: number }[];
+          return {
+            qIndex,
+            text: q.text,
+            correctCount: answers.filter(a => a.correct).length,
+            totalCount: answers.length,
+            avgTimeMs: answers.length ? answers.reduce((s, a) => s + (a.timeMs || 0), 0) / answers.length : undefined,
+          };
+        }),
+      };
+      await saveSessionResult(result);
+    } catch { /* best-effort — session still ends */ }
+  }
+
   async function handleNext() {
     clearRevealTimer();
     const nextIdx = currentQIdx + 1;
     if (nextIdx >= questions.length) {
+      await persistResult();
       await endSession(sessionId!);
       if (user) clearTeacherSession(user.uid, sessionId!);
       clearActiveSession(quizId);
@@ -183,6 +229,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
   async function handleEndSession() {
     if (!sessionId) return;
+    await persistResult();
     await endSession(sessionId);
     if (user) clearTeacherSession(user.uid, sessionId);
     clearActiveSession(quizId);

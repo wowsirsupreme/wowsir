@@ -155,6 +155,63 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
           </table>
         </div>
       </div>
+
+      {/* Question-level analytics */}
+      {result.questionStats && result.questionStats.length > 0 && (
+        <div className="animate-fadeUp mt-8" style={{ animationDelay: '200ms' }}>
+          <h2 className="font-display text-2xl mb-4">Question Breakdown</h2>
+          <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: 'rgba(0,0,0,0.04)', borderBottom: '1px solid var(--color-border)' }}>
+                  <th className="text-left px-4 py-3 font-semibold">#</th>
+                  <th className="text-left px-4 py-3 font-semibold">Question</th>
+                  <th className="text-right px-4 py-3 font-semibold">Correct</th>
+                  <th className="text-right px-4 py-3 font-semibold">Accuracy</th>
+                  <th className="text-right px-4 py-3 font-semibold">Avg Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.questionStats.map((qs, i) => {
+                  const pct = qs.totalCount > 0 ? qs.correctCount / qs.totalCount : 0;
+                  return (
+                    <tr
+                      key={i}
+                      style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', animationDelay: `${300 + i * 30}ms` }}
+                    >
+                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--color-muted)' }}>
+                        {qs.qIndex + 1}
+                      </td>
+                      <td className="px-4 py-3" style={{ maxWidth: 320 }}>
+                        <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {qs.text || `Question ${qs.qIndex + 1}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-sm">
+                        {qs.correctCount}/{qs.totalCount}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs"
+                          style={{
+                            background: pct >= 0.7 ? 'rgba(26,107,74,0.12)' : pct >= 0.4 ? 'rgba(201,168,76,0.12)' : 'rgba(192,57,43,0.12)',
+                            color: pct >= 0.7 ? 'var(--color-green)' : pct >= 0.4 ? 'var(--color-gold)' : 'var(--color-red)',
+                          }}
+                        >
+                          {Math.round(pct * 100)}%
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm" style={{ color: 'var(--color-muted)' }}>
+                        {qs.avgTimeMs != null ? `${(qs.avgTimeMs / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

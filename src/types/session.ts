@@ -63,4 +63,12 @@ export interface SessionResult {
     streak: number;
     tabSwitches: number;
   }[];
+  /** Per-question analytics: correct count out of total players who answered */
+  questionStats?: {
+    qIndex: number;
+    text?: string;
+    correctCount: number;
+    totalCount: number;
+    avgTimeMs?: number;
+  }[];
 }
