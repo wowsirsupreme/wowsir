@@ -16,10 +16,11 @@ import {
   joinSession,
   getSessionPublicQuestions,
 } from '@/lib/firebase/sessions';
+import { getQuiz } from '@/lib/firebase/quizzes';
 import { calcTimeBonus } from '@/lib/utils';
 import type { Question } from '@/types/question';
 
-type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended';
+type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'next-round';
 
 export default function PlayPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -42,6 +43,12 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [questionStartTime, setQuestionStartTime] = useState(0);
   const [error, setError] = useState('');
   const [finalRank, setFinalRank] = useState<number | null>(null);
+  const [quizId, setQuizId] = useState<string | null>(null);
+  // Round-based progression through the full question bank
+  const [fullBank, setFullBank] = useState<Question[]>([]);
+  const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
+  const [roundNum, setRoundNum] = useState(1);
+  const [roundScore, setRoundScore] = useState(0); // score for this round only
 
   // Self-paced mode state
   const [localQuestions, setLocalQuestions] = useState<Question[]>([]);
@@ -67,6 +74,8 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       }
 
       setSessionId(sid);
+      const qid = result.session.quizId || null;
+      setQuizId(qid);
       const pid = await joinSession(sid, playerName, avatarId);
       setPlayerId(pid);
 
@@ -74,6 +83,15 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       setQuestionsLoading(true);
       const qs = await getSessionPublicQuestions(sid);
       if (qs && qs.length > 0) setLocalQuestions(qs);
+
+      // Fetch full question bank for round-based play
+      if (qid) {
+        const quiz = await getQuiz(qid).catch(() => null);
+        if (quiz?.questions && quiz.questions.length > 0) setFullBank(quiz.questions);
+        else if (qs && qs.length > 0) setFullBank(qs); // fallback to session questions
+      } else if (qs && qs.length > 0) {
+        setFullBank(qs);
+      }
       setQuestionsLoading(false);
 
       setPhase('lobby');
@@ -171,13 +189,38 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   function handleNextSelfPaced() {
     const next = localQIdx + 1;
     if (next >= localQuestions.length) {
-      // All questions done
-      setPhase('ended');
+      // Round done — check if more questions remain in the full bank
+      const newUsed = new Set([...usedIndices, ...localQuestions.map((lq) => {
+        // find index in fullBank by matching id or text content
+        return fullBank.findIndex(bq =>
+          (bq.id && lq.id) ? bq.id === lq.id : bq.text === lq.text
+        );
+      }).filter(i => i >= 0)]);
+      setUsedIndices(newUsed);
+      const remaining = fullBank.filter((_, i) => !newUsed.has(i));
+      if (remaining.length > 0) {
+        setRoundScore(score); // snapshot score at end of round
+        setPhase('next-round');
+      } else {
+        setPhase('ended');
+      }
       return;
     }
     setLocalQIdx(next);
     setSelected(null);
     setAnswerTime(null);
+    setQuestionStartTime(Date.now());
+    setPhase('question');
+  }
+
+  // ── Start next round with remaining questions ──
+  function handleStartNextRound() {
+    const remaining = fullBank.filter((_, i) => !usedIndices.has(i));
+    setLocalQuestions(remaining);
+    setLocalQIdx(0);
+    setSelected(null);
+    setAnswerTime(null);
+    setRoundNum(r => r + 1);
     setQuestionStartTime(Date.now());
     setPhase('question');
   }
@@ -265,13 +308,107 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
               )}
             </>
           )}
-          <button
-            onClick={() => router.push('/')}
-            className="btn-glass btn-glass-green"
-            style={{ width: 'auto', minWidth: 180 }}
-          >
-            ← Back to Home
-          </button>
+          {/* Post-quiz navigation */}
+          <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
+            {/* Retake — restart from the beginning of the full bank */}
+            {selfPaced && fullBank.length > 0 && (
+              <button
+                onClick={() => {
+                  setScore(0); setStreak(0); setNumCorrect(0); setNumAnswered(0);
+                  setSelected(null); setFinalRank(null); setRoundNum(1);
+                  setUsedIndices(new Set());
+                  setLocalQuestions(fullBank);
+                  setLocalQIdx(0); setPhase('question');
+                }}
+                className="btn-glass btn-glass-green"
+                style={{ width: '100%', fontSize: 16 }}
+              >
+                🔄 Retake from Start ({fullBank.length} questions)
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/study')}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 14,
+                background: 'rgba(6,182,212,0.1)',
+                border: '1.5px solid rgba(6,182,212,0.25)',
+                color: '#22d3ee', fontWeight: 600, fontSize: 15,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              📚 Study Resources
+            </button>
+            <button
+              onClick={() => router.push('/practice')}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 14,
+                background: 'rgba(139,92,246,0.1)',
+                border: '1.5px solid rgba(139,92,246,0.25)',
+                color: '#a78bfa', fontWeight: 600, fontSize: 15,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              🎯 Practice Mode
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                width: '100%', padding: '12px',
+                color: 'rgba(255,255,255,0.3)', fontWeight: 500, fontSize: 14,
+                cursor: 'pointer', background: 'none', border: 'none',
+              }}
+            >
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── NEXT ROUND PROMPT ──
+  if (phase === 'next-round') {
+    const remaining = fullBank.filter((_, i) => !usedIndices.has(i));
+    const totalDone = fullBank.length - remaining.length;
+    return (
+      <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
+        <div className="text-center animate-slideUp max-w-sm w-full">
+          <div className="text-6xl mb-4">🏁</div>
+          <h2 className="font-display text-4xl mb-1" style={{ color: '#fff' }}>Round {roundNum} Done!</h2>
+          <p className="text-[15px] mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            Score so far: <span className="font-mono font-bold" style={{ color: '#34d399' }}>{score.toLocaleString()}</span>
+          </p>
+          <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            {totalDone} of {fullBank.length} questions done · {remaining.length} remaining
+          </p>
+
+          {/* Progress bar */}
+          <div className="w-full h-2 rounded-full mb-8" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div
+              className="h-2 rounded-full transition-all"
+              style={{ width: `${(totalDone / fullBank.length) * 100}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleStartNextRound}
+              className="btn-glass btn-glass-green"
+              style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
+            >
+              ▶ Next Round ({remaining.length} questions)
+            </button>
+            <button
+              onClick={() => setPhase('ended')}
+              style={{
+                width: '100%', padding: '12px',
+                color: 'rgba(255,255,255,0.3)', fontWeight: 500, fontSize: 14,
+                cursor: 'pointer', background: 'none', border: 'none',
+              }}
+            >
+              I&apos;m done for now
+            </button>
+          </div>
         </div>
       </div>
     );
