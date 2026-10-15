@@ -35,6 +35,8 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [phase, setPhase] = useState<Phase>('loading');
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [numCorrect, setNumCorrect] = useState(0);
+  const [numAnswered, setNumAnswered] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [answerTime, setAnswerTime] = useState<number | null>(null);
   const [questionStartTime, setQuestionStartTime] = useState(0);
@@ -157,8 +159,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     const basePoints = q.points || 100;
     const scored = isCorrect ? basePoints + timeBonus : 0;
 
-    if (isCorrect) { setScore(s => s + scored); setStreak(s => s + 1); }
+    if (isCorrect) { setScore(s => s + scored); setStreak(s => s + 1); setNumCorrect(n => n + 1); }
     else { setStreak(0); }
+    setNumAnswered(n => n + 1);
 
     const qIdx = selfPaced ? localQIdx : (session?.currentQ || 0);
     await submitAnswer(sessionId, playerId, qIdx, index, isCorrect, scored, timeMs);
@@ -213,15 +216,27 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
             </>
           ) : (
             <>
-              <div
-                className="text-7xl mb-5 animate-crownPop"
-                style={{ filter: `drop-shadow(0 0 24px ${finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})` }}
-              >
-                {finalRank === 1 ? '🏆' : '🎉'}
-              </div>
-              <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
-                {selfPaced ? 'Quiz Complete!' : 'Game Over!'}
-              </h2>
+              {(() => {
+                const isPerfect = numAnswered > 0 && numCorrect === numAnswered;
+                return (
+                  <>
+                    <div
+                      className="text-7xl mb-5 animate-crownPop"
+                      style={{ filter: `drop-shadow(0 0 24px ${isPerfect ? 'rgba(201,168,76,1)' : finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})` }}
+                    >
+                      {isPerfect ? '⭐' : finalRank === 1 ? '🏆' : '🎉'}
+                    </div>
+                    <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
+                      {isPerfect ? 'Perfect Score!' : selfPaced ? 'Quiz Complete!' : 'Game Over!'}
+                    </h2>
+                    {isPerfect && (
+                      <p className="text-[15px] mb-3 font-semibold" style={{ color: '#fcd34d', textShadow: '0 0 12px rgba(201,168,76,0.6)' }}>
+                        {numCorrect}/{numAnswered} correct — flawless! 🌟
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
               <p className="text-[15px] mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>Final score</p>
               <p
                 className="font-mono text-6xl font-bold mb-3 animate-scoreSlide"
