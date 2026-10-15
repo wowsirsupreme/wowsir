@@ -369,7 +369,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   // ── Ch 1 Extended: Computer Evolution (from DPS Chapter 1 Question Bank) ──
   {
     id: 'gr5-ch1-evolution-q024',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'The oldest known counting board, used by the Babylonians around 300 BCE, is called the:',
     options: ['Abacus', 'Pascaline', 'Salamis Tablet', 'Napier\'s Bones'],
@@ -382,7 +382,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q025',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Who is known as the "Father of Computers"?',
     options: ['Ada Lovelace', 'Herman Hollerith', 'Charles Babbage', 'Blaise Pascal'],
@@ -395,7 +395,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q026',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Who is considered the world\'s first computer programmer?',
     options: ['Charles Babbage', 'Ada Lovelace', 'Howard Aiken', 'Herman Hollerith'],
@@ -408,7 +408,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q027',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Which generation of computers used transistors?',
     options: ['First generation', 'Second generation', 'Third generation', 'Fourth generation'],
@@ -421,7 +421,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q028',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'The Pascaline was invented by:',
     options: ['Charles Babbage', 'Blaise Pascal', 'Herman Hollerith', 'John Napier'],
@@ -434,7 +434,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q029',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Napier\'s Bones were mainly used to help with:',
     options: [
@@ -452,7 +452,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q030',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'The Jacquard Loom used ______ to control weaving patterns.',
     options: ['Vacuum tubes', 'Punch cards', 'Transistors', 'Magnetic tape'],
@@ -465,7 +465,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q031',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Fifth-generation computers are based on the concept of:',
     options: ['Vacuum tubes', 'Integrated circuits', 'Artificial Intelligence', 'Microprocessors'],
@@ -478,7 +478,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q032',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'IBM Simon, released in 1993, is considered the world\'s first:',
     options: ['Personal computer', 'Supercomputer', 'Smartphone', 'Tablet'],
@@ -491,7 +491,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q033',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'truefalse',
     text: 'Second-generation computers used vacuum tubes.',
     options: ['True', 'False'],
@@ -504,7 +504,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q034',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'truefalse',
     text: 'Ada Lovelace is considered the first computer programmer.',
     options: ['True', 'False'],
@@ -517,7 +517,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q035',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'Herman Hollerith\'s Tabulating Machine was invented to help process:',
     options: ['Weather data', 'The 1888 US Census data', 'Factory production records', 'Military communications'],
@@ -530,7 +530,7 @@ export const gr5Questions: Omit<Question, 'quizId'>[] = [
   },
   {
     id: 'gr5-ch1-evolution-q036',
-    topicKey: 'gr5-ch1-evolution',
+    topicKey: 'gr5-ch1-history',
     type: 'mcq',
     text: 'The difference between Augmented Reality (AR) and Virtual Reality (VR) is:',
     options: [
