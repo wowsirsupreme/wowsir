@@ -23,7 +23,7 @@ import type { SessionResult } from '@/types/session';
 import type { Quiz } from '@/types/quiz';
 import type { Question } from '@/types/question';
 
-type HostPhase = 'setup' | 'lobby' | 'question' | 'reveal' | 'ended';
+type HostPhase = 'loading' | 'setup' | 'lobby' | 'question' | 'reveal' | 'ended';
 
 /** localStorage key for persisting active session per quiz */
 function sessionStorageKey(quizId: string) { return `wq_session_${quizId}`; }
@@ -49,7 +49,14 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [phase, setPhase] = useState<HostPhase>('setup');
+  // Start in 'loading' if a saved session exists — avoids a flash of the setup screen
+  const [phase, setPhase] = useState<HostPhase>(() => {
+    try {
+      const raw = typeof window !== 'undefined'
+        ? localStorage.getItem(`wq_session_${quizId}`) : null;
+      return raw ? 'loading' : 'setup';
+    } catch { return 'setup'; }
+  });
   const [currentQIdx, setCurrentQIdx] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [revealTimer, setRevealTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -81,6 +88,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         if (!result || result.session.status === 'ended') {
           clearActiveSession(quizId);
           setSavedSession(null);
+          setPhase('setup');
           return;
         }
         setSessionId(result.sessionId);
@@ -90,7 +98,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         else if (status === 'active' || status === 'paused') setPhase('question');
         else setPhase('ended');
         toast('Session resumed automatically', 'success');
-      }).catch(() => { /* silent — user can still manually resume */ });
+      }).catch(() => { setPhase('setup'); });
     }
   }, [ready, user, quizId]);
 
@@ -353,7 +361,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   }
 
   // ── LOADING ──
-  if (!ready || !quiz) {
+  if (!ready || !quiz || phase === 'loading') {
     return (
       <div className="host-screen min-h-screen flex items-center justify-center">
         <div className="text-3xl animate-goldGlow">🎓</div>
@@ -604,86 +612,141 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
           {/* LOBBY */}
           {phase === 'lobby' && (
-            <div className="text-center animate-fadeUp w-full max-w-lg">
-              <p className="text-xs font-mono uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Room Code
-              </p>
-              <div className="code-display-dark mb-3" style={{ color: '#fcd34d', borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.06)', textShadow: '0 0 24px rgba(201,168,76,0.5)' }}>
-                {session?.code || '…'}
-              </div>
-              {session?.code && (
-                <div className="flex justify-center gap-2 mb-6">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(session.code).then(() => toast('Code copied!', 'success'));
-                    }}
-                    className="btn-glass"
-                    style={{ fontSize: 12, padding: '7px 14px', minHeight: 0 }}
-                  >
-                    Copy code
-                  </button>
-                  <button
-                    onClick={() => {
-                      const url = `${window.location.origin}/join?code=${session.code}`;
-                      navigator.clipboard.writeText(url).then(() => toast('Join link copied!', 'success'));
-                    }}
-                    className="btn-glass"
-                    style={{ fontSize: 12, padding: '7px 14px', minHeight: 0 }}
-                  >
-                    Copy join link
-                  </button>
+            <div className="animate-fadeUp w-full max-w-xl">
+
+              {/* ── Room code hero ── */}
+              <div style={{
+                borderRadius: 24, padding: '28px 24px 20px',
+                background: 'rgba(201,168,76,0.06)',
+                border: '1px solid rgba(201,168,76,0.22)',
+                marginBottom: 14, textAlign: 'center',
+              }}>
+                <p style={{ margin: '0 0 8px', fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
+                  Room Code
+                </p>
+                <div style={{
+                  fontSize: 64, fontFamily: 'var(--font-mono)', fontWeight: 800,
+                  color: '#fcd34d', letterSpacing: 10,
+                  textShadow: '0 0 32px rgba(201,168,76,0.5)',
+                  lineHeight: 1, marginBottom: 16,
+                }}>
+                  {session?.code || '…'}
                 </div>
-              )}
-              <p className="text-lg mb-6" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                {players.length} player{players.length !== 1 ? 's' : ''} waiting…
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 mb-8 min-h-16">
-                {players.map(p => (
-                  <div key={p.id} className="flex flex-col items-center gap-1 animate-fadeIn">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}>
-                      <Avatar id={p.avatarId} size={32} />
-                    </div>
-                    <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>{p.name}</span>
+                {/* Share buttons */}
+                {session?.code && (
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(session.code).then(() => toast('Code copied!', 'success'))}
+                      className="btn-glass"
+                      style={{ fontSize: 12, padding: '8px 16px', minHeight: 0 }}
+                    >
+                      📋 Copy code
+                    </button>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/join?code=${session.code}`;
+                        navigator.clipboard.writeText(url).then(() => toast('Join link copied!', 'success'));
+                      }}
+                      className="btn-glass"
+                      style={{ fontSize: 12, padding: '8px 16px', minHeight: 0 }}
+                    >
+                      🔗 Copy join link
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
 
-              {/* Close-at picker in lobby */}
-              <div className="mb-5 text-left max-w-xs mx-auto">
-                <label className="block text-xs font-mono uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  Auto-close at
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="datetime-local"
-                    value={closeAtInput}
-                    onChange={e => handleCloseAtChange(e.target.value)}
-                    className="flex-1 rounded-xl px-3 py-2 text-[13px] font-mono"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.4)',
-                      outline: 'none',
-                    }}
-                  />
-                  <button
-                    className="btn-glass"
-                    style={{ fontSize: 12, padding: '8px 14px', minHeight: 0 }}
-                    onClick={handleUpdateCloseAt}
-                  >
-                    Set
-                  </button>
+              {/* ── Players waiting ── */}
+              <div style={{
+                borderRadius: 20, padding: '18px 20px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                marginBottom: 14,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: players.length > 0 ? 14 : 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
+                    Players waiting
+                  </p>
+                  <span style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700,
+                    color: players.length > 0 ? '#fcd34d' : 'rgba(255,255,255,0.25)',
+                  }}>
+                    {players.length}
+                  </span>
                 </div>
+                {players.length === 0 ? (
+                  <p style={{ margin: '10px 0 2px', fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
+                    Students will appear here when they join…
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {players.map(p => (
+                      <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} className="animate-fadeIn">
+                        <div style={{
+                          width: 44, height: 44, borderRadius: 12,
+                          background: 'rgba(201,168,76,0.08)',
+                          border: '1px solid rgba(201,168,76,0.2)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Avatar id={p.avatarId} size={30} />
+                        </div>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* ── Start button ── */}
               <button
                 className="btn-gold-solid"
-                style={{ maxWidth: 320, margin: '0 auto' }}
+                style={{ fontSize: 16, marginBottom: 14 }}
                 onClick={handleStart}
                 disabled={players.length === 0}
               >
-                🚀 Start Quiz ({players.length} players)
+                🚀 Start Quiz ({players.length} {players.length === 1 ? 'player' : 'players'})
               </button>
+
+              {/* ── Auto-close (secondary) ── */}
+              <details style={{ borderRadius: 14, overflow: 'hidden' }}>
+                <summary style={{
+                  padding: '12px 16px', cursor: 'pointer', fontSize: 12,
+                  color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14,
+                  listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span>⏰ Auto-close {closeAt ? `· ${new Date(closeAt).toLocaleString()}` : '(optional)'}</span>
+                  <span style={{ opacity: 0.5 }}>▾</span>
+                </summary>
+                <div style={{
+                  padding: '12px 16px 16px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderTop: 'none',
+                  borderRadius: '0 0 14px 14px',
+                }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="datetime-local"
+                      value={closeAtInput}
+                      onChange={e => handleCloseAtChange(e.target.value)}
+                      style={{
+                        flex: 1, borderRadius: 10, padding: '9px 12px', fontSize: 13,
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.4)',
+                        outline: 'none',
+                      }}
+                    />
+                    <button className="btn-glass" style={{ fontSize: 12, padding: '8px 14px', minHeight: 0 }} onClick={handleUpdateCloseAt}>
+                      Set
+                    </button>
+                  </div>
+                </div>
+              </details>
+
             </div>
           )}
 
