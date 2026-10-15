@@ -267,17 +267,34 @@ class AudioEngine {
 
   // ── Background Music ──────────────────────────────────────────────
 
+  get isPlayingMusic(): boolean {
+    if (this._paused) return false;
+    if (this._musicTheme === 'custom') {
+      return !!(this._customAudio && !this._customAudio.paused);
+    }
+    return this.musicStop !== null;
+  }
+
   startMusic(theme?: MusicTheme) {
     const th = theme ?? this._musicTheme;
     this._paused = false;
+
+    // If already playing the same theme, just ensure context is running
+    if (!theme && this.isPlayingMusic) {
+      if (this.ctx?.state === 'suspended') this.ctx.resume();
+      return;
+    }
 
     // Custom: HTMLAudioElement
     if (th === 'custom') {
       this.stopSynth();
       if (this._customAudio) {
         this._customAudio.volume = this._muted ? 0 : 0.5;
-        this._customAudio.currentTime = 0;
-        this._customAudio.play().catch(() => {/* autoplay blocked */});
+        // Only reset to start if not already playing
+        if (this._customAudio.paused) {
+          this._customAudio.currentTime = 0;
+          this._customAudio.play().catch(() => {/* autoplay blocked */});
+        }
       }
       return;
     }
