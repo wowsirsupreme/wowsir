@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { BookOpen, ChevronRight, ArrowLeft } from 'lucide-react';
+import QuizNav from '@/components/QuizNav';
 import { CLASSES, STUDY_MODES } from '@/data/studyClasses';
 
 export default function StudyIndexPage() {
@@ -16,6 +17,7 @@ export default function StudyIndexPage() {
         color: '#f5f3ee',
       }}
     >
+      <QuizNav />
       {/* Star field */}
       <div
         aria-hidden

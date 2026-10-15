@@ -9,6 +9,7 @@ import {
 import { submitScore, fetchLeaderboard } from '@/lib/firebase/leaderboard';
 import type { LeaderboardEntry } from '@/lib/firebase/leaderboard';
 import { useFirebase } from '@/hooks/useFirebase';
+import QuizNav from '@/components/QuizNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -577,6 +578,7 @@ export default function CustomPracticePage() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%), #09090f', fontFamily: 'var(--font-body)' }}>
+      <QuizNav showEndGame endGameLabel="End Quiz" />
       <style>{`
         @keyframes spin      { to { transform: rotate(360deg); } }
         @keyframes popUp     { 0%{opacity:0;transform:translateY(0) scale(0.8)} 20%{opacity:1;transform:translateY(-12px) scale(1.1)} 80%{opacity:1;transform:translateY(-18px) scale(1)} 100%{opacity:0;transform:translateY(-28px) scale(0.9)} }

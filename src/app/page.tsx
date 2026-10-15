@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useFirebase } from '@/hooks/useFirebase';
+import QuizNav from '@/components/QuizNav';
 
 // ── Mode cards ────────────────────────────────────────────────────────────────
 
@@ -95,6 +96,7 @@ export default function LandingPage() {
         overflow: 'hidden',
       }}
     >
+      <QuizNav />
       {/* Star-field */}
       <div
         aria-hidden

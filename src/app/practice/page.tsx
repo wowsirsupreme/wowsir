@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, ChevronRight, Clock, Layers, AlertCircle, Loader2, ArrowLeft, CheckSquare, Square, PlayCircle } from 'lucide-react';
+import QuizNav from '@/components/QuizNav';
 import { useFirebase } from '@/hooks/useFirebase';
 import { listPresetQuizzes } from '@/lib/firebase/presetQuizzes';
 import type { PresetQuiz } from '@/lib/firebase/presetQuizzes';
@@ -96,6 +97,7 @@ export default function PracticePage() {
         fontFamily: 'var(--font-body)',
       }}
     >
+      <QuizNav />
       {/* Star field overlay */}
       <div
         aria-hidden

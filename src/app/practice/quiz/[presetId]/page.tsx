@@ -13,6 +13,7 @@ import type { Question } from '@/types/question';
 import { audioEngine } from '@/lib/audioEngine';
 import AudioControls from '@/components/MuteButton';
 import MusicThemePicker from '@/components/MusicThemePicker';
+import QuizNav from '@/components/QuizNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -478,7 +479,12 @@ export default function PracticeQuizPage() {
 
     return (
       <main style={bgStyle}>
-        <AudioControls />
+        <div style={{ position: 'fixed', bottom: 70, left: 18, zIndex: 90 }}><AudioControls /></div>
+        <QuizNav
+          showEndGame
+          endGameLabel="End Quiz"
+          onEndGame={() => { audioEngine.stopMusic(); }}
+        />
         {starOverlay}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 120px' }}>
 
@@ -618,7 +624,8 @@ export default function PracticeQuizPage() {
   if (phase === 'results') {
     return (
       <main style={bgStyle}>
-        <AudioControls />
+        <div style={{ position: 'fixed', bottom: 70, left: 18, zIndex: 90 }}><AudioControls /></div>
+        <QuizNav />
         {starOverlay}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 60px' }}>
 
@@ -780,8 +787,15 @@ export default function PracticeQuizPage() {
 
   return (
     <main style={bgStyle}>
-      {/* Floating audio controls — bottom-left */}
-      <AudioControls />
+      {/* Floating audio controls — bottom-left (sits above nav bar) */}
+      <div style={{ position: 'fixed', bottom: 70, left: 18, zIndex: 90 }}>
+        <AudioControls />
+      </div>
+      <QuizNav
+        showEndGame
+        endGameLabel="End Quiz"
+        onEndGame={() => { audioEngine.stopMusic(); }}
+      />
       {showNameModal && (
         <NameModal
           accent={accent}
