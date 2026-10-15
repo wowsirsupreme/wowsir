@@ -16,25 +16,101 @@ const BG = [
 ].join(',');
 
 // ---------------------------------------------------------------------------
-// Template CSV — all supported question types with answer-format instructions
+// Template CSV — all supported question types + valid topicKeys for every grade
 // ---------------------------------------------------------------------------
+// ANSWER FORMAT BY TYPE:
+//   mcq         — 0-based index of correct option (0=A, 1=B, 2=C, 3=D)
+//   truefalse   — "true" or "false" (case-insensitive; leave optionA-D blank)
+//   shortanswer — expected keyword / phrase; graded case-insensitively (leave optionA-D blank)
+//   fillinblank — missing word/phrase; use ___ in the question text (leave optionA-D blank)
+//   matching    — pipe-separated RIGHT-side labels in the same order as optionA-D
+//                 e.g. "Router|Switch|Hub|Modem" means A→Router B→Switch C→Hub D→Modem
+//   ordering    — pipe-separated 0-based indices giving the correct sequence
+//                 e.g. "2|0|3|1" means optC, optA, optD, optB
+//
+// VALID topicKey VALUES (copy exactly — wrong keys will be rejected):
+//
+// Grade 4 Computing:
+//   gr4-ch1-peripherals  gr4-ch2-logo  gr4-ch3-files  gr4-ch4-desktop
+//   gr4-ch5-formatting   gr4-ch6-word  gr4-ch7-internet  gr4-ch8-ppt1  gr4-ch9-ppt2
+//
+// Grade 5 Computing:
+//   gr5-ch1-history   gr5-ch2-storage   gr5-ch3-tables   gr5-ch4-pptanim
+//   gr5-ch5-slideshow gr5-ch6-internet  gr5-ch7-multimedia
+//   gr5-ch8-scratch1  gr5-ch9-scratch2
+//
+// Grade 6 Computing:
+//   gr6-ch1-robotics  gr6-ch2-mailmerge  gr6-ch3-email
+//   gr6-ch4-excel1    gr6-ch5-excel2     gr6-ch6-excel3
+//   gr6-ch7-algorithms gr6-ch8-scratch3  gr6-ch9-qb64
+//
+// Grade 7 Computing:
+//   gr7-ch1-numbers       gr7-ch2-excel-calc   gr7-ch3-excel-data
+//   gr7-ch4-excel-charts  gr7-ch5-internet     gr7-ch6-html1
+//   gr7-ch7-html2         gr7-ch8-ai           gr7-ch9-qb64
+//   gr7-ch10-python
+//
+// Grade 8 Computing:
+//   gr8-ch1-ai         gr8-ch2-tech        gr8-ch3-access1
+//   gr8-ch4-access2    gr8-ch5-access3     gr8-ch6-networks
+//   gr8-ch7-google     gr8-ch8-malware     gr8-ch9-html-tables
+//   gr8-ch10-social    gr8-ch11-troubleshoot  gr8-ch12-python
+//
+// Grade 9 CS IGCSE 0478:
+//   gr9-cpu  gr9-fde  gr9-embedded  gr9-storage  gr9-os
+//   gr9-languages  gr9-internet  gr9-logic
+//   gr9-data-binary  gr9-data-twos  gr9-data-text
+//   gr9-data-sound   gr9-data-images  gr9-data-compression
+//   gr9-networking   gr9-programming
+//
+// Grade 9 DT IGCSE 0445:
+//   gr9dt-influences  gr9dt-design-brief  gr9dt-developing  gr9dt-plan
+//   gr9dt-evaluation  gr9dt-communication  gr9dt-making
+//   gr9dt-materials   gr9dt-manufacturing  gr9dt-health-safety
+//   gr9dt-structures  gr9dt-mechanisms
+//
+// Grade 10 CS IGCSE 0478:
+//   gr10-data-integrity  gr10-cybersecurity  gr10-encryption
+//   gr10-sensors  gr10-robotics  gr10-ai  gr10-quantum
+//   gr10-abstraction  gr10-algorithms  gr10-programming  gr10-sql
+//
+// Grade 11 CS A-Level 9618:
+//   gr11-information  gr11-communication  gr11-hardware  gr11-processor
+//   gr11-system-software  gr11-security  gr11-ai-advanced
+//   gr11-programming  gr11-oop  gr11-algorithms  gr11-databases
+// ---------------------------------------------------------------------------
+
 const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter';
 
 const TEMPLATE_ROWS = [
-  // MCQ — answer is the 0-based index of the correct option
-  'gr7-ch1-q001,gr7-networks,mcq,What does LAN stand for?,Local Area Network,Long Area Network,Large Area Network,Light Area Network,0,LAN means Local Area Network — it connects devices in one building,easy,1,1',
-  // True/False — answer is "true" or "false" (case-insensitive)
-  'gr7-ch1-q002,gr7-networks,truefalse,The Internet is a Wide Area Network (WAN).,,,,,true,The Internet spans the whole globe — it is the largest WAN.,easy,1,1',
-  // Short answer — answer is the expected keyword/phrase (case-insensitive match during grading)
-  'gr7-ch1-q003,gr7-networks,shortanswer,What device connects a home network to the Internet?,,,,, router,A router directs traffic between your local network and the Internet.,medium,2,1',
-  // Fill-in-the-blank — use ___ in the question text; answer is the missing word/phrase
-  'gr7-ch1-q004,gr7-networks,fillinblank,A ___ address uniquely identifies every device on a network.,,,,,IP,Every device on a network has a unique IP (Internet Protocol) address.,medium,2,1',
-  // Matching — optionA..D are the LEFT-side items; answer encodes RIGHT-side items as pipe-separated list in matching order
-  // e.g. answer = "Router|Switch|Hub|Modem" means A→Router B→Switch C→Hub D→Modem
-  'gr7-ch1-q005,gr7-networks,matching,Match each device to its function.,Directs packets between networks,Connects devices in a LAN,Broadcasts to all ports,Connects LAN to ISP,Router|Switch|Hub|Modem,Match each networking device to its primary function.,hard,3,1',
-  // Ordering — optionA..D are the items; answer encodes the correct order as pipe-separated 0-based indices
-  // e.g. answer = "2|0|3|1" means the correct sequence is optC, optA, optD, optB
-  'gr7-ch1-q006,gr7-networks,ordering,Order the OSI layers from lowest to highest.,Physical,Application,Transport,Network,0|3|2|1,OSI layers bottom-up: Physical — Network — Transport — Application (and more above).,hard,3,1',
+  // ── Grade 4 ──────────────────────────────────────────────────────────────
+  'gr4-ch1-q001,gr4-ch1-peripherals,mcq,Which of these is an OUTPUT device?,Keyboard,Mouse,Monitor,Scanner,2,A monitor displays output from the computer.,easy,1,1',
+  // ── Grade 5 ──────────────────────────────────────────────────────────────
+  'gr5-ch2-q001,gr5-ch2-storage,mcq,Which storage medium uses laser light to read data?,Hard disk,USB drive,CD-ROM,RAM,2,CDs use a laser to read the pits and lands on the disc surface.,easy,1,2',
+  // ── Grade 6 ──────────────────────────────────────────────────────────────
+  'gr6-ch4-q001,gr6-ch4-excel1,mcq,Which Excel function adds all numbers in a range?,COUNT,SUM,AVERAGE,MAX,1,SUM adds up all the values in the selected range.,easy,1,4',
+  // ── Grade 7 — MCQ ────────────────────────────────────────────────────────
+  'gr7-ch1-q001,gr7-ch1-numbers,mcq,What is the denary value of binary 1010?,8,10,12,14,1,1×8 + 0×4 + 1×2 + 0×1 = 10.,easy,1,1',
+  // ── Grade 7 — True/False (leave optionA-D blank) ─────────────────────────
+  'gr7-ch4-q001,gr7-ch4-excel-charts,truefalse,A pie chart is best for showing changes over time.,,,,,false,Pie charts show proportions of a whole — use a line chart for trends.,easy,1,4',
+  // ── Grade 7 — Short Answer ───────────────────────────────────────────────
+  'gr7-ch6-q001,gr7-ch6-html1,shortanswer,What HTML tag creates the largest heading?,,,,, h1,The <h1> tag defines the most important heading on a page.,easy,1,6',
+  // ── Grade 7 — Fill-in-the-blank (use ___ for the missing word) ───────────
+  'gr7-ch10-q001,gr7-ch10-python,fillinblank,In Python the ___ keyword starts a conditional statement.,,,,,if,if is the keyword used to begin a conditional statement in Python.,easy,1,10',
+  // ── Grade 8 — Matching ───────────────────────────────────────────────────
+  // optionA-D are LEFT-side items; answer gives the matching RIGHT-side labels pipe-separated
+  'gr8-ch8-q001,gr8-ch8-malware,matching,Match each malware type to its behaviour.,Self-replicates via email attachments,Disguises itself as useful software,Silently records keystrokes,Locks files and demands payment,Virus|Trojan horse|Spyware|Ransomware,Each malware type has a distinct attack method.,medium,2,8',
+  // ── Grade 8 — Ordering ───────────────────────────────────────────────────
+  // answer gives the correct sequence as pipe-separated 0-based indices of optionA-D
+  'gr8-ch3-q001,gr8-ch3-access1,ordering,Place the database design steps in the correct order.,Define the fields,Create the table,Set the primary key,Enter records,0|2|1|3,You define fields first then choose a primary key before creating the table and finally entering data.,medium,2,3',
+  // ── Grade 9 CS IGCSE ─────────────────────────────────────────────────────
+  'gr9-cpu-q001,gr9-cpu,mcq,Which component temporarily holds data the CPU is using?,Hard disk,ROM,RAM,SSD,2,RAM is volatile memory that holds data the CPU is actively processing.,medium,1,0',
+  // ── Grade 9 DT IGCSE ─────────────────────────────────────────────────────
+  'gr9dt-materials-q001,gr9dt-materials,mcq,Which material property describes resistance to scratching?,Toughness,Hardness,Elasticity,Conductivity,1,Hardness means resistance to indentation or scratching.,easy,1,0',
+  // ── Grade 10 CS IGCSE ────────────────────────────────────────────────────
+  'gr10-cybersec-q001,gr10-cybersecurity,mcq,What does a firewall primarily do?,Speeds up the network,Blocks unauthorised network access,Encrypts stored files,Backs up data automatically,1,A firewall monitors and filters incoming and outgoing network traffic.,medium,1,0',
+  // ── Grade 11 CS A-Level ──────────────────────────────────────────────────
+  'gr11-oop-q001,gr11-oop,mcq,Which OOP concept hides internal implementation details?,Inheritance,Polymorphism,Encapsulation,Abstraction,2,Encapsulation bundles data and methods and restricts direct access to object internals.,medium,2,0',
 ];
 
 const TEMPLATE_CSV = TEMPLATE_HEADERS + '\n' + TEMPLATE_ROWS.join('\n');

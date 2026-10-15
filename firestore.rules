@@ -39,6 +39,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Papers: teachers can read/write their own papers; subcollection path is
+    // papers/{teacherId}/items/{paperId}
+    match /papers/{teacherId}/items/{paperId} {
+      allow read, write: if request.auth != null && request.auth.uid == teacherId;
+    }
+
     // Preset quizzes: any authenticated user can read (isActive filtering
     // happens at query level — resource.data unavailable in list context);
     // teachers can write
