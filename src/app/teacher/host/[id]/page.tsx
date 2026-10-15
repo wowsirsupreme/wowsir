@@ -517,9 +517,32 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
               <p className="text-xs font-mono uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Room Code
               </p>
-              <div className="code-display-dark mb-8" style={{ color: '#fcd34d', borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.06)', textShadow: '0 0 24px rgba(201,168,76,0.5)' }}>
+              <div className="code-display-dark mb-3" style={{ color: '#fcd34d', borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.06)', textShadow: '0 0 24px rgba(201,168,76,0.5)' }}>
                 {session?.code || '…'}
               </div>
+              {session?.code && (
+                <div className="flex justify-center gap-2 mb-6">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(session.code).then(() => toast('Code copied!', 'success'));
+                    }}
+                    className="btn-glass"
+                    style={{ fontSize: 12, padding: '7px 14px', minHeight: 0 }}
+                  >
+                    Copy code
+                  </button>
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/join?code=${session.code}`;
+                      navigator.clipboard.writeText(url).then(() => toast('Join link copied!', 'success'));
+                    }}
+                    className="btn-glass"
+                    style={{ fontSize: 12, padding: '7px 14px', minHeight: 0 }}
+                  >
+                    Copy join link
+                  </button>
+                </div>
+              )}
               <p className="text-lg mb-6" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 {players.length} player{players.length !== 1 ? 's' : ''} waiting…
               </p>

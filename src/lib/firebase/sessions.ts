@@ -219,6 +219,28 @@ export async function saveSessionResult(result: SessionResult): Promise<void> {
   await setDoc(doc(fs(), 'results', result.id), result);
 }
 
+export async function getResultsByTeacher(teacherId: string): Promise<SessionResult[]> {
+  const { collection, query, where, getDocs, orderBy } = await import('firebase/firestore');
+  const q = query(
+    collection(fs(), 'results'),
+    where('teacherId', '==', teacherId),
+    orderBy('completedAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as SessionResult);
+}
+
+export async function getResultsByQuiz(quizId: string): Promise<SessionResult[]> {
+  const { collection, query, where, getDocs, orderBy } = await import('firebase/firestore');
+  const q = query(
+    collection(fs(), 'results'),
+    where('quizId', '==', quizId),
+    orderBy('completedAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as SessionResult);
+}
+
 // ── Teacher session index ─────────────────────────────────────────────────────
 
 /** Remove a session from the teacher's active-session index (call on end/complete) */

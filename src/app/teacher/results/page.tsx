@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, BarChart2, Users, CheckCircle, Clock, Trophy } from 'lucide-react';
+import { ChevronLeft, BarChart2, Users, CheckCircle, Clock, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
+import { getResultsByTeacher } from '@/lib/firebase/sessions';
 import type { Quiz } from '@/types/quiz';
+import type { SessionResult } from '@/types/session';
 
 const BG = [
   'radial-gradient(ellipse 80% 50% at 30% 0%,   rgba(245,158,11,0.1) 0%, transparent 55%)',
@@ -20,13 +22,19 @@ export default function ResultsPage() {
   const { configured } = useFirebase();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [results, setResults] = useState<SessionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready || !user) return;
-    getTeacherQuizzes(user.uid).then(qs => {
+    Promise.all([
+      getTeacherQuizzes(user.uid),
+      getResultsByTeacher(user.uid),
+    ]).then(([qs, rs]) => {
       setQuizzes(qs);
+      setResults(rs);
       setLoading(false);
     });
   }, [ready, user]);
@@ -122,70 +130,120 @@ export default function ResultsPage() {
               YOUR QUIZZES
             </p>
             <div style={{ display: 'grid', gap: 10 }}>
-              {quizzes.map((q, i) => {
+              {quizzes.map((q) => {
                 const hov = hovered === q.id;
+                const quizResults = results.filter(r => r.quizId === q.id);
+                const totalPlayers = quizResults.reduce((acc, r) => acc + (r.playerResults?.length || 0), 0);
+                const isExpanded = expanded === q.id;
                 return (
                   <div
                     key={q.id}
                     style={{
-                      borderRadius: 16, padding: '18px 20px',
+                      borderRadius: 16,
                       background: hov ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)',
                       border: `1.5px solid ${hov ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)'}`,
-                      transition: 'all 0.15s',
+                      transition: 'all 0.15s', overflow: 'hidden',
                     }}
                     onMouseEnter={() => setHovered(q.id!)}
                     onMouseLeave={() => setHovered(null)}
                   >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {q.title}
-                        </h3>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
-                          {q.questionIds?.length || 0} questions · {q.topicKey}
-                        </p>
+                    {/* Quiz header row */}
+                    <div style={{ padding: '18px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {q.title}
+                          </h3>
+                          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
+                            {q.questionIds?.length || 0} questions · {q.topicKey}
+                          </p>
+                        </div>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', flexShrink: 0,
+                          padding: '4px 10px', borderRadius: 999,
+                          background: q.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
+                          color: q.status === 'published' ? '#34d399' : 'rgba(255,255,255,0.3)',
+                          border: `1px solid ${q.status === 'published' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
+                        }}>
+                          {q.status?.toUpperCase()}
+                        </span>
                       </div>
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', flexShrink: 0,
-                        padding: '4px 10px', borderRadius: 999,
-                        background: q.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
-                        color: q.status === 'published' ? '#34d399' : 'rgba(255,255,255,0.3)',
-                        border: `1px solid ${q.status === 'published' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
-                      }}>
-                        {q.status?.toUpperCase()}
-                      </span>
+
+                      {/* Stats row */}
+                      <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                          <Trophy size={13} style={{ color: '#fcd34d' }} />
+                          <span>{quizResults.length} session{quizResults.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                          <Users size={13} style={{ color: '#6ee7b7' }} />
+                          <span>{totalPlayers} total player{totalPlayers !== 1 ? 's' : ''}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => router.push(`/teacher/host/${q.id}`)}
+                          style={{
+                            flex: 1, padding: '10px 0', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                            background: 'linear-gradient(135deg,#c9a84c,#e8d08a)',
+                            color: '#0d0d14', border: 'none',
+                            boxShadow: '0 3px 14px rgba(201,168,76,0.25)',
+                          }}
+                        >
+                          Host Session
+                        </button>
+                        {quizResults.length > 0 && (
+                          <button
+                            onClick={() => setExpanded(isExpanded ? null : q.id!)}
+                            className="btn-glass"
+                            style={{ fontSize: 13, padding: '10px 14px', borderRadius: 11, display: 'flex', alignItems: 'center', gap: 5 }}
+                          >
+                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            History
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Placeholder stats — live session data would connect via sessions.ts */}
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-                        <Users size={13} /> <span>—</span>
+                    {/* Session history */}
+                    {isExpanded && quizResults.length > 0 && (
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 20px 16px' }}>
+                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: 8 }}>SESSION HISTORY</p>
+                        <div style={{ display: 'grid', gap: 6 }}>
+                          {quizResults.map(r => {
+                            const date = new Date(r.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                            const topScore = r.playerResults?.length ? Math.max(...r.playerResults.map(p => p.score)) : 0;
+                            const avgAcc = r.playerResults?.length
+                              ? Math.round(r.playerResults.reduce((a, p) => a + (p.accuracy || 0), 0) / r.playerResults.length * 100)
+                              : 0;
+                            return (
+                              <button
+                                key={r.id}
+                                onClick={() => router.push(`/teacher/results/${r.id}`)}
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                  padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                                  color: '#fff', textAlign: 'left', transition: 'background 0.1s',
+                                }}
+                              >
+                                <div>
+                                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: '#fcd34d', marginRight: 10 }}>{r.code}</span>
+                                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{date}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                                  <span>{r.playerResults?.length || 0} players</span>
+                                  <span>top {topScore}pts</span>
+                                  <span>{avgAcc}% avg</span>
+                                  <ChevronRight size={13} style={{ color: 'rgba(255,255,255,0.25)' }} />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
-                        <Trophy size={13} /> <span>—</span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => router.push(`/teacher/host/${q.id}`)}
-                        style={{
-                          flex: 1, padding: '10px 0', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                          background: 'linear-gradient(135deg,#c9a84c,#e8d08a)',
-                          color: '#0d0d14', border: 'none',
-                          boxShadow: '0 3px 14px rgba(201,168,76,0.25)',
-                        }}
-                      >
-                        Host Session
-                      </button>
-                      <button
-                        onClick={() => router.push(`/teacher/quiz/new?edit=${q.id}`)}
-                        className="btn-glass"
-                        style={{ fontSize: 14, padding: '10px 18px', borderRadius: 11 }}
-                      >
-                        Edit
-                      </button>
-                    </div>
+                    )}
                   </div>
                 );
               })}

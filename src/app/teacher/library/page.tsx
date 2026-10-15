@@ -48,6 +48,8 @@ export default function QuestionBankPage() {
   const [pendingQuestions, setPendingQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
   const [tab, setTab] = useState<'browse' | 'pending'>('browse');
   const [approvingAll, setApprovingAll] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -78,7 +80,11 @@ export default function QuestionBankPage() {
   useEffect(() => {
     if (!selectedTopic) return;
     setLoading(true);
-    getQuestionsByTopic(selectedTopic).then(qs => {
+    setSearch('');
+    setFilterType('');
+    setFilterStatus('');
+    // Include both approved and pending so teachers can see all their questions
+    getQuestionsByTopic(selectedTopic, ['approved', 'pending']).then(qs => {
       setQuestions(qs);
       setLoading(false);
     });
@@ -206,9 +212,12 @@ export default function QuestionBankPage() {
     );
   }
 
-  const filtered = questions.filter(q =>
-    !search || q.text.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = questions.filter(q => {
+    if (search && !q.text.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterType && q.type !== filterType) return false;
+    if (filterStatus && q.approvalStatus !== filterStatus) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
@@ -371,19 +380,44 @@ export default function QuestionBankPage() {
                 />
               </div>
               {selectedTopic && (
-                <div style={{ position: 'relative', flex: '1 1 200px' }}>
-                  <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                  <input
-                    placeholder="Search questions…"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    style={{
-                      width: '100%', paddingLeft: 36, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
-                      borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.12)',
-                      background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 14,
-                    }}
-                  />
-                </div>
+                <>
+                  <div style={{ position: 'relative', flex: '1 1 180px' }}>
+                    <Search size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                    <input
+                      placeholder="Search questions…"
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      style={{
+                        width: '100%', paddingLeft: 36, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
+                        borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.12)',
+                        background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 14,
+                      }}
+                    />
+                  </div>
+                  <select
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                    style={{ flex: '0 0 auto', padding: '11px 14px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: filterType ? '#c4b5fd' : 'rgba(255,255,255,0.45)', fontSize: 14, cursor: 'pointer' }}
+                  >
+                    <option value="">All types</option>
+                    <option value="mcq">MCQ</option>
+                    <option value="truefalse">True/False</option>
+                    <option value="shortanswer">Short Answer</option>
+                    <option value="fillinblank">Fill in Blank</option>
+                    <option value="matching">Matching</option>
+                    <option value="ordering">Ordering</option>
+                  </select>
+                  <select
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value)}
+                    style={{ flex: '0 0 auto', padding: '11px 14px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: filterStatus ? '#c4b5fd' : 'rgba(255,255,255,0.45)', fontSize: 14, cursor: 'pointer' }}
+                  >
+                    <option value="">All statuses</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </>
               )}
             </div>
 
