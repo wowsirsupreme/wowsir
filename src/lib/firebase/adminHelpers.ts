@@ -185,3 +185,54 @@ export async function incrementQuestionUseCount(questionId: string): Promise<voi
     // Silently ignore if field doesn't exist yet
   }
 }
+
+/* ── Database reset utilities ── */
+
+export interface ResetResult {
+  deleted: number;
+  errors: number;
+}
+
+/** Delete all documents in a Firestore collection (in batches) */
+async function deleteCollection(colName: string): Promise<ResetResult> {
+  const { fs } = getFirebaseInstances();
+  if (!fs) return { deleted: 0, errors: 0 };
+  const { writeBatch, doc: _doc } = await import('firebase/firestore');
+  const snap = await getDocs(collection(fs, colName));
+  let deleted = 0, errors = 0;
+  // Process in batches of 400
+  const batchSize = 400;
+  for (let i = 0; i < snap.docs.length; i += batchSize) {
+    const batch = writeBatch(fs);
+    snap.docs.slice(i, i + batchSize).forEach(d => batch.delete(d.ref));
+    try { await batch.commit(); deleted += Math.min(batchSize, snap.docs.length - i); }
+    catch { errors++; }
+  }
+  return { deleted, errors };
+}
+
+/** Wipe all session results from Firestore */
+export async function wipeResults(): Promise<ResetResult> {
+  return deleteCollection('results');
+}
+
+/** Wipe practice leaderboard entries from Firestore */
+export async function wipePracticeLeaderboard(): Promise<ResetResult> {
+  return deleteCollection('practiceLeaderboard');
+}
+
+/** Wipe all RTDB sessions (active/ended) */
+export async function wipeRTDBSessions(): Promise<ResetResult> {
+  const { db } = getFirebaseInstances();
+  if (!db) return { deleted: 0, errors: 0 };
+  const { ref, get, remove } = await import('firebase/database');
+  let deleted = 0, errors = 0;
+  const paths = ['sessions', 'sessions_questions', 'session_pub_questions', 'session_codes', 'teacher_sessions'];
+  for (const path of paths) {
+    try {
+      const snap = await get(ref(db, path));
+      if (snap.exists()) { await remove(ref(db, path)); deleted++; }
+    } catch { errors++; }
+  }
+  return { deleted, errors };
+}
