@@ -4,8 +4,11 @@ import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
   title: 'WOW Sir — DPS International Ghana',
-  description: 'Grade 7 Computer Science Assessment Platform',
-  icons: { icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎓</text></svg>' },
+  description: 'Grades 4–11 Computer Science Assessment Platform',
+  icons: {
+    icon: '/wowsir-logo.svg',
+    apple: '/wowsir-logo.svg',
+  },
 };
 
 export const viewport: Viewport = {
