@@ -116,6 +116,36 @@ const TEMPLATE_ROWS = [
 const TEMPLATE_CSV = TEMPLATE_HEADERS + '\n' + TEMPLATE_ROWS.join('\n');
 
 // ---------------------------------------------------------------------------
+// topicKey auto-remap — old CSV keys → canonical app keys
+// Teachers who export from the generated bank will have the old keys;
+// this makes import work without manual editing.
+// ---------------------------------------------------------------------------
+const TOPIC_REMAP: Record<string, string> = {
+  // Grade 5
+  'gr5-computer-evolution': 'gr5-ch1-history',
+  'gr5-storage-media':      'gr5-ch2-storage',
+  // Grade 8
+  'gr8-artificial-intelligence': 'gr8-ch1-ai',
+  'gr8-technology-trends':       'gr8-ch2-tech',
+  // Grade 9 CS
+  'gr9-cs-cpu-architecture':       'gr9-cpu',
+  'gr9-cs-data-storage':           'gr9-storage',
+  'gr9-cs-os-accounts-security':   'gr9-os',
+  'gr9-cs-os-file-management':     'gr9-os',
+  'gr9-cs-os-interrupts':          'gr9-os',
+  'gr9-cs-os-memory-management':   'gr9-os',
+  'gr9-cs-os-peripherals-drivers': 'gr9-os',
+  'gr9-cs-os-process-management':  'gr9-os',
+  'gr9-cs-os-purpose':             'gr9-os',
+  // Grade 9 DT
+  'gr9-dt-defining':             'gr9dt-design-brief',
+  'gr9-dt-developing':           'gr9dt-developing',
+  'gr9-dt-identifying':          'gr9dt-design1',
+  'gr9-dt-influences-designing': 'gr9dt-influences',
+  'gr9-dt-proposing':            'gr9dt-plan',
+};
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 type ParsedRow = { ok: boolean; row: number; data?: Omit<Question, 'id'>; error?: string };
@@ -125,7 +155,15 @@ type ParsedRow = { ok: boolean; row: number; data?: Omit<Question, 'id'>; error?
 // ---------------------------------------------------------------------------
 const VALID_TYPES = new Set<string>(['mcq', 'truefalse', 'shortanswer', 'fillinblank', 'matching', 'ordering']);
 
-function parseCSV(text: string): ParsedRow[] {
+export interface ParseMeta { remapped: number; }
+
+function parseCSV(text: string): { rows: ParsedRow[]; meta: ParseMeta } {
+  const rows = _parseCSVRows(text);
+  const remapped = rows.filter(r => r.ok && (r as ParsedRow & { remappedKey?: boolean }).remappedKey).length;
+  return { rows, meta: { remapped } };
+}
+
+function _parseCSVRows(text: string): ParsedRow[] {
   const lines = text.trim().split('\n').filter(l => l.trim());
   if (lines.length < 2) return [{ ok: false, row: 0, error: 'File is empty or has no data rows' }];
 
@@ -155,6 +193,11 @@ function parseCSV(text: string): ParsedRow[] {
       results.push({ ok: false, row: i + 1, error: 'Missing required field (id, topicKey, text or answer)' });
       continue;
     }
+
+    // Auto-remap legacy topicKeys
+    const rawTopicKey = topicKey.trim();
+    const resolvedTopicKey = TOPIC_REMAP[rawTopicKey] ?? rawTopicKey;
+    const wasRemapped = resolvedTopicKey !== rawTopicKey;
 
     if (!VALID_TYPES.has(type)) {
       results.push({
@@ -249,12 +292,13 @@ function parseCSV(text: string): ParsedRow[] {
       continue;
     }
 
-    results.push({
+    const row: ParsedRow & { remappedKey?: boolean } = {
       ok: true,
       row: i + 1,
+      remappedKey: wasRemapped,
       data: {
         quizId: null,
-        topicKey: topicKey.trim(),
+        topicKey: resolvedTopicKey,
         type: type as Question['type'],
         text: text.trim(),
         options,
@@ -267,7 +311,8 @@ function parseCSV(text: string): ParsedRow[] {
         source: 'imported' as const,
         createdAt: Date.now(),
       },
-    });
+    };
+    results.push(row);
   }
   return results;
 }
@@ -283,11 +328,13 @@ export default function ImportCSVPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
+  const [parseMeta, setParseMeta] = useState<ParseMeta | null>(null);
   const [filename, setFilename] = useState('');
   const [importing, setImporting] = useState(false);
   const [done, setDone] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
+  const [autoApprove, setAutoApprove] = useState(false);
 
   if (!ready) return null;
   if (!configured || !user) {
@@ -309,7 +356,9 @@ export default function ImportCSVPage() {
     const reader = new FileReader();
     reader.onload = e => {
       const text = e.target?.result as string;
-      setParsed(parseCSV(text));
+      const { rows, meta } = parseCSV(text);
+      setParsed(rows);
+      setParseMeta(meta);
     };
     reader.readAsText(file);
   }
@@ -348,7 +397,10 @@ export default function ImportCSVPage() {
       }
 
       if (toSave.length > 0) {
-        await batchSaveQuestions(toSave);
+        const finalSave = autoApprove
+          ? toSave.map(q => ({ ...q, approvalStatus: 'approved' as const }))
+          : toSave;
+        await batchSaveQuestions(finalSave);
       }
 
       setImportedCount(toSave.length);
@@ -410,8 +462,8 @@ export default function ImportCSVPage() {
               <div>
                 <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: 8 }}>
                   Download the template to see answer formats for all 6 question types. New questions start as{' '}
-                  <strong style={{ color: 'rgba(255,255,255,0.7)' }}>pending</strong> — approve them in the Question Bank.
-                  Exact duplicates are skipped automatically.
+                  <strong style={{ color: 'rgba(255,255,255,0.7)' }}>pending</strong> unless you enable auto-approve below.
+                  Exact duplicates are skipped automatically. Legacy topicKeys (e.g. <code style={{ fontSize: 11 }}>gr5-computer-evolution</code>) are remapped automatically.
                 </p>
                 {/* Type legend */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
@@ -502,6 +554,57 @@ export default function ImportCSVPage() {
               </div>
             )}
 
+            {/* topicKey remap notice */}
+            {parseMeta && parseMeta.remapped > 0 && (
+              <div style={{
+                borderRadius: 10, background: 'rgba(251,191,36,0.07)',
+                border: '1px solid rgba(251,191,36,0.25)', padding: '10px 14px',
+                marginBottom: 12,
+                display: 'flex', alignItems: 'flex-start', gap: 8,
+              }}>
+                <Info size={14} color="#fbbf24" style={{ marginTop: 1, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#fbbf24' }}>{parseMeta.remapped} topicKey{parseMeta.remapped !== 1 ? 's' : ''} auto-remapped</strong>
+                  {' '}to canonical app keys (e.g. <code>gr9-cs-cpu-architecture</code> → <code>gr9-cpu</code>).
+                  No action needed — they will import correctly.
+                </span>
+              </div>
+            )}
+
+            {/* Auto-approve toggle */}
+            {!done && okCount > 0 && (
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                marginBottom: 12, cursor: 'pointer',
+                fontSize: 13, color: 'rgba(255,255,255,0.5)',
+              }}>
+                <span style={{
+                  width: 36, height: 20, borderRadius: 10, position: 'relative',
+                  background: autoApprove ? '#059669' : 'rgba(255,255,255,0.1)',
+                  border: `1px solid ${autoApprove ? '#059669' : 'rgba(255,255,255,0.15)'}`,
+                  transition: 'background 0.2s',
+                  flexShrink: 0,
+                  display: 'inline-block',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={autoApprove}
+                    onChange={e => setAutoApprove(e.target.checked)}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span style={{
+                    position: 'absolute', top: 2, left: autoApprove ? 18 : 2,
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: '#fff', transition: 'left 0.2s',
+                  }} />
+                </span>
+                Auto-approve questions on import
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                  (skip the approval queue — use for trusted curated content)
+                </span>
+              </label>
+            )}
+
             {/* Import button / done state */}
             {done ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -509,7 +612,10 @@ export default function ImportCSVPage() {
                 <p style={{ fontSize: 16, color: '#6ee7b7', fontWeight: 600, marginBottom: 6 }}>Import complete!</p>
                 {importedCount > 0 && (
                   <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-                    {importedCount} question{importedCount !== 1 ? 's' : ''} added as <strong style={{ color: 'rgba(255,255,255,0.6)' }}>pending</strong>
+                    {importedCount} question{importedCount !== 1 ? 's' : ''} added as{' '}
+                    <strong style={{ color: autoApprove ? '#34d399' : 'rgba(255,255,255,0.6)' }}>
+                      {autoApprove ? 'approved' : 'pending'}
+                    </strong>
                   </p>
                 )}
                 {skippedCount > 0 && (
