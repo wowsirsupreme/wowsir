@@ -159,9 +159,8 @@ export async function fetchQuestionsForPreset(quiz: PresetQuiz): Promise<Questio
     snap.docs.forEach(d => allQuestions.push({ id: d.id, ...d.data() } as Question));
   }
 
-  // Shuffle and cap to questionCount
-  const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, quiz.questionCount);
+  // Shuffle — return ALL approved questions (the player pages handle batching into rounds)
+  return allQuestions.sort(() => Math.random() - 0.5);
 }
 
 // ── Initial catalog seed ─────────────────────────────────────────────────────
