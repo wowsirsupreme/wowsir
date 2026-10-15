@@ -20,6 +20,60 @@ const ADMIN_PASSWORD = 'wowadmin2024';
 const TABS = ['Approvals', 'Teachers', 'Usage', 'Geography', 'Question Quality', 'Database'] as const;
 type Tab = typeof TABS[number];
 
+const MAX_ATTEMPTS   = 5;
+const LOCKOUT_MS     = 15 * 60 * 1000;  // 15 minutes
+const SESSION_MS     = 2  * 60 * 60 * 1000; // 2 hours
+const STORE_ATTEMPTS = 'admin_fail_attempts';
+const STORE_LOCKOUT  = 'admin_lockout_until';
+const STORE_SESSION  = 'admin_session_exp';
+
+function getLockoutState(): { locked: boolean; remaining: number; attempts: number } {
+  try {
+    const until = parseInt(localStorage.getItem(STORE_LOCKOUT) ?? '0', 10);
+    const now   = Date.now();
+    if (until > now) return { locked: true, remaining: until - now, attempts: MAX_ATTEMPTS };
+    const attempts = parseInt(localStorage.getItem(STORE_ATTEMPTS) ?? '0', 10);
+    return { locked: false, remaining: 0, attempts };
+  } catch { return { locked: false, remaining: 0, attempts: 0 }; }
+}
+
+function recordFailedAttempt(): { locked: boolean; remaining: number } {
+  try {
+    const prev = parseInt(localStorage.getItem(STORE_ATTEMPTS) ?? '0', 10);
+    const next = prev + 1;
+    if (next >= MAX_ATTEMPTS) {
+      const until = Date.now() + LOCKOUT_MS;
+      localStorage.setItem(STORE_LOCKOUT, String(until));
+      localStorage.removeItem(STORE_ATTEMPTS);
+      return { locked: true, remaining: LOCKOUT_MS };
+    }
+    localStorage.setItem(STORE_ATTEMPTS, String(next));
+    return { locked: false, remaining: 0 };
+  } catch { return { locked: false, remaining: 0 }; }
+}
+
+function clearLoginState() {
+  try {
+    localStorage.removeItem(STORE_ATTEMPTS);
+    localStorage.removeItem(STORE_LOCKOUT);
+  } catch { /* ignore */ }
+}
+
+function isSessionValid(): boolean {
+  try {
+    const exp = parseInt(sessionStorage.getItem(STORE_SESSION) ?? '0', 10);
+    return exp > Date.now();
+  } catch { return false; }
+}
+
+function startSession() {
+  try { sessionStorage.setItem(STORE_SESSION, String(Date.now() + SESSION_MS)); } catch { /* ignore */ }
+}
+
+function endSession() {
+  try { sessionStorage.removeItem(STORE_SESSION); } catch { /* ignore */ }
+}
+
 const BG = [
   'radial-gradient(ellipse 70% 50% at 20% 0%,   rgba(139,92,246,0.15) 0%, transparent 55%)',
   'radial-gradient(ellipse 60% 50% at 80% 20%,  rgba(217,70,239,0.09) 0%, transparent 50%)',
@@ -30,11 +84,12 @@ export default function AdminPage() {
   const router = useRouter();
   const { configured } = useFirebase();
 
-  const [authed, setAuthed]   = useState(false);
-  const [pwInput, setPwInput] = useState('');
-  const [pwError, setPwError] = useState(false);
-  const [tab, setTab]         = useState<Tab>('Approvals');
-  const [loading, setLoading] = useState(false);
+  const [authed, setAuthed]     = useState(false);
+  const [pwInput, setPwInput]   = useState('');
+  const [pwError, setPwError]   = useState('');
+  const [tab, setTab]           = useState<Tab>('Approvals');
+  const [loading, setLoading]   = useState(false);
+  const [lockRemaining, setLockRemaining] = useState(0); // ms remaining in lockout
 
   // Data
   const [pending,  setPending]  = useState<UserProfile[]>([]);
@@ -51,9 +106,54 @@ export default function AdminPage() {
   });
   const [resetMsg, setResetMsg] = useState<Record<string, string>>({});
 
+  // Restore session on mount, and set up lockout countdown timer
+  useEffect(() => {
+    if (isSessionValid()) setAuthed(true);
+    const { locked, remaining } = getLockoutState();
+    if (locked) setLockRemaining(remaining);
+  }, []);
+
+  useEffect(() => {
+    if (lockRemaining <= 0) return;
+    const id = setInterval(() => {
+      setLockRemaining(prev => {
+        const next = prev - 1000;
+        if (next <= 0) { clearInterval(id); return 0; }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lockRemaining]);
+
   function tryLogin() {
-    if (pwInput === ADMIN_PASSWORD) { setAuthed(true); setPwError(false); }
-    else { setPwError(true); }
+    const state = getLockoutState();
+    if (state.locked) {
+      setLockRemaining(state.remaining);
+      return;
+    }
+    if (pwInput === ADMIN_PASSWORD) {
+      clearLoginState();
+      startSession();
+      setAuthed(true);
+      setPwError('');
+    } else {
+      const result = recordFailedAttempt();
+      if (result.locked) {
+        setLockRemaining(result.remaining);
+        setPwError(`Too many failed attempts. Locked for 15 minutes.`);
+      } else {
+        const { attempts } = getLockoutState();
+        const left = MAX_ATTEMPTS - attempts;
+        setPwError(`Incorrect password. ${left} attempt${left !== 1 ? 's' : ''} remaining.`);
+      }
+    }
+  }
+
+  function handleLogout() {
+    endSession();
+    setAuthed(false);
+    setPwInput('');
+    setPwError('');
   }
 
   const loadTab = useCallback(async (t: Tab) => {
@@ -111,30 +211,42 @@ export default function AdminPage() {
           </div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: '#fff', marginBottom: 6 }}>Admin Panel</h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 28 }}>Enter the admin password to continue</p>
-          <input
-            className="dark-input"
-            type="password"
-            placeholder="Admin password"
-            value={pwInput}
-            onChange={e => { setPwInput(e.target.value); setPwError(false); }}
-            onKeyDown={e => e.key === 'Enter' && tryLogin()}
-            style={{ borderColor: pwError ? 'rgba(248,113,113,0.5)' : undefined }}
-            autoFocus
-          />
-          {pwError && (
-            <p style={{ fontSize: 13, color: '#f87171', marginBottom: 12 }}>Incorrect password</p>
+          {lockRemaining > 0 ? (
+            <div style={{ padding: '18px 0', borderRadius: 14, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', marginBottom: 12, textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: '#f87171', marginBottom: 4 }}>Too many failed attempts</p>
+              <p style={{ fontSize: 22, fontFamily: 'var(--font-mono)', color: '#fca5a5' }}>
+                {String(Math.floor(lockRemaining / 60000)).padStart(2, '0')}:{String(Math.floor((lockRemaining % 60000) / 1000)).padStart(2, '0')}
+              </p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>locked — try again after countdown</p>
+            </div>
+          ) : (
+            <>
+              <input
+                className="dark-input"
+                type="password"
+                placeholder="Admin password"
+                value={pwInput}
+                onChange={e => { setPwInput(e.target.value); setPwError(''); }}
+                onKeyDown={e => e.key === 'Enter' && tryLogin()}
+                style={{ borderColor: pwError ? 'rgba(248,113,113,0.5)' : undefined }}
+                autoFocus
+              />
+              {pwError && (
+                <p style={{ fontSize: 13, color: '#f87171', marginBottom: 12 }}>{pwError}</p>
+              )}
+              <button
+                onClick={tryLogin}
+                style={{
+                  width: '100%', padding: '14px 0', borderRadius: 14, marginTop: 4,
+                  background: 'linear-gradient(135deg,rgba(139,92,246,0.8),rgba(217,70,239,0.7))',
+                  color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
+                }}
+              >
+                Enter
+              </button>
+            </>
           )}
-          <button
-            onClick={tryLogin}
-            style={{
-              width: '100%', padding: '14px 0', borderRadius: 14, marginTop: 4,
-              background: 'linear-gradient(135deg,rgba(139,92,246,0.8),rgba(217,70,239,0.7))',
-              color: '#fff', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(139,92,246,0.3)',
-            }}
-          >
-            Enter
-          </button>
         </div>
       </div>
     );
@@ -154,9 +266,14 @@ export default function AdminPage() {
             <ShieldCheck size={16} color="#a78bfa" />
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: '#fff' }}>Admin Panel</span>
           </div>
-          <button onClick={() => loadTab(tab)} style={{ color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-            <RefreshCw size={14} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => loadTab(tab)} title="Refresh" style={{ color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+              <RefreshCw size={14} />
+            </button>
+            <button onClick={handleLogout} title="Log out" style={{ color: 'rgba(248,113,113,0.6)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}>
+              Log out
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
