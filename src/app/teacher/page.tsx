@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, ChevronLeft, ShieldCheck, Clock, ScrollText, Pencil } from 'lucide-react';
+import { Plug, GraduationCap, Plus, BookOpen, FileDown, BarChart2, Rocket, ChevronLeft, ShieldCheck, Clock, ScrollText, Pencil, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,18 @@ function MyPapersSection() {
   const router = useRouter();
   const [papers, setPapers] = useState<SavedPaper[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  function handleDeletePaper(id: string) {
+    try {
+      const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
+      const newIdx = idx.filter(i => i !== id);
+      localStorage.setItem('assessments_index', JSON.stringify(newIdx));
+      localStorage.removeItem(`assessment_${id}`);
+      setPapers(prev => prev.filter(p => p.id !== id));
+    } catch { /* ignore */ }
+    setConfirmDelete(null);
+  }
 
   useEffect(() => {
     try {
@@ -90,19 +102,68 @@ function MyPapersSection() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => router.push(`/teacher/assessment/new?edit=${p.id}`)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '9px 18px', borderRadius: 10, flexShrink: 0,
-                  background: hov ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.12)',
-                  border: '1px solid rgba(139,92,246,0.3)',
-                  color: '#c4b5fd', fontWeight: 600, fontSize: 13,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
-                <Pencil size={13} strokeWidth={2} /> Edit
-              </button>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                {confirmDelete === p.id ? (
+                  <>
+                    <button
+                      onClick={() => handleDeletePaper(p.id)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '9px 14px', borderRadius: 10,
+                        background: 'rgba(239,68,68,0.2)',
+                        border: '1px solid rgba(239,68,68,0.4)',
+                        color: '#fca5a5', fontWeight: 700, fontSize: 12,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(null)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center',
+                        padding: '9px 12px', borderRadius: 10,
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        color: 'rgba(255,255,255,0.4)', fontWeight: 600, fontSize: 12,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push(`/teacher/assessment/new?edit=${p.id}`)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '9px 18px', borderRadius: 10,
+                        background: hov ? 'rgba(139,92,246,0.25)' : 'rgba(139,92,246,0.12)',
+                        border: '1px solid rgba(139,92,246,0.3)',
+                        color: '#c4b5fd', fontWeight: 600, fontSize: 13,
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      <Pencil size={13} strokeWidth={2} /> Edit
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(p.id)}
+                      title="Delete paper"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 38, height: 38, borderRadius: 10,
+                        background: hov ? 'rgba(239,68,68,0.12)' : 'transparent',
+                        border: `1px solid ${hov ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                        color: hov ? '#f87171' : 'rgba(255,255,255,0.25)',
+                        cursor: 'pointer', transition: 'all 0.15s',
+                      }}
+                    >
+                      <Trash2 size={14} strokeWidth={2} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}

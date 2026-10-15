@@ -13,20 +13,43 @@ function fs(): Firestore {
   return fs;
 }
 
-export async function getQuestionsByTopic(topicKey: string): Promise<Question[]> {
-  // No orderBy — avoids composite index requirement. Sort client-side.
-  const q = query(
-    collection(fs(), 'questions'),
-    where('topicKey', '==', topicKey),
-    where('approvalStatus', '==', 'approved'),
+export async function getQuestionsByTopic(
+  topicKey: string,
+  includeStatuses: Array<'approved' | 'pending'> = ['approved'],
+): Promise<Question[]> {
+  // Fetch each status separately to avoid composite index on (topicKey, approvalStatus).
+  // Client-side merge + sort is fine for typical question-bank sizes.
+  const results = await Promise.all(
+    includeStatuses.map(status =>
+      getDocs(
+        query(
+          collection(fs(), 'questions'),
+          where('topicKey', '==', topicKey),
+          where('approvalStatus', '==', status),
+        )
+      )
+    )
   );
-  const snap = await getDocs(q);
-  const docs = snap.docs.map(d => ({ ...d.data(), id: d.id } as Question));
+  const seen = new Set<string>();
+  const docs: Question[] = [];
+  for (const snap of results) {
+    for (const d of snap.docs) {
+      if (!seen.has(d.id)) {
+        seen.add(d.id);
+        docs.push({ ...d.data(), id: d.id } as Question);
+      }
+    }
+  }
   return docs.sort((a, b) => {
     const ta = (a as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
     const tb = (b as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
     return ta - tb;
   });
+}
+
+/** Returns all questions for a topic regardless of approval status */
+export async function getAllQuestionsByTopic(topicKey: string): Promise<Question[]> {
+  return getQuestionsByTopic(topicKey, ['approved', 'pending']);
 }
 
 export async function getRandomQuestions(topicKey: string, count: number): Promise<Question[]> {
@@ -90,4 +113,42 @@ export async function updateQuestion(
 ): Promise<void> {
   const { updateDoc, doc } = await import('firebase/firestore');
   await updateDoc(doc(fs(), 'questions', id), data as Record<string, unknown>);
+}
+
+/** Normalise question text for duplicate detection: lowercase + collapse whitespace */
+function normaliseText(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Check for exact-text duplicates across the given topic keys.
+ * Returns a Set of normalised question texts that already exist (approved or pending).
+ */
+export async function getExistingQuestionTexts(topicKeys: string[]): Promise<Set<string>> {
+  const results = await Promise.all(
+    topicKeys.map(key =>
+      getDocs(query(collection(fs(), 'questions'), where('topicKey', '==', key)))
+    )
+  );
+  const existing = new Set<string>();
+  for (const snap of results) {
+    for (const d of snap.docs) {
+      const text = (d.data() as { text?: string }).text;
+      if (text) existing.add(normaliseText(text));
+    }
+  }
+  return existing;
+}
+
+/** Save a question only if its text doesn't already exist in the topic.
+ *  Returns { saved: true, id } or { saved: false, reason: 'duplicate' } */
+export async function saveQuestionDeduped(
+  question: Omit<Question, 'id'> & { id?: string }
+): Promise<{ saved: boolean; id?: string; reason?: string }> {
+  const existing = await getExistingQuestionTexts([question.topicKey]);
+  if (existing.has(normaliseText(question.text))) {
+    return { saved: false, reason: 'duplicate' };
+  }
+  const id = await saveQuestion(question);
+  return { saved: true, id };
 }

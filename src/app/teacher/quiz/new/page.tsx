@@ -97,7 +97,7 @@ function QuizBuilderInner() {
   useEffect(() => {
     if (activeTopicKeys.length === 0) { setQuestions([]); return; }
     setLoadingQ(true);
-    Promise.all(activeTopicKeys.map(k => getQuestionsByTopic(k)))
+    Promise.all(activeTopicKeys.map(k => getQuestionsByTopic(k, ['approved', 'pending'])))
       .then(results => {
         const seen = new Set<string>();
         const merged: Question[] = [];

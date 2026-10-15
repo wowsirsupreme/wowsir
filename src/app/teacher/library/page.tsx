@@ -2,14 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, BookOpen, Search, CheckCircle, Clock, Filter, Edit2, X, Save } from 'lucide-react';
+import { ChevronLeft, BookOpen, Search, CheckCircle, Clock, Edit2, X, Save, Plus, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion } from '@/lib/firebase/questions';
+import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
 import TopicPicker from '@/components/TopicPicker';
 import type { Question } from '@/types/question';
+
+/** Human-readable label + colour for each question type */
+const TYPE_META: Record<string, { label: string; bg: string; fg: string; border: string }> = {
+  mcq:         { label: 'MCQ',         bg: 'rgba(56,189,248,0.12)',  fg: '#7dd3fc', border: 'rgba(56,189,248,0.25)' },
+  truefalse:   { label: 'T/F',         bg: 'rgba(16,185,129,0.12)', fg: '#6ee7b7', border: 'rgba(16,185,129,0.25)' },
+  shortanswer: { label: 'Short',       bg: 'rgba(245,158,11,0.12)', fg: '#fcd34d', border: 'rgba(245,158,11,0.25)' },
+  fillinblank: { label: 'Fill',        bg: 'rgba(139,92,246,0.12)', fg: '#c4b5fd', border: 'rgba(139,92,246,0.25)' },
+  matching:    { label: 'Match',       bg: 'rgba(236,72,153,0.12)', fg: '#f9a8d4', border: 'rgba(236,72,153,0.25)' },
+  ordering:    { label: 'Order',       bg: 'rgba(249,115,22,0.12)', fg: '#fdba74', border: 'rgba(249,115,22,0.25)' },
+};
+
+function TypeBadge({ type }: { type: string }) {
+  const m = TYPE_META[type] ?? { label: type, bg: 'rgba(255,255,255,0.06)', fg: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.12)' };
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', flexShrink: 0, padding: '3px 8px', borderRadius: 999, background: m.bg, color: m.fg, border: `1px solid ${m.border}` }}>
+      {m.label}
+    </span>
+  );
+}
 
 const BG = [
   'radial-gradient(ellipse 80% 50% at 30% 0%,   rgba(139,92,246,0.12) 0%, transparent 55%)',
@@ -35,6 +54,21 @@ export default function QuestionBankPage() {
   const [editText, setEditText] = useState('');
   const [editExplanation, setEditExplanation] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Add Question form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addTopic, setAddTopic] = useState('');
+  const [addType, setAddType] = useState<Question['type']>('mcq');
+  const [addText, setAddText] = useState('');
+  const [addOptionA, setAddOptionA] = useState('');
+  const [addOptionB, setAddOptionB] = useState('');
+  const [addOptionC, setAddOptionC] = useState('');
+  const [addOptionD, setAddOptionD] = useState('');
+  const [addAnswer, setAddAnswer] = useState('');
+  const [addExplanation, setAddExplanation] = useState('');
+  const [addDifficulty, setAddDifficulty] = useState<Question['difficulty']>('medium');
+  const [addPoints, setAddPoints] = useState(1);
+  const [addSaving, setAddSaving] = useState(false);
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -96,6 +130,69 @@ export default function QuestionBankPage() {
     }
   }
 
+  async function handleAddQuestion() {
+    if (!addText.trim() || !addTopic) { toast('Topic and question text are required', 'error'); return; }
+    setAddSaving(true);
+    try {
+      let options: string[] = [];
+      let answer = addAnswer.trim();
+
+      if (addType === 'mcq') {
+        options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
+        if (options.length < 2) { toast('MCQ needs at least 2 options', 'error'); setAddSaving(false); return; }
+        const idx = parseInt(answer, 10);
+        if (isNaN(idx) || idx < 0 || idx >= options.length) { toast(`MCQ answer must be a 0-based index (0–${options.length - 1})`, 'error'); setAddSaving(false); return; }
+      } else if (addType === 'truefalse') {
+        options = ['True', 'False'];
+        const n = answer.toLowerCase();
+        if (n !== 'true' && n !== 'false') { toast('True/False answer must be "true" or "false"', 'error'); setAddSaving(false); return; }
+        answer = n;
+      } else if (addType === 'matching') {
+        options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
+        if (options.length < 2) { toast('Matching needs at least 2 left-side items', 'error'); setAddSaving(false); return; }
+      } else if (addType === 'ordering') {
+        options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
+        if (options.length < 2) { toast('Ordering needs at least 2 items', 'error'); setAddSaving(false); return; }
+      }
+
+      const q: Omit<Question, 'id'> = {
+        quizId: null,
+        topicKey: addTopic,
+        type: addType,
+        text: addText.trim(),
+        options,
+        answer,
+        explanation: addExplanation.trim(),
+        difficulty: addDifficulty,
+        points: addPoints,
+        chapter: 0,
+        approvalStatus: 'pending',
+        source: 'manual' as const,
+        createdAt: Date.now(),
+      };
+
+      const result = await saveQuestionDeduped(q);
+      if (!result.saved) {
+        toast('A question with this text already exists in this topic', 'error');
+        setAddSaving(false);
+        return;
+      }
+
+      toast('Question added — it\'s in Pending for approval', 'success');
+      // Refresh pending list
+      getPendingQuestions().then(setPendingQuestions);
+      // Reset form
+      setShowAddForm(false);
+      setAddText(''); setAddOptionA(''); setAddOptionB(''); setAddOptionC(''); setAddOptionD('');
+      setAddAnswer(''); setAddExplanation(''); setAddDifficulty('medium'); setAddPoints(1);
+    } catch (e) {
+      console.error('Add question error:', e);
+      toast('Failed to save question', 'error');
+    } finally {
+      setAddSaving(false);
+    }
+  }
+
   if (!ready) return null;
 
   if (!configured || !user) {
@@ -122,7 +219,12 @@ export default function QuestionBankPage() {
             <ChevronLeft size={14} /> Teacher
           </button>
           <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em' }}>QUESTION BANK</span>
-          <div style={{ width: 80 }} />
+          <button
+            onClick={() => setShowAddForm(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: showAddForm ? 'rgba(196,181,253,0.2)' : 'rgba(196,181,253,0.1)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.3)' }}
+          >
+            <Plus size={13} strokeWidth={2.5} /> Add Question
+          </button>
         </div>
       </div>
 
@@ -136,6 +238,101 @@ export default function QuestionBankPage() {
             Browse and manage all questions in the system
           </p>
         </div>
+
+        {/* Add Question Form */}
+        {showAddForm && (
+          <div style={{ borderRadius: 18, padding: '20px 22px', background: 'rgba(196,181,253,0.06)', border: '1.5px solid rgba(196,181,253,0.25)', marginBottom: 24 }}>
+            <p style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: '#c4b5fd', letterSpacing: '0.06em', marginBottom: 16 }}>ADD QUESTION</p>
+            <div style={{ display: 'grid', gap: 12 }}>
+
+              {/* Topic + Type row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>TOPIC *</label>
+                  <TopicPicker value={addTopic} onChange={setAddTopic} inputStyle={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.25)', background: 'rgba(255,255,255,0.06)', fontSize: 13 }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>TYPE *</label>
+                  <select
+                    value={addType}
+                    onChange={e => { setAddType(e.target.value as Question['type']); setAddAnswer(''); }}
+                    style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.25)', background: 'rgba(255,255,255,0.06)', color: '#f5f3ee', fontSize: 13 }}
+                  >
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="truefalse">True / False</option>
+                    <option value="shortanswer">Short Answer</option>
+                    <option value="fillinblank">Fill in the Blank</option>
+                    <option value="matching">Matching</option>
+                    <option value="ordering">Ordering</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Question text */}
+              <div>
+                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>QUESTION TEXT *</label>
+                <textarea value={addText} onChange={e => setAddText(e.target.value)} rows={2} placeholder={addType === 'fillinblank' ? 'Use ___ for the blank, e.g. "A ___ connects a home network to the Internet."' : 'Enter the question…'} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13, resize: 'vertical', lineHeight: 1.5 }} />
+              </div>
+
+              {/* Options (MCQ / Matching / Ordering) */}
+              {(addType === 'mcq' || addType === 'matching' || addType === 'ordering') && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[['A', addOptionA, setAddOptionA], ['B', addOptionB, setAddOptionB], ['C', addOptionC, setAddOptionC], ['D', addOptionD, setAddOptionD]].map(([lbl, val, setter]) => (
+                    <div key={String(lbl)}>
+                      <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>
+                        {addType === 'matching' ? `LEFT ${lbl}` : addType === 'ordering' ? `ITEM ${lbl}` : `OPTION ${lbl}`}
+                      </label>
+                      <input value={String(val)} onChange={e => (setter as (v: string) => void)(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13 }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Answer field */}
+              <div>
+                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>
+                  {addType === 'mcq' ? 'CORRECT OPTION (0=A, 1=B, 2=C, 3=D) *' :
+                   addType === 'truefalse' ? 'ANSWER (true / false) *' :
+                   addType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated, in matching order) *' :
+                   addType === 'ordering' ? 'CORRECT ORDER (pipe-separated 0-based indices, e.g. 2|0|3|1) *' :
+                   'CORRECT ANSWER *'}
+                </label>
+                <input value={addAnswer} onChange={e => setAddAnswer(e.target.value)} placeholder={addType === 'mcq' ? '0' : addType === 'truefalse' ? 'true' : addType === 'matching' ? 'Router|Switch|Hub|Modem' : addType === 'ordering' ? '2|0|3|1' : 'Expected answer'} style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+              </div>
+
+              {/* Explanation + meta */}
+              <div>
+                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>EXPLANATION</label>
+                <textarea value={addExplanation} onChange={e => setAddExplanation(e.target.value)} rows={2} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)', fontSize: 13, resize: 'vertical', lineHeight: 1.5 }} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>DIFFICULTY</label>
+                  <select value={addDifficulty} onChange={e => setAddDifficulty(e.target.value as Question['difficulty'])} style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#f5f3ee', fontSize: 13 }}>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>POINTS</label>
+                  <input type="number" min={1} max={10} value={addPoints} onChange={e => setAddPoints(Math.max(1, parseInt(e.target.value) || 1))} style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 13 }} />
+                </div>
+              </div>
+
+              {/* Save / Cancel */}
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                <button onClick={() => setShowAddForm(false)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 10, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <X size={13} /> Cancel
+                </button>
+                <button onClick={handleAddQuestion} disabled={addSaving} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: addSaving ? 'rgba(196,181,253,0.1)' : 'rgba(196,181,253,0.18)', color: '#c4b5fd', border: '1px solid rgba(196,181,253,0.35)' }}>
+                  <Save size={13} /> {addSaving ? 'Saving…' : 'Add to Bank'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -266,15 +463,7 @@ export default function QuestionBankPage() {
                               </span>
                               {q.text}
                             </p>
-                            <span style={{
-                              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', flexShrink: 0,
-                              padding: '3px 8px', borderRadius: 999,
-                              background: q.type === 'mcq' ? 'rgba(56,189,248,0.12)' : 'rgba(16,185,129,0.12)',
-                              color: q.type === 'mcq' ? '#7dd3fc' : '#6ee7b7',
-                              border: `1px solid ${q.type === 'mcq' ? 'rgba(56,189,248,0.25)' : 'rgba(16,185,129,0.25)'}`,
-                            }}>
-                              {q.type === 'mcq' ? 'MCQ' : 'T/F'}
-                            </span>
+                            <TypeBadge type={q.type} />
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
                             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}>
