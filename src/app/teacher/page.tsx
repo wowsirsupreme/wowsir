@@ -9,50 +9,47 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { loginTeacher, registerTeacher, logoutTeacher } from '@/lib/firebase/auth';
 import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
+import { getPapers, deletePaper, migrateLocalStoragePapers, type SavedPaper } from '@/lib/firebase/papers';
 import FeedbackPrompt from '@/components/FeedbackPrompt';
 import type { Quiz } from '@/types/quiz';
 
 type AuthMode = 'login' | 'register';
 
-/* ── Paper type from localStorage ── */
-interface SavedPaper {
-  id: string;
-  title: string;
-  updatedAt?: number;
-  status?: string;
-  questions?: unknown[];
-}
-
-/* ── My Papers section (reads from localStorage) ── */
-function MyPapersSection() {
+/* ── My Papers section (reads from Firestore with localStorage fallback) ── */
+function MyPapersSection({ teacherId }: { teacherId: string }) {
   const router = useRouter();
   const [papers, setPapers] = useState<SavedPaper[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  function handleDeletePaper(id: string) {
+  async function handleDeletePaper(id: string) {
     try {
-      const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
-      const newIdx = idx.filter(i => i !== id);
-      localStorage.setItem('assessments_index', JSON.stringify(newIdx));
-      localStorage.removeItem(`assessment_${id}`);
+      await deletePaper(teacherId, id);
       setPapers(prev => prev.filter(p => p.id !== id));
     } catch { /* ignore */ }
     setConfirmDelete(null);
   }
 
   useEffect(() => {
-    try {
-      const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
-      const loaded: SavedPaper[] = idx
-        .map(id => {
-          try { return JSON.parse(localStorage.getItem(`assessment_${id}`) || 'null'); }
-          catch { return null; }
-        })
-        .filter(Boolean) as SavedPaper[];
-      setPapers(loaded);
-    } catch { /* ignore */ }
-  }, []);
+    if (!teacherId) return;
+    // Migrate localStorage papers then load from Firestore
+    migrateLocalStoragePapers(teacherId)
+      .then(() => getPapers(teacherId))
+      .then(setPapers)
+      .catch(() => {
+        // Fallback to localStorage if Firestore fails
+        try {
+          const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
+          const loaded: SavedPaper[] = idx
+            .map(id => {
+              try { return JSON.parse(localStorage.getItem(`assessment_${id}`) || 'null'); }
+              catch { return null; }
+            })
+            .filter(Boolean) as SavedPaper[];
+          setPapers(loaded);
+        } catch { /* ignore */ }
+      });
+  }, [teacherId]);
 
   if (papers.length === 0) return null;
 
@@ -565,7 +562,7 @@ export default function TeacherPage() {
           </div>
 
           {/* ── my papers section ── */}
-          <MyPapersSection />
+          <MyPapersSection teacherId={user.uid} />
 
         </div>
       </div>

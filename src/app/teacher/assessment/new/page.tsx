@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { useToast } from '@/components/ui/Toast';
 import { getQuestionsByTopic } from '@/lib/firebase/questions';
+import { savePaper, getPaper } from '@/lib/firebase/papers';
 import { TOPIC_LABELS } from '@/types/question';
 import type { Question as BankQuestion } from '@/types/question';
 import TopicPicker from '@/components/TopicPicker';
@@ -1538,6 +1539,15 @@ function AssessmentBuilderInner() {
 
   const [draft, setDraft] = useState<AssessmentDraft>(loadInitialDraft);
 
+  // Load from Firestore when editing (overrides localStorage initial load)
+  useEffect(() => {
+    const editId = searchParams?.get('edit');
+    if (!editId || !user?.uid) return;
+    getPaper(user.uid, editId).then(paper => {
+      if (paper) setDraft(paper as unknown as AssessmentDraft);
+    }).catch(() => { /* keep localStorage version */ });
+  }, [user?.uid, searchParams]);
+
   const [activeTab, setActiveTab] = useState<'details' | 'sections' | 'format'>('details');
   const [bankTargetSection, setBankTargetSection] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1621,15 +1631,21 @@ function AssessmentBuilderInner() {
     if (!draft.subject.trim() && !draft.title.trim()) { toast('Enter a subject or title', 'error'); return; }
     setSaving(true);
     try {
-      const key = `assessment_${draft.id}`;
-      localStorage.setItem(key, JSON.stringify({ ...draft, status, updatedAt: Date.now() }));
-      const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
-      if (!idx.includes(draft.id)) { idx.unshift(draft.id); localStorage.setItem('assessments_index', JSON.stringify(idx)); }
+      const paperData = { ...draft, status, updatedAt: Date.now() };
+      if (user?.uid) {
+        await savePaper(user.uid, paperData);
+      } else {
+        // Fallback to localStorage if not authenticated
+        const key = `assessment_${draft.id}`;
+        localStorage.setItem(key, JSON.stringify(paperData));
+        const idx: string[] = JSON.parse(localStorage.getItem('assessments_index') || '[]');
+        if (!idx.includes(draft.id)) { idx.unshift(draft.id); localStorage.setItem('assessments_index', JSON.stringify(idx)); }
+      }
       toast(status === 'published' ? 'Assessment published!' : 'Draft saved', 'success');
       if (status === 'published') router.push('/teacher');
     } catch { toast('Failed to save', 'error'); }
     finally { setSaving(false); }
-  }, [draft, toast, router]);
+  }, [draft, toast, router, user]);
 
   const totalQs = draft.sections.reduce((a, s) => {
     const directQs = s.questions.length;
