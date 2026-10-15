@@ -185,9 +185,7 @@ export async function endBattle(battleId: string, winnerId: string): Promise<voi
 }
 
 export async function saveBattleResult(result: BattleResult): Promise<void> {
-  try {
-    await setDoc(doc(fs(), 'battle_results', result.id), result);
-  } catch { /* best-effort */ }
+  await setDoc(doc(fs(), 'battle_results', result.id), result);
 }
 
 // ── Listeners ────────────────────────────────────────────────────────────────

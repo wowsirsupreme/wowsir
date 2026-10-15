@@ -50,6 +50,7 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
   const metaRef = useRef<BattleMeta | null>(null);
   const questionsRef = useRef<Question[]>([]);
   const answeredRef = useRef<Record<number, number>>({});
+  const scoresRef = useRef<Record<string, BattlePlayer>>({});
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resultSavedRef = useRef(false);
@@ -57,6 +58,7 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
   metaRef.current = meta;
   questionsRef.current = questions;
   answeredRef.current = answered;
+  scoresRef.current = scores;
 
   const myScore = scores[myId];
   const opponentId = meta ? (meta.player1.id === myId ? meta.player2.id : meta.player1.id) : null;
@@ -146,9 +148,10 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
   async function saveResult(m: BattleMeta) {
     if (resultSavedRef.current) return;
     resultSavedRef.current = true;
-    const s = scores;
+    const s = scoresRef.current;  // use ref — never stale in async closures
     const p1s = s[m.player1.id];
     const p2s = s[m.player2.id] ?? { score: 0 };
+    try {
     await saveBattleResult({
       id: m.id,
       quizId: m.quizId,
@@ -163,6 +166,9 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
       player2Id: m.player2.id, player2Name: m.player2.name, player2Score: (p2s as BattlePlayer).score ?? 0,
       playedAt: m.endedAt ?? Date.now(),
     });
+    } catch (err) {
+      console.error('[saveBattleResult] failed:', err);
+    }
   }
 
   async function handleAnswer(choice: number, currentMeta?: BattleMeta) {

@@ -366,6 +366,14 @@ ${qHtml}
                     {label}
                   </button>
                 ))}
+                {selectedIds.size > 0 && (
+                  <button onClick={() => setSelectedIds(new Set())}
+                    style={{ padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: 'rgba(239,68,68,0.6)', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.15)'; el.style.color = 'rgb(239,68,68)'; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = 'rgba(239,68,68,0.6)'; }}>
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
 
