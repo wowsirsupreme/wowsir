@@ -21,7 +21,7 @@ import { calcTimeBonus } from '@/lib/utils';
 import type { Question } from '@/types/question';
 import type { SessionPlayer } from '@/types/session';
 
-type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'next-round';
+type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'round-review';
 
 export default function PlayPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -53,7 +53,8 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [fullBank, setFullBank] = useState<Question[]>([]);
   const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
   const [roundNum, setRoundNum] = useState(1);
-  const [roundScore, setRoundScore] = useState(0); // score for this round only
+  const [roundScore, setRoundScore] = useState(0); // score at start of this round
+  const [roundResultsStartIdx, setRoundResultsStartIdx] = useState(0); // index into questionResults where current round starts
 
   // Self-paced mode state
   const [localQuestions, setLocalQuestions] = useState<Question[]>([]);
@@ -195,21 +196,15 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   function handleNextSelfPaced() {
     const next = localQIdx + 1;
     if (next >= localQuestions.length) {
-      // Round done — check if more questions remain in the full bank
+      // Round done — mark these questions as used and show round review
       const newUsed = new Set([...usedIndices, ...localQuestions.map((lq) => {
-        // find index in fullBank by matching id or text content
         return fullBank.findIndex(bq =>
           (bq.id && lq.id) ? bq.id === lq.id : bq.text === lq.text
         );
       }).filter(i => i >= 0)]);
       setUsedIndices(newUsed);
-      const remaining = fullBank.filter((_, i) => !newUsed.has(i));
-      if (remaining.length > 0) {
-        setRoundScore(score); // snapshot score at end of round
-        setPhase('next-round');
-      } else {
-        setPhase('ended');
-      }
+      setRoundScore(score);
+      setPhase('round-review'); // always show review before offering next round / retake
       return;
     }
     setLocalQIdx(next);
@@ -220,8 +215,9 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   }
 
   // ── Start next round with remaining questions ──
-  function handleStartNextRound() {
-    const remaining = fullBank.filter((_, i) => !usedIndices.has(i));
+  function handleStartNextRound(newUsed: Set<number>) {
+    const remaining = fullBank.filter((_, i) => !newUsed.has(i));
+    setRoundResultsStartIdx(questionResults.length); // new round's results start here
     setLocalQuestions(remaining);
     setLocalQIdx(0);
     setSelected(null);
@@ -229,6 +225,14 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     setRoundNum(r => r + 1);
     setQuestionStartTime(Date.now());
     setPhase('question');
+  }
+
+  // ── Retake from the very beginning ──
+  function handleRetake() {
+    setScore(0); setStreak(0); setNumCorrect(0); setNumAnswered(0);
+    setSelected(null); setFinalRank(null); setRoundNum(1); setRoundScore(0);
+    setUsedIndices(new Set()); setQuestionResults([]); setRoundResultsStartIdx(0);
+    setLocalQuestions(fullBank); setLocalQIdx(0); setPhase('question');
   }
 
   function handleTimerEnd() {
@@ -265,12 +269,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       questionResults={questionResults}
       leaderboard={leaderboard}
       playerId={playerId}
-      onRetake={() => {
-        setScore(0); setStreak(0); setNumCorrect(0); setNumAnswered(0);
-        setSelected(null); setFinalRank(null); setRoundNum(1);
-        setUsedIndices(new Set()); setQuestionResults([]);
-        setLocalQuestions(fullBank); setLocalQIdx(0); setPhase('question');
-      }}
+      onRetake={handleRetake}
       onStudy={() => router.push('/study')}
       onPractice={() => router.push('/practice')}
       onBattle={() => router.push(`/battle/${code}?name=${encodeURIComponent(playerName)}`)}
@@ -279,49 +278,113 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     />;
   }
 
-  // ── NEXT ROUND PROMPT ──
-  if (phase === 'next-round') {
+  // ── ROUND REVIEW ──
+  if (phase === 'round-review') {
     const remaining = fullBank.filter((_, i) => !usedIndices.has(i));
     const totalDone = fullBank.length - remaining.length;
+    const roundResults = questionResults.slice(roundResultsStartIdx);
+    const roundCorrect = roundResults.filter(r => r.correct).length;
+    const roundWrong = roundResults.length - roundCorrect;
+    const hasMore = remaining.length > 0;
+
     return (
-      <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
-        <div className="text-center animate-slideUp max-w-sm w-full">
-          <div className="text-6xl mb-4">🏁</div>
-          <h2 className="font-display text-4xl mb-1" style={{ color: '#fff' }}>Round {roundNum} Done!</h2>
-          <p className="text-[15px] mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Score so far: <span className="font-mono font-bold" style={{ color: '#34d399' }}>{score.toLocaleString()}</span>
-          </p>
-          <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            {totalDone} of {fullBank.length} questions done · {remaining.length} remaining
-          </p>
-
-          {/* Progress bar */}
-          <div className="w-full h-2 rounded-full mb-8" style={{ background: 'rgba(255,255,255,0.08)' }}>
-            <div
-              className="h-2 rounded-full transition-all"
-              style={{ width: `${(totalDone / fullBank.length) * 100}%`, background: 'linear-gradient(90deg, #10b981, #34d399)' }}
-            />
+      <div className="play-screen flex flex-col min-h-screen">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(2,12,6,0.5)', backdropFilter: 'blur(12px)' }}>
+          <div className="text-6xl">🏁</div>
+          <div className="text-center">
+            <h2 className="font-display text-2xl" style={{ color: '#fff' }}>Round {roundNum} Done!</h2>
+            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {totalDone} / {fullBank.length || localQuestions.length} questions complete
+            </p>
           </div>
+          <div className="text-right">
+            <p className="font-mono text-2xl font-bold" style={{ color: '#34d399' }}>{score.toLocaleString()}</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>total score</p>
+          </div>
+        </div>
 
-          <div className="flex flex-col gap-3">
+        {/* Stats row */}
+        <div className="flex gap-3 px-4 pt-4 pb-2">
+          {[
+            { label: 'Correct', value: roundCorrect, color: '#34d399', bg: 'rgba(16,185,129,0.1)', border: 'rgba(52,211,153,0.25)' },
+            { label: 'Wrong',   value: roundWrong,   color: '#f87171', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(248,113,113,0.25)' },
+          ].map(s => (
+            <div key={s.label} className="flex-1 rounded-xl py-3 text-center" style={{ background: s.bg, border: `1.5px solid ${s.border}` }}>
+              <p className="font-mono text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        {fullBank.length > 0 && (
+          <div className="px-4 py-2">
+            <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+              <div className="h-2 rounded-full" style={{ width: `${(totalDone / fullBank.length) * 100}%`, background: 'linear-gradient(90deg,#10b981,#34d399)', transition: 'width 0.6s ease' }} />
+            </div>
+          </div>
+        )}
+
+        {/* Question review */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+          {roundResults.map((r, i) => {
+            const correctIndex = parseInt(r.question.answer, 10);
+            const opts = r.question.options || [];
+            return (
+              <div key={i} className="rounded-2xl p-4" style={{ background: r.correct ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)', border: `1.5px solid ${r.correct ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}` }}>
+                <div className="flex items-start gap-2 mb-3">
+                  <span style={{ fontSize: 18, lineHeight: 1, marginTop: 2 }}>{r.correct ? '✅' : '❌'}</span>
+                  <p className="text-[14px] font-medium leading-snug" style={{ color: '#fff' }}>
+                    <span className="text-xs font-mono mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Q{roundResultsStartIdx + i + 1}</span>
+                    {r.question.text}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5 pl-6">
+                  {opts.map((opt, oi) => {
+                    const isCorrectOpt = oi === correctIndex;
+                    const isSelected = oi === r.selected;
+                    let bg = 'rgba(255,255,255,0.04)', border = 'rgba(255,255,255,0.08)', color = 'rgba(255,255,255,0.5)';
+                    if (isCorrectOpt) { bg = 'rgba(16,185,129,0.12)'; border = 'rgba(52,211,153,0.35)'; color = '#34d399'; }
+                    if (isSelected && !isCorrectOpt) { bg = 'rgba(239,68,68,0.12)'; border = 'rgba(248,113,113,0.35)'; color = '#f87171'; }
+                    return (
+                      <div key={oi} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm" style={{ background: bg, border: `1px solid ${border}`, color }}>
+                        <span style={{ fontSize: 11, opacity: 0.6 }}>{String.fromCharCode(65 + oi)}.</span>
+                        <span className="flex-1">{opt}</span>
+                        {isCorrectOpt && <span>✓</span>}
+                        {isSelected && !isCorrectOpt && <span>✗</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Action buttons — sticky at bottom */}
+        <div className="px-4 py-4 flex flex-col gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(2,12,6,0.8)', backdropFilter: 'blur(12px)' }}>
+          {hasMore && (
             <button
-              onClick={handleStartNextRound}
+              onClick={() => handleStartNextRound(usedIndices)}
               className="btn-glass btn-glass-green"
-              style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
+              style={{ width: '100%', fontSize: 16, padding: '15px 24px' }}
             >
-              ▶ Next Round ({remaining.length} questions)
+              ▶ Round {roundNum + 1} — {remaining.length} more question{remaining.length !== 1 ? 's' : ''}
             </button>
-            <button
-              onClick={() => setPhase('ended')}
-              style={{
-                width: '100%', padding: '12px',
-                color: 'rgba(255,255,255,0.3)', fontWeight: 500, fontSize: 14,
-                cursor: 'pointer', background: 'none', border: 'none',
-              }}
-            >
-              I&apos;m done for now
-            </button>
-          </div>
+          )}
+          <button
+            onClick={handleRetake}
+            style={{ width: '100%', padding: '13px', borderRadius: 14, background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.2)', color: '#34d399', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}
+          >
+            🔄 Retake Quiz
+          </button>
+          <button
+            onClick={() => setPhase('ended')}
+            style={{ width: '100%', padding: '10px', color: 'rgba(255,255,255,0.28)', fontWeight: 500, fontSize: 14, cursor: 'pointer', background: 'none', border: 'none' }}
+          >
+            {hasMore ? "I'm done for now →" : '📊 See Final Results →'}
+          </button>
         </div>
       </div>
     );
