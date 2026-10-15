@@ -20,6 +20,8 @@ export interface LeaderboardEntry {
   accuracy: number;   // 0–100
   streak: number;     // best streak achieved
   timestamp: Timestamp | null;
+  totalTimeMs?: number;  // total time to complete all questions (Hot Seat)
+  source?: 'practice' | 'hotseat';  // which mode produced the entry
 }
 
 /** Returns null when Firebase has not been initialised (no config provided). */

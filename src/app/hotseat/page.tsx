@@ -14,6 +14,7 @@ import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import MuteButton from '@/components/MuteButton';
 import MusicThemePicker from '@/components/MusicThemePicker';
+import { submitScore } from '@/lib/firebase/leaderboard';
 
 // Only show topics that have at least one local question
 const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
@@ -81,6 +82,7 @@ export default function HotSeatPage() {
   const [loading, setLoading] = useState(false);
   const [shakeHeart, setShakeHeart] = useState(false);
   const [error, setError] = useState('');
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   // Ref to track lives within handleAnswer without stale closure issues
   const livesRef = useRef(MAX_LIVES);
@@ -104,6 +106,7 @@ export default function HotSeatPage() {
     setMaxStreak(0);
     setResults([]);
     setSelected(null);
+    setScoreSaved(false);
     setLoading(false);
     setPhase('playing');
     setQuestionStart(Date.now());
@@ -175,9 +178,29 @@ export default function HotSeatPage() {
     if (phase === 'dead') setTimeout(() => audioEngine.lose(), 300);
   }, [phase]);
 
+  // Save score to leaderboard when 'done' (survived all questions)
+  useEffect(() => {
+    if (phase !== 'done' || scoreSaved) return;
+    setScoreSaved(true);
+    const totalTimeMs = results.reduce((s, r) => s + r.timeMs, 0);
+    submitScore({
+      name: name.trim() || 'Anonymous',
+      score,
+      gradeKey: topicKey,
+      level: 0,
+      accuracy: Math.round(accuracy * 100),
+      streak: maxStreak,
+      totalTimeMs,
+      source: 'hotseat',
+    }).catch(() => { /* best-effort */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   const currentQ = questions[currentIdx];
   const accuracy = results.length > 0 ? correct / results.length : 0;
   const currentTimeLimit = timeForIdx(currentIdx);
+  const totalTimeMs = results.reduce((s, r) => s + r.timeMs, 0);
+  const totalTimeSec = (totalTimeMs / 1000).toFixed(1);
 
   const heartStyle = (i: number) => ({
     fontSize: 22,
@@ -442,11 +465,12 @@ export default function HotSeatPage() {
           </div>
           <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>points · {lives} {lives === 1 ? 'life' : 'lives'} remaining</p>
 
-          <div className="grid grid-cols-3 gap-3 mb-6 w-full max-w-sm">
+          <div className="grid grid-cols-2 gap-3 mb-6 w-full max-w-sm">
             {[
               { label: 'Accuracy', val: `${Math.round(accuracy * 100)}%`, color: '#fdba74' },
               { label: 'Correct',  val: `${correct}/${questions.length}`, color: '#4ade80' },
               { label: 'Best Streak', val: `🔥 ${maxStreak}`, color: '#fb923c' },
+              { label: 'Total Time', val: `⏱ ${totalTimeSec}s`, color: '#a78bfa' },
             ].map(({ label, val, color }) => (
               <div
                 key={label}
