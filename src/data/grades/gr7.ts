@@ -513,7 +513,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
 
   // ── Ch 4: Excel Charts (new topic, from 0) ─────────────────────────
   {
-    id: 'gr7-ch4-charts-q001', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q001', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'What is the primary purpose of a chart in Excel?',
     options: ['To print data in a table','To visually represent data so trends and patterns are easier to understand','To sort data alphabetically','To protect data from editing'],
     answer: '1', explanation: 'Charts convert numerical data into visual graphics (bars, lines, pies) making trends, comparisons, and distributions easier to see.',
@@ -521,7 +521,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q002', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q002', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'Which type of chart is best for showing how a quantity changes over time?',
     options: ['Pie chart','Line chart','Bar chart','Scatter chart'],
     answer: '1', explanation: 'A line chart connects data points with a line and is ideal for showing trends over a continuous time period.',
@@ -529,7 +529,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q003', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q003', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'A pie chart is most appropriate when:',
     options: ['Comparing values over time','Showing the relationship between two variables','Displaying how parts of a whole relate to the total (percentages)','Showing minimum and maximum values'],
     answer: '2', explanation: 'Pie charts show proportions — how individual parts contribute to the whole. Each slice represents a percentage of the total.',
@@ -537,7 +537,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q004', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q004', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'What is the Chart Title used for in Excel?',
     options: ['To label the x-axis','To label data series in the legend','To provide a descriptive name for the entire chart so viewers understand what it shows','To add gridlines'],
     answer: '2', explanation: 'The Chart Title gives the chart a heading explaining what it represents, e.g. "Monthly Sales 2024".',
@@ -545,7 +545,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q005', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q005', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'What does a bar chart compare?',
     options: ['Trends over time','Sizes of parts relative to a whole','Values across different categories using horizontal or vertical bars','Correlation between two variables'],
     answer: '2', explanation: 'Bar charts use bars of proportional length to compare values across categories, e.g. comparing sales across different products.',
@@ -553,7 +553,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q006', topicKey: 'gr7-ch4-charts', type: 'truefalse',
+    id: 'gr7-ch4-charts-q006', topicKey: 'gr7-ch4-excel-charts', type: 'truefalse',
     text: 'You must select the data range before inserting a chart in Excel.',
     options: ['True', 'False'],
     answer: '0', explanation: 'True. Selecting the data first tells Excel which values and labels to use in the chart.',
@@ -561,7 +561,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q007', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q007', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'What is the legend in an Excel chart?',
     options: ['The title of the chart','A key that identifies the colours or patterns used for each data series in the chart','The scale on the y-axis','The source data table'],
     answer: '1', explanation: 'The legend is a key box showing which colour/pattern corresponds to each data series so viewers can distinguish them.',
@@ -569,7 +569,7 @@ export const gr7Questions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin',
   },
   {
-    id: 'gr7-ch4-charts-q008', topicKey: 'gr7-ch4-charts', type: 'mcq',
+    id: 'gr7-ch4-charts-q008', topicKey: 'gr7-ch4-excel-charts', type: 'mcq',
     text: 'Which chart type is best suited to show the relationship between two sets of numerical data?',
     options: ['Pie chart','Bar chart','Line chart','Scatter (XY) chart'],
     answer: '3', explanation: 'A scatter chart plots pairs of numerical values on x and y axes to reveal correlations or patterns between two variables.',
