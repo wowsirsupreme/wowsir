@@ -15,6 +15,7 @@ import {
   endSession,
   updateSessionCloseAt,
   findSessionByCode,
+  findActiveSessionForQuiz,
   clearTeacherSession,
 } from '@/lib/firebase/sessions';
 import type { Quiz } from '@/types/quiz';
@@ -86,6 +87,17 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
   async function handleLaunch() {
     if (!user || !quiz) return;
+    // Guard: prevent creating a duplicate active session for this quiz
+    try {
+      const existing = await findActiveSessionForQuiz(user.uid, quizId);
+      if (existing) {
+        // An active session already exists — resume it instead of creating a new one
+        saveActiveSession(quizId, existing.sessionId, existing.code);
+        setSavedSession({ sessionId: existing.sessionId, code: existing.code });
+        toast('An active session already exists for this quiz. Use "Resume" to continue it.', 'info');
+        return;
+      }
+    } catch { /* if the check fails, allow creation to proceed */ }
     try {
       const sid = await createSession(
         quizId, quiz.title, user.uid, questions,

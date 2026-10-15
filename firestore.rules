@@ -25,9 +25,18 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.teacherId;
     }
 
-    // Results: any authenticated user can read/write
+    // Results: teachers can create their own session results; anyone auth can read.
+    // Students cannot directly write to this collection — results are written
+    // server-side (or by the teacher's authenticated session) only.
     match /results/{resultId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      // Only the teacher who owns the quiz/session may create a result record.
+      // The teacherId field in the result document must match the authenticated user.
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['id','sessionId','quizId','teacherId','completedAt'])
+        && request.resource.data.teacherId == request.auth.uid;
+      // Results are immutable once written — no updates or deletes from clients.
+      allow update, delete: if false;
     }
 
     // Preset quizzes: any authenticated user can read (isActive filtering
@@ -48,10 +57,18 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 30
         && request.resource.data.score is number
         && request.resource.data.score >= 0
+        && request.resource.data.score <= 100000   // reasonable upper bound
         && request.resource.data.gradeKey is string
         && request.resource.data.level is number
+        && request.resource.data.level >= 1
+        && request.resource.data.level <= 100
         && request.resource.data.accuracy is number
-        && request.resource.data.streak is number;
+        && request.resource.data.accuracy >= 0
+        && request.resource.data.accuracy <= 100
+        && request.resource.data.streak is number
+        && request.resource.data.streak >= 0
+        && request.resource.data.streak <= 1000;
+      allow update, delete: if false;
     }
   }
 }

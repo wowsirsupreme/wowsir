@@ -55,7 +55,8 @@
         "scores": {
           ".read": true,
           "$playerId": {
-            ".write": true
+            ".write": true,
+            ".validate": "newData.hasChildren(['score','correct','total']) && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 100000 && newData.child('correct').isNumber() && newData.child('correct').val() >= 0 && newData.child('total').isNumber() && newData.child('total').val() >= 0"
           }
         }
       }

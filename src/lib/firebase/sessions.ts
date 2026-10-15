@@ -236,6 +236,33 @@ export interface TeacherActiveSession {
   playerCount: number;
 }
 
+/**
+ * Check if a teacher already has an active (non-ended) session for a specific quiz.
+ * Returns the sessionId + code if one exists, or null.
+ */
+export async function findActiveSessionForQuiz(
+  teacherId: string,
+  quizId: string
+): Promise<{ sessionId: string; code: string } | null> {
+  const snap = await get(ref(db(), `teacher_sessions/${teacherId}`));
+  if (!snap.exists()) return null;
+
+  const entries = snap.val() as Record<string, { quizId: string; code: string }>;
+  for (const [sessionId, entry] of Object.entries(entries)) {
+    if (entry.quizId !== quizId) continue;
+    // Verify it's still active in RTDB
+    try {
+      const metaSnap = await get(ref(db(), `sessions/${sessionId}/meta`));
+      if (!metaSnap.exists()) continue;
+      const meta = metaSnap.val() as { status?: string; code?: string };
+      if (meta.status && meta.status !== 'ended') {
+        return { sessionId, code: meta.code || entry.code };
+      }
+    } catch { /* skip */ }
+  }
+  return null;
+}
+
 /** Return all non-ended sessions for a teacher, enriched with live meta */
 export async function getTeacherActiveSessions(teacherId: string): Promise<TeacherActiveSession[]> {
   const snap = await get(ref(db(), `teacher_sessions/${teacherId}`));
