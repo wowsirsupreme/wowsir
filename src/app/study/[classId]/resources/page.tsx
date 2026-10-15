@@ -1,11 +1,13 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BookOpen, Key, FileText, Map, ChevronDown, ChevronUp } from 'lucide-react';
 import { GRADE_CHAPTERS } from '@/data/studyContent';
 import { CLASSES } from '@/data/studyClasses';
 import type { StudyChapter } from '@/data/studyContent';
+import { getStudyOverride } from '@/lib/firebase/studyOverrides';
+import type { StudyKeyword, StudyOverride } from '@/lib/firebase/studyOverrides';
 
 interface PageProps {
   params: Promise<{ classId: string }>;
@@ -24,10 +26,25 @@ function ChapterResourceCard({
 }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('keywords');
+  const [override, setOverride] = useState<StudyOverride | null>(null);
+  const [overrideLoaded, setOverrideLoaded] = useState(false);
 
-  const res = chapter.resources;
-  const hasKeywords = res?.keywords && res.keywords.length > 0;
-  const hasNotes    = res?.notes    && res.notes.length    > 0;
+  // Load Firestore override when the card is opened
+  useEffect(() => {
+    if (!open || overrideLoaded) return;
+    getStudyOverride(chapter.key)
+      .then(data => { setOverride(data); setOverrideLoaded(true); })
+      .catch(() => { setOverrideLoaded(true); }); // fall back to static on error
+  }, [open, overrideLoaded, chapter.key]);
+
+  // Use Firestore override if available, otherwise fall back to static
+  const staticRes = chapter.resources;
+  const keywords: StudyKeyword[] = (override?.keywords ?? staticRes?.keywords ?? []) as StudyKeyword[];
+  const notes: string[] = override?.notes ?? staticRes?.notes ?? [];
+
+  const res = staticRes; // for mindmapUrl only
+  const hasKeywords = keywords.length > 0;
+  const hasNotes    = notes.length > 0;
   const hasMindmap  = !!res?.mindmapUrl;
   const hasAny      = hasKeywords || hasNotes || hasMindmap;
 
@@ -124,7 +141,7 @@ function ChapterResourceCard({
               {/* Keywords */}
               {tab === 'keywords' && hasKeywords && (
                 <div style={{ display: 'grid', gap: 8 }}>
-                  {res!.keywords!.map((kw, i) => (
+                  {keywords.map((kw, i) => (
                     <div key={i} style={{
                       borderRadius: 10,
                       background: 'rgba(255,255,255,0.03)',
@@ -145,7 +162,7 @@ function ChapterResourceCard({
               {/* Notes */}
               {tab === 'notes' && hasNotes && (
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
-                  {res!.notes!.map((note, i) => (
+                  {notes.map((note, i) => (
                     <li key={i} style={{
                       display: 'flex', gap: 10, alignItems: 'flex-start',
                     }}>

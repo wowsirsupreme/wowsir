@@ -54,6 +54,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
 
+    // Study Corner overrides: authenticated users can read (students + teachers);
+    // only teachers may write. Docs keyed by chapterKey e.g. 'gr9-cpu'.
+    match /studyOverrides/{chapterKey} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
     // Practice leaderboard: public read + create (no auth — students use display names)
     match /practiceLeaderboard/{entryId} {
       allow read: if true;

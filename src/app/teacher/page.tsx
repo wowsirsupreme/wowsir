@@ -376,6 +376,13 @@ export default function TeacherPage() {
         hoverBorder: 'rgba(16,185,129,0.55)', glow: 'rgba(16,185,129,0.18)',
         tagColor: '#6ee7b7',
       },
+      {
+        id: 'study-resources', Icon: BookOpen, label: 'Study Resources',
+        href: '/teacher/study-resources',
+        accent: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.25)',
+        hoverBorder: 'rgba(251,191,36,0.55)', glow: 'rgba(251,191,36,0.18)',
+        tagColor: '#fcd34d',
+      },
     ];
 
     // first name only
