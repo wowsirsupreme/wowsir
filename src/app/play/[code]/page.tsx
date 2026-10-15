@@ -18,6 +18,7 @@ import {
 } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
 import { calcTimeBonus } from '@/lib/utils';
+import QuizNav from '@/components/QuizNav';
 import type { Question } from '@/types/question';
 import type { SessionPlayer } from '@/types/session';
 
@@ -524,57 +525,69 @@ function LobbyView({
 
   return (
     <div className="play-screen flex flex-col min-h-screen">
-      {/* Header bar */}
-      <div
-        className="flex items-center justify-between px-5 py-3.5"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(2,12,6,0.5)', position: 'sticky', top: 0, zIndex: 10 }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
-          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            {players.length} player{players.length !== 1 ? 's' : ''} in lobby
-          </span>
-        </div>
-        <div
-          className="font-mono font-bold tracking-widest text-lg"
-          style={{ color: '#34d399', textShadow: '0 0 14px rgba(52,211,153,0.5)' }}
-        >{code}</div>
-        <div style={{ width: 80 }} />
-      </div>
+      <QuizNav />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-5">
 
-        {/* Avatar + name */}
-        <div className="flex flex-col items-center gap-3 animate-fadeUp">
-          <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center"
-            style={{ background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.3)', boxShadow: '0 0 30px rgba(16,185,129,0.15)' }}
-          >
-            <Avatar id={avatarId} size={52} />
-          </div>
-          <p className="font-display text-2xl" style={{ color: '#fff' }}>{playerName}</p>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            {questionsLoading ? 'Loading quiz…' : ready ? 'Ready to play!' : 'Waiting for teacher…'}
-          </p>
+        {/* Room code chip */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '6px 16px', borderRadius: 999,
+          background: 'rgba(52,211,153,0.08)',
+          border: '1px solid rgba(52,211,153,0.2)',
+        }}>
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
+          <span className="font-mono font-bold text-lg tracking-widest" style={{ color: '#34d399' }}>{code}</span>
+          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            · {players.length} {(players.length as number) === 1 ? 'player' : 'players'}
+          </span>
         </div>
 
-        {/* Loading dots */}
-        {questionsLoading && (
-          <div className="flex justify-center gap-1.5">
-            {[0,1,2].map(i => (
-              <div key={i} className="w-2 h-2 rounded-full animate-pulseDot" style={{ background: '#10b981', animationDelay: `${i * 0.2}s` }} />
-            ))}
+        {/* Avatar + name + status */}
+        <div className="flex flex-col items-center gap-3 animate-fadeUp">
+          <div
+            style={{
+              width: 88, height: 88, borderRadius: 24,
+              background: 'rgba(16,185,129,0.12)',
+              border: '2px solid rgba(16,185,129,0.3)',
+              boxShadow: '0 0 36px rgba(16,185,129,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <Avatar id={avatarId} size={56} />
           </div>
-        )}
+          <p className="font-display text-2xl" style={{ color: '#fff' }}>{playerName}</p>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '5px 14px', borderRadius: 999,
+            background: questionsLoading
+              ? 'rgba(255,255,255,0.05)'
+              : ready ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${ready && !questionsLoading ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.08)'}`,
+          }}>
+            {questionsLoading ? (
+              <>
+                {[0,1,2].map(i => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full animate-pulseDot" style={{ background: '#10b981', animationDelay: `${i * 0.2}s` }} />
+                ))}
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading quiz…</span>
+              </>
+            ) : ready ? (
+              <span className="text-xs font-medium" style={{ color: '#34d399' }}>✓ Ready to play!</span>
+            ) : (
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Waiting for teacher to start…</span>
+            )}
+          </div>
+        </div>
 
         {/* Music player */}
         <div
-          className="w-full max-w-sm rounded-2xl p-4 animate-fadeUp"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+          className="w-full animate-fadeUp"
+          style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
-          <p className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>
-            LOBBY MUSIC
+          <p style={{ margin: '0 0 10px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Lobby Music
           </p>
           <div className="flex flex-col gap-2">
             {TRACKS.map(t => {
@@ -589,7 +602,7 @@ function LobbyView({
                     border: `1.5px solid ${active ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.07)'}`,
                   }}
                 >
-                  <span className="text-2xl">{t.emoji}</span>
+                  <span style={{ fontSize: 22 }}>{t.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: active ? '#34d399' : '#fff' }}>{t.label}</p>
                     <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{t.artist}</p>
@@ -617,39 +630,28 @@ function LobbyView({
 
         {/* Action buttons */}
         {ready && (
-          <div className="w-full max-w-sm flex flex-col gap-3 animate-fadeUp">
+          <div className="w-full animate-fadeUp" style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               className="btn-glass btn-glass-green"
               style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
               onClick={onStart}
             >
-              🚀 Start Quiz ({localQuestions.length} questions)
+              🚀 Start ({localQuestions.length} questions)
             </button>
-            <div className="relative flex items-center gap-3">
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>or challenge classmates</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-            </div>
             <button
               onClick={onBattle}
               style={{
-                width: '100%', padding: '14px', borderRadius: 14,
-                background: 'rgba(239,68,68,0.1)',
-                border: '1.5px solid rgba(239,68,68,0.25)',
-                color: '#f87171', fontWeight: 700, fontSize: 15,
+                width: '100%', padding: '13px', borderRadius: 14,
+                background: 'rgba(239,68,68,0.08)',
+                border: '1.5px solid rgba(239,68,68,0.2)',
+                color: '#f87171', fontWeight: 600, fontSize: 14,
                 cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
-              ⚔️ Battle Mode
+              ⚔️ Battle Mode instead
             </button>
           </div>
-        )}
-
-        {!questionsLoading && !ready && (
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            The teacher will start the quiz shortly
-          </p>
         )}
       </div>
     </div>
@@ -690,51 +692,59 @@ function EndedScreen({
   const numWrong = numAnswered - numCorrect;
 
   return (
-    <div className="play-screen flex flex-col min-h-screen">
+    <div className="play-screen flex flex-col min-h-screen" style={{ paddingBottom: 72 }}>
+      <QuizNav />
 
       {/* ── Hero section ── */}
       <div className="flex flex-col items-center pt-10 pb-6 px-4 text-center animate-slideUp">
         <div
-          className="text-7xl mb-4 animate-crownPop"
-          style={{ filter: `drop-shadow(0 0 24px ${isPerfect ? 'rgba(201,168,76,1)' : finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})` }}
+          style={{
+            fontSize: 72, marginBottom: 12, lineHeight: 1,
+            filter: `drop-shadow(0 0 28px ${isPerfect ? 'rgba(201,168,76,1)' : finalRank === 1 ? 'rgba(201,168,76,0.9)' : 'rgba(16,185,129,0.7)'})`,
+          }}
+          className="animate-crownPop"
         >
           {isPerfect ? '⭐' : finalRank === 1 ? '🏆' : '🎉'}
         </div>
-        <h2 className="font-display text-5xl mb-2" style={{ color: '#fff' }}>
+        <h2 className="font-display" style={{ fontSize: 40, color: '#fff', margin: '0 0 6px' }}>
           {isPerfect ? 'Perfect Score!' : selfPaced ? 'Quiz Complete!' : 'Game Over!'}
         </h2>
         {isPerfect && (
-          <p className="text-[15px] mb-2 font-semibold" style={{ color: '#fcd34d', textShadow: '0 0 12px rgba(201,168,76,0.6)' }}>
+          <p style={{ fontSize: 15, marginBottom: 8, fontWeight: 600, color: '#fcd34d', textShadow: '0 0 12px rgba(201,168,76,0.6)' }}>
             {numCorrect}/{numAnswered} correct — flawless! 🌟
           </p>
         )}
-        <p className="font-mono text-5xl font-bold mb-1 animate-scoreSlide" style={{ color: '#34d399', textShadow: '0 0 24px rgba(52,211,153,0.6)' }}>
-          {score.toLocaleString()}
-        </p>
-        <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>points</p>
-        {finalRank && (
-          <p className="text-[15px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            Rank <span className="font-bold" style={{ color: '#fcd34d' }}>#{finalRank}</span>
+
+        {/* Score + rank row */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '6px 0 4px' }}>
+          <p className="font-mono animate-scoreSlide" style={{ fontSize: 52, fontWeight: 800, color: '#34d399', textShadow: '0 0 28px rgba(52,211,153,0.6)', margin: 0, lineHeight: 1 }}>
+            {score.toLocaleString()}
           </p>
-        )}
+          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)' }}>pts</span>
+          {finalRank && (
+            <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', marginLeft: 4 }}>
+              · Rank <span style={{ fontWeight: 700, color: '#fcd34d' }}>#{finalRank}</span>
+            </span>
+          )}
+        </div>
 
         {/* Quick stats row */}
-        <div className="flex gap-4 mt-5">
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           {[
             { label: 'Correct', value: numCorrect, color: '#34d399' },
             { label: 'Wrong', value: numWrong, color: '#f87171' },
-            { label: 'Total', value: numAnswered, color: 'rgba(255,255,255,0.5)' },
+            { label: 'Answered', value: numAnswered, color: 'rgba(255,255,255,0.5)' },
           ].map(s => (
-            <div key={s.label} className="text-center px-4 py-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="font-mono text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{s.label}</p>
+            <div key={s.label} style={{ textAlign: 'center', padding: '10px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="font-mono" style={{ fontSize: 26, fontWeight: 700, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+              <p style={{ fontSize: 11, marginTop: 4, color: 'rgba(255,255,255,0.3)' }}>{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── Tab bar ── */}
-      <div className="flex gap-1 mx-4 mb-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', gap: 4, margin: '0 16px 4px', padding: 4, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
         {([
           { id: 'results', label: '📊 Results' },
           { id: 'leaderboard', label: '🏆 Board' },
@@ -743,11 +753,13 @@ function EndedScreen({
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
+              flex: 1, padding: '8px 4px', borderRadius: 10,
+              fontSize: 13, fontWeight: 500,
               background: tab === t.id ? 'rgba(52,211,153,0.15)' : 'transparent',
               color: tab === t.id ? '#34d399' : 'rgba(255,255,255,0.4)',
               border: tab === t.id ? '1px solid rgba(52,211,153,0.3)' : '1px solid transparent',
+              cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
             {t.label}
@@ -756,70 +768,77 @@ function EndedScreen({
       </div>
 
       {/* ── Tab content ── */}
-      <div className="flex-1 px-4 py-4 overflow-y-auto">
+      <div style={{ flex: 1, padding: '12px 16px 16px', overflowY: 'auto' }}>
 
         {/* RESULTS TAB */}
         {tab === 'results' && (
-          <div className="flex flex-col gap-3 max-w-sm mx-auto animate-slideUp">
+          <div className="animate-slideUp" style={{ maxWidth: 680, margin: '0 auto' }}>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 10 }}>
+              Continue Learning
+            </p>
 
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: '0.07em' }}>CONTINUE LEARNING</p>
+            {/* 2-column card grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+              {[
+                { emoji: '📖', label: 'Flashcards',  sub: 'Study key terms',        color: '#22d3ee',  bg: 'rgba(6,182,212,0.1)',   border: 'rgba(6,182,212,0.25)',   action: onStudy },
+                { emoji: '⚔️', label: 'Battle Mode',  sub: 'Challenge classmates',   color: '#f87171',  bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)',   action: onBattle },
+                { emoji: '🔥', label: 'Hot Seat',     sub: 'Solo 15-second rounds',  color: '#fb923c',  bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)',  action: onHotseat },
+                { emoji: '📝', label: 'Read Notes',   sub: 'Review the topic',        color: '#a78bfa',  bg: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.25)', action: onStudy },
+                { emoji: '🔑', label: 'Keywords',     sub: 'Glance key vocabulary',   color: '#fcd34d',  bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)', action: onStudy },
+                { emoji: '🎯', label: 'Practice',     sub: 'Drill more questions',    color: '#34d399',  bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)', action: onPractice },
+              ].map(c => (
+                <button
+                  key={c.label}
+                  onClick={c.action}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    width: '100%', textAlign: 'left', padding: '14px 16px',
+                    borderRadius: 18, background: c.bg, border: `1.5px solid ${c.border}`,
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >
+                  <span style={{ fontSize: 30, lineHeight: 1 }}>{c.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 600, fontSize: 15, color: c.color, margin: 0 }}>{c.label}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>{c.sub}</p>
+                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 20 }}>›</span>
+                </button>
+              ))}
+            </div>
 
-            {/* Nav cards grid */}
-            {[
-              { emoji: '📖', label: 'Flashcards',  sub: 'Study key terms',        color: '#22d3ee',  bg: 'rgba(6,182,212,0.1)',   border: 'rgba(6,182,212,0.25)',   action: onStudy },
-              { emoji: '⚔️', label: 'Battle Mode',  sub: 'Challenge classmates',   color: '#f87171',  bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)',   action: onBattle },
-              { emoji: '🔥', label: 'Hot Seat',     sub: 'Answer live questions',   color: '#fb923c',  bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)',  action: onHotseat },
-              { emoji: '📝', label: 'Read Notes',   sub: 'Review the topic',        color: '#a78bfa',  bg: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.25)', action: onStudy },
-              { emoji: '🔑', label: 'Keywords',     sub: 'Glance key vocabulary',   color: '#fcd34d',  bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)', action: onStudy },
-              { emoji: '🎯', label: 'Practice',     sub: 'Drill more questions',    color: '#34d399',  bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.25)', action: onPractice },
-            ].map(c => (
-              <button
-                key={c.label}
-                onClick={c.action}
-                className="flex items-center gap-4 w-full text-left rounded-2xl px-4 py-3.5 transition-all"
-                style={{ background: c.bg, border: `1.5px solid ${c.border}` }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-              >
-                <span style={{ fontSize: 28 }}>{c.emoji}</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-[15px]" style={{ color: c.color }}>{c.label}</p>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{c.sub}</p>
-                </div>
-                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 18 }}>›</span>
-              </button>
-            ))}
-
-            {/* Retake */}
+            {/* Retake — full width below grid */}
             {selfPaced && fullBank.length > 0 && (
               <button
                 onClick={onRetake}
-                className="flex items-center gap-4 w-full text-left rounded-2xl px-4 py-3.5 transition-all"
-                style={{ background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.2)' }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 14, marginTop: 10,
+                  width: '100%', textAlign: 'left', padding: '14px 16px',
+                  borderRadius: 18, background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.2)',
+                  cursor: 'pointer',
+                }}
               >
                 <span style={{ fontSize: 28 }}>🔄</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-[15px]" style={{ color: '#34d399' }}>Retake Quiz</p>
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{fullBank.length} questions from the start</p>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontWeight: 600, fontSize: 15, color: '#34d399', margin: 0 }}>Retake Quiz</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>{fullBank.length} questions from the start</p>
                 </div>
-                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 18 }}>›</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 20 }}>›</span>
               </button>
             )}
-
-            <button onClick={onHome} style={{ color: 'rgba(255,255,255,0.25)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: '8px', textAlign: 'center' }}>
-              ← Back to Home
-            </button>
           </div>
         )}
 
         {/* LEADERBOARD TAB */}
         {tab === 'leaderboard' && (
-          <div className="max-w-sm mx-auto animate-slideUp">
+          <div style={{ maxWidth: 520, margin: '0 auto' }} className="animate-slideUp">
             {leaderboard.length > 0 ? (
               <Leaderboard players={leaderboard} currentPlayerId={playerId || undefined} compact />
             ) : (
-              <div className="text-center py-12">
-                <div className="text-5xl mb-3">🏆</div>
+              <div style={{ textAlign: 'center', paddingTop: 48 }}>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>🏆</div>
                 <p style={{ color: 'rgba(255,255,255,0.3)' }}>No leaderboard data yet</p>
               </div>
             )}
@@ -828,10 +847,10 @@ function EndedScreen({
 
         {/* REVIEW TAB */}
         {tab === 'review' && (
-          <div className="flex flex-col gap-3 max-w-lg mx-auto animate-slideUp">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 680, margin: '0 auto' }} className="animate-slideUp">
             {questionResults.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-5xl mb-3">📝</div>
+              <div style={{ textAlign: 'center', paddingTop: 48 }}>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>📝</div>
                 <p style={{ color: 'rgba(255,255,255,0.3)' }}>No questions to review</p>
               </div>
             ) : (
@@ -841,20 +860,20 @@ function EndedScreen({
                 return (
                   <div
                     key={i}
-                    className="rounded-2xl p-4"
                     style={{
+                      borderRadius: 18, padding: 16,
                       background: r.correct ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)',
                       border: `1.5px solid ${r.correct ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}`,
                     }}
                   >
-                    <div className="flex items-start gap-2 mb-3">
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
                       <span style={{ fontSize: 20, lineHeight: 1, marginTop: 2 }}>{r.correct ? '✅' : '❌'}</span>
-                      <p className="text-[15px] font-medium leading-snug" style={{ color: '#fff' }}>
-                        <span className="text-xs font-mono mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Q{i + 1}</span>
+                      <p style={{ fontSize: 15, fontWeight: 500, color: '#fff', margin: 0, lineHeight: 1.4 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.3)', marginRight: 6 }}>Q{i + 1}</span>
                         {r.question.text}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-1.5 pl-7">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 28 }}>
                       {opts.map((opt, oi) => {
                         const isCorrectOpt = oi === correctIndex;
                         const isSelected = oi === r.selected;
@@ -866,11 +885,10 @@ function EndedScreen({
                         return (
                           <div
                             key={oi}
-                            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm"
-                            style={{ background: bg, border: `1px solid ${border}`, color }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, borderRadius: 10, padding: '8px 12px', fontSize: 14, background: bg, border: `1px solid ${border}`, color }}
                           >
                             <span style={{ fontSize: 12, opacity: 0.6 }}>{String.fromCharCode(65 + oi)}.</span>
-                            <span className="flex-1">{opt}</span>
+                            <span style={{ flex: 1 }}>{opt}</span>
                             {isCorrectOpt && <span style={{ fontSize: 14 }}>✓</span>}
                             {isSelected && !isCorrectOpt && <span style={{ fontSize: 14 }}>✗</span>}
                           </div>
