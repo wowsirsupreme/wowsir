@@ -9,6 +9,7 @@ import {
 import {
   getAllUsers, getPendingTeachers, approveTeacher, suspendTeacher,
   getUsageStats, getGeoStats, getAllQuestions,
+  wipeResults, wipePracticeLeaderboard, wipeRTDBSessions,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -16,7 +17,7 @@ import type { UserProfile } from '@/types/user';
 import { TOPIC_LABELS } from '@/types/question';
 
 const ADMIN_PASSWORD = 'wowadmin2024';
-const TABS = ['Approvals', 'Teachers', 'Usage', 'Geography', 'Question Quality'] as const;
+const TABS = ['Approvals', 'Teachers', 'Usage', 'Geography', 'Question Quality', 'Database'] as const;
 type Tab = typeof TABS[number];
 
 const BG = [
@@ -41,6 +42,14 @@ export default function AdminPage() {
   const [usage,    setUsage]    = useState<UsageStat | null>(null);
   const [geo,      setGeo]      = useState<GeoPoint[]>([]);
   const [questions, setQuestions] = useState<QuestionStat[]>([]);
+
+  // Database reset state
+  const [resetStatus, setResetStatus] = useState<Record<string, 'idle' | 'confirm' | 'running' | 'done' | 'error'>>({
+    results: 'idle',
+    practice: 'idle',
+    rtdb: 'idle',
+  });
+  const [resetMsg, setResetMsg] = useState<Record<string, string>>({});
 
   function tryLogin() {
     if (pwInput === ADMIN_PASSWORD) { setAuthed(true); setPwError(false); }
@@ -197,6 +206,31 @@ export default function AdminPage() {
         )}
         {!loading && tab === 'Question Quality' && (
           <QualityTab questions={questions} />
+        )}
+        {tab === 'Database' && (
+          <DatabaseTab
+            resetStatus={resetStatus}
+            resetMsg={resetMsg}
+            onWipe={async (key) => {
+              if (resetStatus[key] !== 'confirm') {
+                setResetStatus(s => ({ ...s, [key]: 'confirm' }));
+                return;
+              }
+              setResetStatus(s => ({ ...s, [key]: 'running' }));
+              try {
+                let result;
+                if (key === 'results') result = await wipeResults();
+                else if (key === 'practice') result = await wipePracticeLeaderboard();
+                else result = await wipeRTDBSessions();
+                setResetMsg(m => ({ ...m, [key]: `Deleted ${result.deleted} record${result.deleted !== 1 ? 's' : ''}${result.errors ? ` (${result.errors} errors)` : ''}` }));
+                setResetStatus(s => ({ ...s, [key]: 'done' }));
+              } catch (e: unknown) {
+                setResetMsg(m => ({ ...m, [key]: e instanceof Error ? e.message : 'Error occurred' }));
+                setResetStatus(s => ({ ...s, [key]: 'error' }));
+              }
+            }}
+            onCancel={(key) => setResetStatus(s => ({ ...s, [key]: 'idle' }))}
+          />
         )}
       </div>
     </div>
@@ -546,6 +580,116 @@ function UserRow({ user, onApprove, onSuspend }: {
             <Pause size={16} />
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Database Tab ─────────────── */
+type ResetKey = 'results' | 'practice' | 'rtdb';
+interface DatabaseTabProps {
+  resetStatus: Record<string, 'idle' | 'confirm' | 'running' | 'done' | 'error'>;
+  resetMsg: Record<string, string>;
+  onWipe: (key: ResetKey) => void;
+  onCancel: (key: ResetKey) => void;
+}
+
+function DatabaseTab({ resetStatus, resetMsg, onWipe, onCancel }: DatabaseTabProps) {
+  const actions: { key: ResetKey; label: string; desc: string; accent: string }[] = [
+    {
+      key: 'results',
+      label: 'Wipe Session Results',
+      desc: 'Deletes all documents in the Firestore "results" collection. Session history and player scores will be permanently removed.',
+      accent: '#f87171',
+    },
+    {
+      key: 'practice',
+      label: 'Wipe Practice Leaderboard',
+      desc: 'Deletes all documents in the Firestore "practiceLeaderboard" collection. All solo-play scores will be permanently removed.',
+      accent: '#fb923c',
+    },
+    {
+      key: 'rtdb',
+      label: 'Wipe RTDB Sessions',
+      desc: 'Removes all live-session data from Realtime Database (sessions, session_codes, teacher_sessions, session_pub_questions, sessions_questions).',
+      accent: '#facc15',
+    },
+  ];
+
+  return (
+    <div>
+      <SectionHeader title="Database Reset" accent="#f87171" />
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 28 }}>
+        Permanently delete data from the database. These actions cannot be undone.
+      </p>
+      <div style={{ display: 'grid', gap: 16 }}>
+        {actions.map(({ key, label, desc, accent }) => {
+          const status = resetStatus[key] || 'idle';
+          const msg = resetMsg[key] || '';
+          return (
+            <div
+              key={key}
+              style={{
+                borderRadius: 16,
+                padding: '20px 24px',
+                background: 'rgba(255,255,255,0.03)',
+                border: `1.5px solid ${status === 'confirm' || status === 'running' ? `${accent}55` : 'rgba(255,255,255,0.08)'}`,
+                transition: 'border-color 0.2s',
+              }}
+            >
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>{label}</h3>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', marginBottom: 16 }}>{desc}</p>
+
+              {status === 'done' && (
+                <div style={{ fontSize: 13, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Check size={14} /> {msg}
+                </div>
+              )}
+              {status === 'error' && (
+                <div style={{ fontSize: 13, color: '#f87171' }}>⚠ {msg}</div>
+              )}
+              {status === 'running' && (
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Deleting…
+                </div>
+              )}
+
+              {(status === 'idle' || status === 'done' || status === 'error') && (
+                <button
+                  onClick={() => onWipe(key)}
+                  style={{
+                    padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    background: `${accent}22`, border: `1px solid ${accent}44`,
+                    color: accent, transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = `${accent}33`)}
+                  onMouseLeave={e => (e.currentTarget.style.background = `${accent}22`)}
+                >
+                  {status === 'done' ? 'Wipe again' : 'Wipe'}
+                </button>
+              )}
+
+              {status === 'confirm' && (
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, color: accent, fontWeight: 600 }}>Are you sure? This cannot be undone.</span>
+                  <button
+                    onClick={() => onWipe(key)}
+                    style={{ padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', background: accent, color: '#0d0d14', border: 'none' }}
+                  >
+                    Yes, wipe
+                  </button>
+                  <button
+                    onClick={() => onCancel(key)}
+                    className="btn-glass"
+                    style={{ padding: '7px 14px', fontSize: 13, minHeight: 0 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
