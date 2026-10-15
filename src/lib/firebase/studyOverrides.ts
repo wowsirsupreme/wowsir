@@ -8,13 +8,24 @@ import { getFirebaseInstances } from './config';
 export interface StudyKeyword {
   term: string;
   definition: string;
+  imageUrl?: string;   // optional image shown on the card / flashcard back
+}
+
+export interface StudyNote {
+  text: string;
+  imageUrl?: string;   // optional illustration for this note
 }
 
 export interface StudyOverride {
   keywords?: StudyKeyword[];
-  notes?: string[];
+  notes?: StudyNote[];   // was string[] — legacy strings are normalised on read
   updatedAt?: number;
   updatedBy?: string;
+}
+
+/** Normalise a note that may be a plain string (legacy) into a StudyNote */
+export function toStudyNote(n: string | StudyNote): StudyNote {
+  return typeof n === 'string' ? { text: n } : n;
 }
 
 /** Fetch the teacher override for a chapter (returns null if none exists) */
@@ -23,7 +34,10 @@ export async function getStudyOverride(chapterKey: string): Promise<StudyOverrid
   if (!fs) return null;
   const snap = await getDoc(doc(fs, 'studyOverrides', chapterKey));
   if (!snap.exists()) return null;
-  return snap.data() as StudyOverride;
+  const raw = snap.data() as StudyOverride & { notes?: (string | StudyNote)[] };
+  // Normalise legacy string notes
+  if (raw.notes) raw.notes = raw.notes.map(toStudyNote);
+  return raw as StudyOverride;
 }
 
 /** Save (overwrite) the override for a chapter */
