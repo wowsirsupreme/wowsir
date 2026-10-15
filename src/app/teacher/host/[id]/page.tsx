@@ -72,9 +72,26 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
       setQuiz(q);
       setQuestions(q.questions || []);
     });
-    // Check for a previously saved session
+    // Check for a previously saved session and auto-resume if found
     const saved = loadActiveSession(quizId);
-    if (saved) setSavedSession(saved);
+    if (saved) {
+      setSavedSession(saved);
+      // Auto-resume: verify it's still alive then jump straight into the session
+      findSessionByCode(saved.code).then(result => {
+        if (!result || result.session.status === 'ended') {
+          clearActiveSession(quizId);
+          setSavedSession(null);
+          return;
+        }
+        setSessionId(result.sessionId);
+        setCurrentQIdx(result.session.currentQ || 0);
+        const status = result.session.status;
+        if (status === 'lobby') setPhase('lobby');
+        else if (status === 'active' || status === 'paused') setPhase('question');
+        else setPhase('ended');
+        toast('Session resumed automatically', 'success');
+      }).catch(() => { /* silent — user can still manually resume */ });
+    }
   }, [ready, user, quizId]);
 
   function scheduleReveal() {
@@ -349,90 +366,117 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   // ── SETUP ──
   if (phase === 'setup') {
     return (
-      <div className="host-screen min-h-screen flex flex-col items-center justify-center px-4 py-8">
-        <div className="text-center mb-8 animate-fadeUp max-w-sm w-full">
-          <div className="text-7xl mb-5 animate-goldGlow">🚀</div>
-          <h1 className="font-display text-4xl mb-3" style={{ color: '#fff', textShadow: '0 0 30px rgba(201,168,76,0.5)' }}>
-            {quiz.title}
-          </h1>
-          <p className="text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            {questions.length} questions · {quiz.settings?.timeLimit || 20}s per question
-          </p>
-
-          {/* Stats */}
-          <div className="flex gap-4 justify-center mb-8">
-            {[
-              { icon: '❓', val: `${questions.length}`, label: 'Questions' },
-              { icon: '⏱️', val: `${quiz.settings?.timeLimit || 20}s`, label: 'Per Q' },
-              { icon: '🛡️', val: quiz.settings?.antiCheat ? 'On' : 'Off', label: 'Anti-Cheat' },
-            ].map(({ icon, val, label }) => (
-              <div
-                key={label}
-                className="rounded-2xl px-4 py-3 text-center"
-                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
-              >
-                <div className="text-xl mb-1">{icon}</div>
-                <div className="font-mono font-bold text-lg" style={{ color: '#fcd34d' }}>{val}</div>
-                <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Optional close date */}
-          <div className="mb-6 text-left">
-            <label className="block text-xs font-mono uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              Close Date (optional)
-            </label>
-            <input
-              type="datetime-local"
-              value={closeAtInput}
-              onChange={e => handleCloseAtChange(e.target.value)}
-              className="w-full rounded-xl px-4 py-3 text-[14px] font-mono"
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.5)',
-                outline: 'none',
-              }}
-            />
-            {closeAt && (
-              <p className="text-xs mt-1.5" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                Students can't join after {new Date(closeAt).toLocaleString()}
-              </p>
-            )}
-          </div>
-
-          {/* Resume saved session */}
-          {savedSession && (
-            <div
-              className="mb-5 rounded-xl px-4 py-3.5 flex items-center justify-between gap-3"
-              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}
-            >
-              <div>
-                <p className="text-sm font-medium" style={{ color: '#34d399' }}>Session in progress</p>
-                <p className="text-xs font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Code: {savedSession.code || '…'}</p>
-              </div>
-              <button
-                className="btn-glass btn-glass-green"
-                style={{ fontSize: 13, padding: '8px 16px', minHeight: 38 }}
-                onClick={handleResumeSession}
-              >
-                Resume →
-              </button>
-            </div>
-          )}
-
-          <button className="btn-gold-solid" onClick={handleLaunch}>
-            ⚡ Launch Session
-          </button>
-
+      <div className="host-screen min-h-screen flex flex-col" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.12) 0%, transparent 60%), #050a06' }}>
+        {/* Top nav */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => router.push('/teacher')}
-            className="w-full mt-4 text-[14px] py-3"
-            style={{ color: 'rgba(255,255,255,0.3)', minHeight: 44 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
           >
-            ← Back to Dashboard
+            ← Dashboard
           </button>
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
+          <div style={{ width: '100%', maxWidth: 480 }} className="animate-fadeUp">
+
+            {/* Quiz title card */}
+            <div style={{
+              borderRadius: 20, padding: '28px 28px 24px',
+              background: 'rgba(201,168,76,0.06)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              marginBottom: 20,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 52, marginBottom: 16 }} className="animate-goldGlow">🚀</div>
+              <h1 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
+                {quiz.title}
+              </h1>
+              <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>
+                Ready to go live
+              </p>
+
+              {/* Stats row */}
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 20 }}>
+                {[
+                  { icon: '❓', val: `${questions.length}`, label: 'Questions' },
+                  { icon: '⏱', val: `${quiz.settings?.timeLimit || 20}s`, label: 'Per Q' },
+                  { icon: '🛡', val: quiz.settings?.antiCheat ? 'On' : 'Off', label: 'Anti-cheat' },
+                ].map(s => (
+                  <div key={s.label} style={{
+                    flex: 1, borderRadius: 12, padding: '10px 8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#fcd34d', fontFamily: 'monospace' }}>{s.val}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Auto-resume banner */}
+            {savedSession && (
+              <div style={{
+                borderRadius: 14, padding: '14px 18px',
+                background: 'rgba(16,185,129,0.08)',
+                border: '1px solid rgba(16,185,129,0.25)',
+                marginBottom: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#34d399' }}>
+                    ↩ Session in progress
+                  </p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)' }}>
+                    Code: {savedSession.code || '…'}
+                  </p>
+                </div>
+                <button
+                  className="btn-glass btn-glass-green"
+                  style={{ fontSize: 12, padding: '8px 16px', minHeight: 36, flexShrink: 0 }}
+                  onClick={handleResumeSession}
+                >
+                  Resume →
+                </button>
+              </div>
+            )}
+
+            {/* Close date picker */}
+            <div style={{
+              borderRadius: 14, padding: '16px 18px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              marginBottom: 20,
+            }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.07em', marginBottom: 8 }}>
+                AUTO-CLOSE DATE (optional)
+              </label>
+              <input
+                type="datetime-local"
+                value={closeAtInput}
+                onChange={e => handleCloseAtChange(e.target.value)}
+                style={{
+                  width: '100%', borderRadius: 10, padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${closeAt ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.1)'}`,
+                  color: closeAt ? '#fcd34d' : 'rgba(255,255,255,0.5)',
+                  fontSize: 13, outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+              {closeAt && (
+                <p style={{ margin: '6px 0 0', fontSize: 11, color: 'rgba(201,168,76,0.7)' }}>
+                  Students can't join after {new Date(closeAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+
+            <button className="btn-gold-solid" style={{ fontSize: 16 }} onClick={handleLaunch}>
+              ⚡ Launch Session
+            </button>
+          </div>
         </div>
       </div>
     );

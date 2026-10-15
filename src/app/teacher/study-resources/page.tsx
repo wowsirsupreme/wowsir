@@ -5,18 +5,93 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ChevronLeft, BookOpen, Plus, Trash2, Save, Check,
-  Key, FileText, ChevronDown, ChevronUp, RefreshCw,
+  Key, FileText, ChevronDown, ChevronUp, RefreshCw, Image, X,
 } from 'lucide-react';
 import { CLASSES } from '@/data/studyClasses';
 import { GRADE_CHAPTERS } from '@/data/studyContent';
-import { getStudyOverride, saveStudyOverride } from '@/lib/firebase/studyOverrides';
-import type { StudyKeyword, StudyOverride } from '@/lib/firebase/studyOverrides';
+import { getStudyOverride, saveStudyOverride, toStudyNote } from '@/lib/firebase/studyOverrides';
+import type { StudyKeyword, StudyNote, StudyOverride } from '@/lib/firebase/studyOverrides';
 
 const BG = '#060510';
 const ACCENT = '#8b5cf6';
 
 type EditTab = 'keywords' | 'notes';
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+/* ── Tiny image-URL input row ── */
+function ImageInput({
+  value,
+  onChange,
+  accentColor,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  accentColor: string;
+}) {
+  const [open, setOpen] = useState(!!value);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: value ? accentColor : 'rgba(255,255,255,0.3)',
+          fontSize: 11, fontWeight: 600, padding: '2px 0',
+        }}
+      >
+        <Image size={11} />
+        {value ? 'Image attached' : 'Add image URL'}
+        {open ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+            style={{
+              flex: 1, padding: '7px 10px', borderRadius: 7,
+              background: 'rgba(255,255,255,0.05)',
+              border: `1px solid ${value ? accentColor + '50' : 'rgba(255,255,255,0.12)'}`,
+              color: '#fff', fontSize: 12, outline: 'none',
+            }}
+          />
+          {value && (
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              title="Remove image"
+              style={{
+                width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
+                background: 'rgba(248,113,113,0.1)', color: '#f87171',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}
+            >
+              <X size={11} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {open && value && (
+        <img
+          src={value}
+          alt="preview"
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          style={{
+            marginTop: 6, maxHeight: 100, maxWidth: '100%',
+            borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            objectFit: 'cover',
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
 /* ── Per-chapter edit panel ── */
 function ChapterEditor({
@@ -30,18 +105,18 @@ function ChapterEditor({
   chapterKey: string;
   chapterTitle: string;
   staticKeywords: StudyKeyword[];
-  staticNotes: string[];
+  staticNotes: StudyNote[];
   teacherUid: string;
   accentColor: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<EditTab>('keywords');
-  const [keywords, setKeywords] = useState<StudyKeyword[]>([]);
-  const [notes, setNotes] = useState<string[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [loadErr, setLoadErr] = useState('');
+  const [open, setOpen]           = useState(false);
+  const [tab, setTab]             = useState<EditTab>('keywords');
+  const [keywords, setKeywords]   = useState<StudyKeyword[]>([]);
+  const [notes, setNotes]         = useState<StudyNote[]>([]);
+  const [loaded, setLoaded]       = useState(false);
+  const [loadErr, setLoadErr]     = useState('');
   const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [saveMsg, setSaveMsg] = useState('');
+  const [saveMsg, setSaveMsg]     = useState('');
 
   const load = useCallback(async () => {
     setLoadErr('');
@@ -60,17 +135,14 @@ function ChapterEditor({
     }
   }, [chapterKey, staticKeywords, staticNotes]);
 
-  useEffect(() => {
-    if (open && !loaded) load();
-  }, [open, loaded, load]);
+  useEffect(() => { if (open && !loaded) load(); }, [open, loaded, load]);
 
   async function handleSave() {
     setSaveState('saving');
     try {
       const data: StudyOverride = { keywords, notes };
       await saveStudyOverride(chapterKey, data, teacherUid);
-      setSaveState('saved');
-      setSaveMsg('Saved');
+      setSaveState('saved'); setSaveMsg('Saved');
       setTimeout(() => setSaveState('idle'), 2000);
     } catch (e: unknown) {
       setSaveState('error');
@@ -79,42 +151,28 @@ function ChapterEditor({
     }
   }
 
-  function addKeyword() {
-    setKeywords(prev => [...prev, { term: '', definition: '' }]);
+  /* ── Keyword helpers ── */
+  function addKeyword() { setKeywords(p => [...p, { term: '', definition: '', imageUrl: '' }]); }
+  function updateKw(i: number, patch: Partial<StudyKeyword>) {
+    setKeywords(p => p.map((k, idx) => idx === i ? { ...k, ...patch } : k));
   }
+  function removeKw(i: number) { setKeywords(p => p.filter((_, idx) => idx !== i)); }
 
-  function updateKeyword(i: number, field: keyof StudyKeyword, val: string) {
-    setKeywords(prev => prev.map((k, idx) => idx === i ? { ...k, [field]: val } : k));
+  /* ── Note helpers ── */
+  function addNote()  { setNotes(p => [...p, { text: '', imageUrl: '' }]); }
+  function updateNote(i: number, patch: Partial<StudyNote>) {
+    setNotes(p => p.map((n, idx) => idx === i ? { ...n, ...patch } : n));
   }
+  function removeNote(i: number) { setNotes(p => p.filter((_, idx) => idx !== i)); }
 
-  function removeKeyword(i: number) {
-    setKeywords(prev => prev.filter((_, idx) => idx !== i));
-  }
-
-  function addNote() {
-    setNotes(prev => [...prev, '']);
-  }
-
-  function updateNote(i: number, val: string) {
-    setNotes(prev => prev.map((n, idx) => idx === i ? val : n));
-  }
-
-  function removeNote(i: number) {
-    setNotes(prev => prev.filter((_, idx) => idx !== i));
-  }
-
-  function resetToStatic() {
-    setKeywords([...staticKeywords]);
-    setNotes([...staticNotes]);
-  }
+  function resetToStatic() { setKeywords([...staticKeywords]); setNotes([...staticNotes]); }
 
   return (
     <div style={{
       borderRadius: 14,
       border: `1px solid ${open ? accentColor + '40' : 'rgba(255,255,255,0.08)'}`,
       background: open ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
-      overflow: 'hidden',
-      transition: 'border-color 0.2s, background 0.2s',
+      overflow: 'hidden', transition: 'border-color 0.2s, background 0.2s',
       marginBottom: 10,
     }}>
       {/* Header */}
@@ -123,15 +181,13 @@ function ChapterEditor({
         style={{
           width: '100%', padding: '14px 18px',
           background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 12,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
           <span style={{
             padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
-            background: `${accentColor}20`, color: accentColor, fontFamily: 'monospace',
-            flexShrink: 0,
+            background: `${accentColor}20`, color: accentColor, fontFamily: 'monospace', flexShrink: 0,
           }}>
             {chapterKey}
           </span>
@@ -149,9 +205,8 @@ function ChapterEditor({
 
       {open && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-          {loadErr && (
-            <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>⚠ {loadErr}</p>
-          )}
+          {loadErr && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>⚠ {loadErr}</p>}
+
           {!loaded ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.3)' }}>
               <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
@@ -162,30 +217,29 @@ function ChapterEditor({
               {/* Tabs */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
                 {([
-                  { id: 'keywords' as EditTab, label: 'Keywords', icon: Key },
-                  { id: 'notes' as EditTab, label: 'Notes', icon: FileText },
+                  { id: 'keywords' as EditTab, label: 'Keywords / Flashcards', icon: Key },
+                  { id: 'notes'    as EditTab, label: 'Notes',                 icon: FileText },
                 ] as const).map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    onClick={() => setTab(id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      padding: '6px 12px', borderRadius: 8,
-                      border: `1px solid ${tab === id ? accentColor + '60' : 'rgba(255,255,255,0.1)'}`,
-                      background: tab === id ? `${accentColor}15` : 'transparent',
-                      color: tab === id ? accentColor : 'rgba(255,255,255,0.4)',
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
+                  <button key={id} onClick={() => setTab(id)} style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '6px 12px', borderRadius: 8,
+                    border: `1px solid ${tab === id ? accentColor + '60' : 'rgba(255,255,255,0.1)'}`,
+                    background: tab === id ? `${accentColor}15` : 'transparent',
+                    color: tab === id ? accentColor : 'rgba(255,255,255,0.4)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  }}>
                     <Icon size={12} />
                     {label} ({id === 'keywords' ? keywords.length : notes.length})
                   </button>
                 ))}
               </div>
 
-              {/* Keywords editor */}
+              {/* ── Keywords / Flashcards editor ── */}
               {tab === 'keywords' && (
                 <div>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 12 }}>
+                    Each card is a flashcard — term on the front, definition on the back. Image is optional.
+                  </p>
                   <div style={{ display: 'grid', gap: 10, marginBottom: 12 }}>
                     {keywords.map((kw, i) => (
                       <div key={i} style={{
@@ -194,35 +248,33 @@ function ChapterEditor({
                         border: '1px solid rgba(255,255,255,0.07)',
                         display: 'grid', gap: 8,
                       }}>
+                        {/* Term row */}
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                           <input
                             value={kw.term}
-                            onChange={e => updateKeyword(i, 'term', e.target.value)}
-                            placeholder="Term"
+                            onChange={e => updateKw(i, { term: e.target.value })}
+                            placeholder="Term (front of card)"
                             style={{
                               flex: 1, padding: '8px 12px', borderRadius: 8,
                               background: 'rgba(255,255,255,0.06)',
                               border: '1px solid rgba(255,255,255,0.12)',
-                              color: '#fff', fontSize: 13, fontWeight: 700,
-                              outline: 'none',
+                              color: '#fff', fontSize: 13, fontWeight: 700, outline: 'none',
                             }}
                           />
-                          <button
-                            onClick={() => removeKeyword(i)}
-                            title="Remove"
-                            style={{
-                              width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
-                              background: 'rgba(248,113,113,0.1)', color: '#f87171',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                            }}
-                          >
+                          <button onClick={() => removeKw(i)} title="Remove" style={{
+                            width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
+                            background: 'rgba(248,113,113,0.1)', color: '#f87171',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
                             <Trash2 size={13} />
                           </button>
                         </div>
+
+                        {/* Definition */}
                         <textarea
                           value={kw.definition}
-                          onChange={e => updateKeyword(i, 'definition', e.target.value)}
-                          placeholder="Definition"
+                          onChange={e => updateKw(i, { definition: e.target.value })}
+                          placeholder="Definition (back of card)"
                           rows={2}
                           style={{
                             width: '100%', padding: '8px 12px', borderRadius: 8,
@@ -232,75 +284,86 @@ function ChapterEditor({
                             resize: 'vertical', outline: 'none', boxSizing: 'border-box',
                           }}
                         />
+
+                        {/* Image URL */}
+                        <ImageInput
+                          value={kw.imageUrl ?? ''}
+                          onChange={v => updateKw(i, { imageUrl: v || undefined })}
+                          accentColor={accentColor}
+                        />
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={addKeyword}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '7px 14px', borderRadius: 8,
-                      border: `1px dashed ${accentColor}50`,
-                      background: 'transparent', color: accentColor, fontSize: 12,
-                      fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
-                    <Plus size={12} /> Add keyword
+                  <button onClick={addKeyword} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '7px 14px', borderRadius: 8,
+                    border: `1px dashed ${accentColor}50`,
+                    background: 'transparent', color: accentColor, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    <Plus size={12} /> Add flashcard
                   </button>
                 </div>
               )}
 
-              {/* Notes editor */}
+              {/* ── Notes editor ── */}
               {tab === 'notes' && (
                 <div>
-                  <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+                  <div style={{ display: 'grid', gap: 10, marginBottom: 12 }}>
                     {notes.map((note, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <span style={{
-                          width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 8,
-                          background: `${accentColor}20`, border: `1px solid ${accentColor}30`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 10, fontWeight: 700, color: accentColor,
-                        }}>
-                          {i + 1}
-                        </span>
-                        <textarea
-                          value={note}
-                          onChange={e => updateNote(i, e.target.value)}
-                          placeholder="Note…"
-                          rows={2}
-                          style={{
-                            flex: 1, padding: '8px 12px', borderRadius: 8,
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.8)', fontSize: 13,
-                            resize: 'vertical', outline: 'none',
-                          }}
-                        />
-                        <button
-                          onClick={() => removeNote(i)}
-                          title="Remove"
-                          style={{
+                      <div key={i} style={{
+                        borderRadius: 10, padding: '12px 14px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.07)',
+                        display: 'grid', gap: 8,
+                      }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <span style={{
+                            width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 4,
+                            background: `${accentColor}20`, border: `1px solid ${accentColor}30`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, fontWeight: 700, color: accentColor,
+                          }}>
+                            {i + 1}
+                          </span>
+                          <textarea
+                            value={note.text}
+                            onChange={e => updateNote(i, { text: e.target.value })}
+                            placeholder="Note…"
+                            rows={2}
+                            style={{
+                              flex: 1, padding: '8px 12px', borderRadius: 8,
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.8)', fontSize: 13,
+                              resize: 'vertical', outline: 'none',
+                            }}
+                          />
+                          <button onClick={() => removeNote(i)} title="Remove" style={{
                             width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
                             background: 'rgba(248,113,113,0.1)', color: '#f87171',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 4,
-                          }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
+                          }}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+
+                        {/* Image URL for note */}
+                        <div style={{ paddingLeft: 30 }}>
+                          <ImageInput
+                            value={note.imageUrl ?? ''}
+                            onChange={v => updateNote(i, { imageUrl: v || undefined })}
+                            accentColor={accentColor}
+                          />
+                        </div>
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={addNote}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '7px 14px', borderRadius: 8,
-                      border: `1px dashed ${accentColor}50`,
-                      background: 'transparent', color: accentColor, fontSize: 12,
-                      fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
+                  <button onClick={addNote} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '7px 14px', borderRadius: 8,
+                    border: `1px dashed ${accentColor}50`,
+                    background: 'transparent', color: accentColor, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  }}>
                     <Plus size={12} /> Add note
                   </button>
                 </div>
@@ -321,19 +384,18 @@ function ChapterEditor({
                     opacity: saveState === 'saving' ? 0.6 : 1,
                   }}
                 >
-                  {saveState === 'saving' ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> : saveState === 'saved' ? <Check size={13} /> : <Save size={13} />}
+                  {saveState === 'saving'
+                    ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                    : saveState === 'saved' ? <Check size={13} /> : <Save size={13} />}
                   {saveState === 'idle' ? 'Save changes' : saveState === 'saving' ? 'Saving…' : saveMsg}
                 </button>
 
-                <button
-                  onClick={resetToStatic}
-                  style={{
-                    padding: '9px 14px', borderRadius: 10,
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer',
-                  }}
-                >
+                <button onClick={resetToStatic} style={{
+                  padding: '9px 14px', borderRadius: 10,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer',
+                }}>
                   Reset to defaults
                 </button>
               </div>
@@ -352,7 +414,7 @@ export default function StudyResourcesEditorPage() {
   const [selectedClass, setSelectedClass] = useState<string>('');
 
   const classData = CLASSES.find(c => c.id === selectedClass);
-  const chapters = selectedClass ? (GRADE_CHAPTERS[selectedClass] ?? []) : [];
+  const chapters  = selectedClass ? (GRADE_CHAPTERS[selectedClass] ?? []) : [];
 
   if (loading) {
     return (
@@ -385,10 +447,10 @@ export default function StudyResourcesEditorPage() {
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <button
-          onClick={() => router.push('/teacher')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
-        >
+        <button onClick={() => router.push('/teacher')} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13,
+        }}>
           <ChevronLeft size={14} /> Dashboard
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -406,7 +468,8 @@ export default function StudyResourcesEditorPage() {
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px 80px' }}>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, marginBottom: 24 }}>
-          Edit keywords and notes for each chapter. Your changes are saved to Firestore and immediately visible to students in the Study Corner.
+          Edit keywords, flashcards and notes per chapter. Each keyword card becomes a flip-card for students.
+          Images are optional — paste any public image URL to attach one.
         </p>
 
         {/* Class selector */}
@@ -416,18 +479,13 @@ export default function StudyResourcesEditorPage() {
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {CLASSES.map(cls => (
-              <button
-                key={cls.id}
-                onClick={() => setSelectedClass(cls.id)}
-                style={{
-                  padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer',
-                  background: selectedClass === cls.id ? `${cls.color}20` : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${selectedClass === cls.id ? cls.color + '60' : 'rgba(255,255,255,0.1)'}`,
-                  color: selectedClass === cls.id ? cls.color : 'rgba(255,255,255,0.5)',
-                  transition: 'all 0.15s',
-                }}
-              >
+              <button key={cls.id} onClick={() => setSelectedClass(cls.id)} style={{
+                padding: '7px 14px', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: selectedClass === cls.id ? `${cls.color}20` : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${selectedClass === cls.id ? cls.color + '60' : 'rgba(255,255,255,0.1)'}`,
+                color: selectedClass === cls.id ? cls.color : 'rgba(255,255,255,0.5)',
+                transition: 'all 0.15s',
+              }}>
                 {cls.grade} — {cls.subject}
               </button>
             ))}
@@ -455,7 +513,7 @@ export default function StudyResourcesEditorPage() {
                   chapterKey={ch.key}
                   chapterTitle={ch.shortTitle}
                   staticKeywords={(ch.resources?.keywords ?? []) as StudyKeyword[]}
-                  staticNotes={ch.resources?.notes ?? []}
+                  staticNotes={(ch.resources?.notes ?? []).map(toStudyNote)}
                   teacherUid={user.uid}
                   accentColor={classData.color}
                 />
@@ -471,6 +529,8 @@ export default function StudyResourcesEditorPage() {
           </div>
         )}
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
