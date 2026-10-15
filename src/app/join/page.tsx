@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Gamepad2, User, Wifi, Zap, Lock, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { AvatarGrid } from '@/components/ui/Avatar';
@@ -8,6 +8,14 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { findSessionByCode } from '@/lib/firebase/sessions';
 
 export default function JoinPage() {
+  return (
+    <Suspense fallback={<div className="join-screen flex flex-col min-h-screen items-center justify-center"><span className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full inline-block" /></div>}>
+      <JoinInner />
+    </Suspense>
+  );
+}
+
+function JoinInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { configured } = useFirebase();

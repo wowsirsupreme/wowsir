@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   title: 'WOW Sir — DPS International Ghana',
   description: 'Grades 4–11 Computer Science Assessment Platform',
   icons: {
-    icon: '/wowsir-logo.svg',
-    apple: '/wowsir-logo.svg',
+    icon: '/wowsir-logo.png',
+    apple: '/wowsir-logo.png',
   },
 };
 
