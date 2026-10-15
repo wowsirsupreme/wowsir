@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, use, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
@@ -280,82 +280,17 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   // ── LOBBY ──
   if (phase === 'lobby') {
     const ready = localQuestions.length > 0;
-    return (
-      <div className="play-screen flex flex-col items-center justify-center px-4 min-h-screen">
-        <div className="text-center animate-fadeUp max-w-sm w-full">
-          <div className="text-7xl mb-5 animate-float">{questionsLoading ? '⏳' : '🎮'}</div>
-          <h2 className="font-display text-4xl mb-2" style={{ color: '#fff' }}>
-            {questionsLoading ? 'Loading quiz…' : ready ? 'Ready to play!' : 'Waiting for teacher…'}
-          </h2>
-          <p className="text-[15px] mb-5" style={{ color: 'rgba(255,255,255,0.4)' }}>Room code</p>
-          <div className="code-display-dark mb-6">{code}</div>
-
-          {/* Player info */}
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: 'rgba(16,185,129,0.12)', border: '1.5px solid rgba(16,185,129,0.3)' }}
-            >
-              <Avatar id={avatarId} size={44} />
-            </div>
-            <p className="font-medium text-[17px]" style={{ color: '#fff' }}>{playerName}</p>
-            <p className="text-sm flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
-              {players.length} player{players.length !== 1 ? 's' : ''} joined
-            </p>
-          </div>
-
-          {/* Start button */}
-          {ready && (
-            <button
-              className="btn-glass btn-glass-green"
-              style={{ width: '100%', maxWidth: 280, fontSize: 17, padding: '16px 24px' }}
-              onClick={handleStartSelfPaced}
-            >
-              🚀 Start Quiz ({localQuestions.length} questions)
-            </button>
-          )}
-
-          {questionsLoading && (
-            <div className="flex justify-center gap-1.5 mt-4">
-              {[0,1,2].map(i => (
-                <div key={i} className="w-2 h-2 rounded-full animate-pulseDot" style={{ background: '#10b981', animationDelay: `${i * 0.2}s` }} />
-              ))}
-            </div>
-          )}
-
-          {!questionsLoading && !ready && (
-            <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              The teacher will start the quiz shortly
-            </p>
-          )}
-
-          {/* Battle Mode entry */}
-          {ready && (
-            <div style={{ marginTop: 20, width: '100%', maxWidth: 280 }}>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, textAlign: 'center' }}>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 10, letterSpacing: '0.08em' }}>
-                  OR CHALLENGE CLASSMATES
-                </p>
-                <button
-                  onClick={() => router.push(`/battle/${code}?name=${encodeURIComponent(playerName)}`)}
-                  style={{
-                    width: '100%', padding: '14px', borderRadius: 14,
-                    background: 'rgba(239,68,68,0.12)',
-                    border: '1.5px solid rgba(239,68,68,0.3)',
-                    color: '#f87171', fontWeight: 700, fontSize: 15,
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  }}
-                >
-                  ⚔️ Battle Mode
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <LobbyView
+      code={code}
+      avatarId={avatarId}
+      playerName={playerName}
+      players={players}
+      ready={ready}
+      questionsLoading={questionsLoading}
+      localQuestions={localQuestions}
+      onStart={handleStartSelfPaced}
+      onBattle={() => router.push(`/battle/${code}?name=${encodeURIComponent(playerName)}`)}
+    />;
   }
 
   // ── QUESTION / REVEAL ──
@@ -428,6 +363,182 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         )}
       </div>{/* end inner constrained column */}
       </div>{/* end full-width wrapper */}
+    </div>
+  );
+}
+
+// ── Lobby View Component ──────────────────────────────────────────────────────
+
+const TRACKS = [
+  { id: 'big-guy',   label: 'Big Guy',   artist: 'Ice Spice',     src: '/music/big-guy.mp3',   emoji: '🎤' },
+  { id: 'lush-life', label: 'Lush Life', artist: 'Zara Larsson',  src: '/music/lush-life.mp3', emoji: '🌸' },
+];
+
+function LobbyView({
+  code, avatarId, playerName, players, ready, questionsLoading,
+  localQuestions, onStart, onBattle,
+}: {
+  code: string; avatarId: number; playerName: string;
+  players: unknown[]; ready: boolean; questionsLoading: boolean;
+  localQuestions: unknown[]; onStart: () => void; onBattle: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
+  const [volume, setVolume] = useState(0.5);
+
+  function toggleTrack(id: string, src: string) {
+    if (nowPlaying === id) {
+      audioRef.current?.pause();
+      setNowPlaying(null);
+    } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; }
+      const a = new Audio(src);
+      a.loop = true;
+      a.volume = volume;
+      a.play().catch(() => {});
+      audioRef.current = a;
+      setNowPlaying(id);
+    }
+  }
+
+  function handleVolume(v: number) {
+    setVolume(v);
+    if (audioRef.current) audioRef.current.volume = v;
+  }
+
+  // Stop music when component unmounts (quiz starts)
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  return (
+    <div className="play-screen flex flex-col min-h-screen">
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between px-5 py-3.5"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(2,12,6,0.5)', position: 'sticky', top: 0, zIndex: 10 }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
+          <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            {players.length} player{players.length !== 1 ? 's' : ''} in lobby
+          </span>
+        </div>
+        <div
+          className="font-mono font-bold tracking-widest text-lg"
+          style={{ color: '#34d399', textShadow: '0 0 14px rgba(52,211,153,0.5)' }}
+        >{code}</div>
+        <div style={{ width: 80 }} />
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 gap-6">
+
+        {/* Avatar + name */}
+        <div className="flex flex-col items-center gap-3 animate-fadeUp">
+          <div
+            className="w-20 h-20 rounded-3xl flex items-center justify-center"
+            style={{ background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.3)', boxShadow: '0 0 30px rgba(16,185,129,0.15)' }}
+          >
+            <Avatar id={avatarId} size={52} />
+          </div>
+          <p className="font-display text-2xl" style={{ color: '#fff' }}>{playerName}</p>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {questionsLoading ? 'Loading quiz…' : ready ? 'Ready to play!' : 'Waiting for teacher…'}
+          </p>
+        </div>
+
+        {/* Loading dots */}
+        {questionsLoading && (
+          <div className="flex justify-center gap-1.5">
+            {[0,1,2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full animate-pulseDot" style={{ background: '#10b981', animationDelay: `${i * 0.2}s` }} />
+            ))}
+          </div>
+        )}
+
+        {/* Music player */}
+        <div
+          className="w-full max-w-sm rounded-2xl p-4 animate-fadeUp"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <p className="text-xs font-medium mb-3" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.06em' }}>
+            LOBBY MUSIC
+          </p>
+          <div className="flex flex-col gap-2">
+            {TRACKS.map(t => {
+              const active = nowPlaying === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => toggleTrack(t.id, t.src)}
+                  className="flex items-center gap-3 w-full text-left rounded-xl px-3 py-2.5 transition-all"
+                  style={{
+                    background: active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: `1.5px solid ${active ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                  }}
+                >
+                  <span className="text-2xl">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: active ? '#34d399' : '#fff' }}>{t.label}</p>
+                    <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{t.artist}</p>
+                  </div>
+                  <span style={{ fontSize: 18, color: active ? '#34d399' : 'rgba(255,255,255,0.2)' }}>
+                    {active ? '⏸' : '▶'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {nowPlaying && (
+            <div className="flex items-center gap-3 mt-3 px-1">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>🔈</span>
+              <input
+                type="range" min={0} max={1} step={0.05} value={volume}
+                onChange={e => handleVolume(parseFloat(e.target.value))}
+                className="flex-1 h-1 appearance-none rounded-full"
+                style={{ accentColor: '#34d399' }}
+              />
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>🔊</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        {ready && (
+          <div className="w-full max-w-sm flex flex-col gap-3 animate-fadeUp">
+            <button
+              className="btn-glass btn-glass-green"
+              style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
+              onClick={onStart}
+            >
+              🚀 Start Quiz ({localQuestions.length} questions)
+            </button>
+            <div className="relative flex items-center gap-3">
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>or challenge classmates</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+            </div>
+            <button
+              onClick={onBattle}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 14,
+                background: 'rgba(239,68,68,0.1)',
+                border: '1.5px solid rgba(239,68,68,0.25)',
+                color: '#f87171', fontWeight: 700, fontSize: 15,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              ⚔️ Battle Mode
+            </button>
+          </div>
+        )}
+
+        {!questionsLoading && !ready && (
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            The teacher will start the quiz shortly
+          </p>
+        )}
+      </div>
     </div>
   );
 }
