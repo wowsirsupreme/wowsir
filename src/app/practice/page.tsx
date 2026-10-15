@@ -16,7 +16,7 @@ const GRADE_LIST = [
   { key: 5,    label: 'Grade 5',  sub: 'Computing & Tech',          accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)',   classId: 'gr5-cs' },
   { key: 6,    label: 'Grade 6',  sub: 'Computing & Programming',   accent: '#f59e0b', glow: 'rgba(245,158,11,0.15)',   classId: 'gr6-cs' },
   { key: 7,    label: 'Grade 7',  sub: 'Computing & Web',           accent: '#10b981', glow: 'rgba(16,185,129,0.15)',   classId: 'gr7-cs' },
-  { key: 8,    label: 'Grade 8',  sub: 'Python & Networks',         accent: '#10b981', glow: 'rgba(16,185,129,0.15)',   classId: 'gr8-cs' },
+  { key: 8,    label: 'Grade 8',  sub: 'AI, Databases & Networks',         accent: '#10b981', glow: 'rgba(16,185,129,0.15)',   classId: 'gr8-cs' },
   { key: 9,    label: 'Grade 9',  sub: 'IGCSE CS 0478 Year 1',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)',   classId: 'gr9-cs' },
   { key: '9dt',label: 'Grade 9',  sub: 'IGCSE D&T 0445',            accent: '#ec4899', glow: 'rgba(236,72,153,0.15)',   classId: 'gr9-dt' },
   { key: 10,   label: 'Grade 10', sub: 'IGCSE CS 0478 Year 2',      accent: '#6366f1', glow: 'rgba(99,102,241,0.15)',   classId: null },

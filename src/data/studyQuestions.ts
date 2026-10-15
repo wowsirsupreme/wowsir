@@ -2820,7 +2820,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch2-q1',
     quizId: null,
-    topicKey: 'gr8-ch2-cybersafety',
+    topicKey: 'gr8-ch10-social',
     type: 'mcq',
     text: 'What is phishing?',
     options: [
@@ -2837,7 +2837,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch2-q2',
     quizId: null,
-    topicKey: 'gr8-ch2-cybersafety',
+    topicKey: 'gr8-ch10-social',
     type: 'mcq',
     text: 'Which of the following is the STRONGEST password?',
     options: [
@@ -2854,7 +2854,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch2-q3',
     quizId: null,
-    topicKey: 'gr8-ch2-cybersafety',
+    topicKey: 'gr8-ch10-social',
     type: 'mcq',
     text: 'What is social engineering in the context of cyber security?',
     options: [
@@ -2871,7 +2871,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch2-q4',
     quizId: null,
-    topicKey: 'gr8-ch2-cybersafety',
+    topicKey: 'gr8-ch10-social',
     type: 'mcq',
     text: 'Which practice helps keep your online accounts safest?',
     options: [
@@ -2888,7 +2888,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch2-q5',
     quizId: null,
-    topicKey: 'gr8-ch2-cybersafety',
+    topicKey: 'gr8-ch10-social',
     type: 'mcq',
     text: 'You receive an email saying you have won a prize and must click a link to claim it. What should you do?',
     options: [
@@ -2994,7 +2994,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch4-q1',
     quizId: null,
-    topicKey: 'gr8-ch4-networks',
+    topicKey: 'gr8-ch6-networks',
     type: 'mcq',
     text: 'What does LAN stand for?',
     options: [
@@ -3011,7 +3011,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch4-q2',
     quizId: null,
-    topicKey: 'gr8-ch4-networks',
+    topicKey: 'gr8-ch6-networks',
     type: 'mcq',
     text: 'In a star topology, what happens if the central switch or hub fails?',
     options: [
@@ -3028,7 +3028,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch4-q3',
     quizId: null,
-    topicKey: 'gr8-ch4-networks',
+    topicKey: 'gr8-ch6-networks',
     type: 'mcq',
     text: 'Which protocol is used to assign IP addresses automatically to devices on a network?',
     options: [
@@ -3045,7 +3045,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch4-q4',
     quizId: null,
-    topicKey: 'gr8-ch4-networks',
+    topicKey: 'gr8-ch6-networks',
     type: 'mcq',
     text: 'What is the main difference between a switch and a hub?',
     options: [
@@ -3062,7 +3062,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch4-q5',
     quizId: null,
-    topicKey: 'gr8-ch4-networks',
+    topicKey: 'gr8-ch6-networks',
     type: 'mcq',
     text: 'Which of the following best describes a WAN?',
     options: [
@@ -3081,7 +3081,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch5-q1',
     quizId: null,
-    topicKey: 'gr8-ch5-database',
+    topicKey: 'gr8-ch3-access1',
     type: 'mcq',
     text: 'In Microsoft Access, what is a primary key?',
     options: [
@@ -3098,7 +3098,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch5-q2',
     quizId: null,
-    topicKey: 'gr8-ch5-database',
+    topicKey: 'gr8-ch3-access1',
     type: 'mcq',
     text: 'What is the purpose of a query in Microsoft Access?',
     options: [
@@ -3115,7 +3115,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch5-q3',
     quizId: null,
-    topicKey: 'gr8-ch5-database',
+    topicKey: 'gr8-ch3-access1',
     type: 'mcq',
     text: 'Which database object in Access is typically used to enter data in a user-friendly way?',
     options: [
@@ -3132,7 +3132,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch5-q4',
     quizId: null,
-    topicKey: 'gr8-ch5-database',
+    topicKey: 'gr8-ch3-access1',
     type: 'mcq',
     text: 'A student database has a field called "StudentID" set as an AutoNumber. What does this mean?',
     options: [
@@ -3149,7 +3149,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch5-q5',
     quizId: null,
-    topicKey: 'gr8-ch5-database',
+    topicKey: 'gr8-ch3-access1',
     type: 'mcq',
     text: 'What is a report in Microsoft Access used for?',
     options: [
@@ -3255,7 +3255,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch7-q1',
     quizId: null,
-    topicKey: 'gr8-ch7-python-sel',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What will the following Python code print?\n\nscore = 45\nif score >= 50:\n    print("Pass")\nelse:\n    print("Fail")',
     options: [
@@ -3272,7 +3272,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch7-q2',
     quizId: null,
-    topicKey: 'gr8-ch7-python-sel',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What is the correct Python keyword to add a second condition to an if statement?',
     options: [
@@ -3289,7 +3289,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch7-q3',
     quizId: null,
-    topicKey: 'gr8-ch7-python-sel',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Which of the following is a valid Boolean expression in Python?',
     options: [
@@ -3306,7 +3306,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch7-q4',
     quizId: null,
-    topicKey: 'gr8-ch7-python-sel',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'How many times will "Hello" be printed by this code?\n\nif True:\n    print("Hello")\nelif True:\n    print("Hello")',
     options: [
@@ -3323,7 +3323,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch7-q5',
     quizId: null,
-    topicKey: 'gr8-ch7-python-sel',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What does the not operator do in Python?',
     options: [
@@ -3342,7 +3342,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch8-q1',
     quizId: null,
-    topicKey: 'gr8-ch8-python-loops',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'How many times will the loop body run?\n\nfor i in range(5):\n    print(i)',
     options: [
@@ -3359,7 +3359,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch8-q2',
     quizId: null,
-    topicKey: 'gr8-ch8-python-loops',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What is the difference between a for loop and a while loop in Python?',
     options: [
@@ -3376,7 +3376,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch8-q3',
     quizId: null,
-    topicKey: 'gr8-ch8-python-loops',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What does the break statement do inside a loop?',
     options: [
@@ -3393,7 +3393,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch8-q4',
     quizId: null,
-    topicKey: 'gr8-ch8-python-loops',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What values does range(2, 8, 2) produce?',
     options: [
@@ -3410,7 +3410,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch8-q5',
     quizId: null,
-    topicKey: 'gr8-ch8-python-loops',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What will this while loop print?\n\nn = 1\nwhile n < 4:\n    print(n)\n    n = n + 1',
     options: [
@@ -3516,7 +3516,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch10-q1',
     quizId: null,
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What is the index of the first item in a Python list?',
     options: [
@@ -3533,7 +3533,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch10-q2',
     quizId: null,
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Which method adds an item to the END of a Python list?',
     options: [
@@ -3550,7 +3550,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch10-q3',
     quizId: null,
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Given fruits = ["apple", "banana", "cherry"], what does fruits[1] return?',
     options: [
@@ -3567,7 +3567,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch10-q4',
     quizId: null,
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What does the slice numbers[1:4] return from the list numbers = [10, 20, 30, 40, 50]?',
     options: [
@@ -3584,7 +3584,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch10-q5',
     quizId: null,
-    topicKey: 'gr8-ch10-python-lists',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Which of the following loops correctly prints every item in a list called colours?',
     options: [
@@ -3690,7 +3690,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch12-q1',
     quizId: null,
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'What is the first step a programmer should take before writing any code for a project?',
     options: [
@@ -3707,7 +3707,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch12-q2',
     quizId: null,
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'A student is writing a number-guessing game in Python. The program needs to keep asking the user to guess until they get the right answer. Which structure is BEST suited for this?',
     options: [
@@ -3724,7 +3724,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch12-q3',
     quizId: null,
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'Which Python function reads a value typed by the user in the console?',
     options: [
@@ -3741,7 +3741,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch12-q4',
     quizId: null,
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'In a simple quiz project, a student stores each question in a list and the correct answers in another list. To access the answer for question index 2, they would use:',
     options: [
@@ -3758,7 +3758,7 @@ export const ALL_STUDY_QUESTIONS: StudyQuestion[] = [
   {
     id: 'gr8-ch12-q5',
     quizId: null,
-    topicKey: 'gr8-ch12-python-proj',
+    topicKey: 'gr8-ch12-python',
     type: 'mcq',
     text: 'After finishing a Python project, what should a student do to check that it works correctly?',
     options: [
