@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getFirebaseInstances } from '@/lib/firebase/config';
-import { collection, addDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function SeedPage() {
   const { user, loading } = useAuth();
@@ -175,10 +175,19 @@ export default function SeedPage() {
     quizzes.push(typeQuiz);
 
     addLog('Seeding quizzes to Firestore…');
-    for (const q of quizzes) {
+    const quizIds = ['seed_quiz_binary_hex', 'seed_quiz_io_devices', 'seed_quiz_algorithms', 'seed_quiz_type_showcase'];
+    for (let i = 0; i < quizzes.length; i++) {
+      const q = quizzes[i];
+      const qId = quizIds[i] ?? `seed_quiz_${i}`;
       try {
-        const ref = await addDoc(collection(db, 'quizzes'), q);
-        addLog(`✓ "${q.title}" → ${ref.id}`, 'ok');
+        const ref = doc(db, 'quizzes', qId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          addLog(`↷ "${q.title}" already exists — skipped`, 'info');
+        } else {
+          await setDoc(ref, { ...q, id: qId });
+          addLog(`✓ "${q.title}" → ${qId}`, 'ok');
+        }
       } catch (e: unknown) {
         addLog(`✗ "${q.title}": ${e instanceof Error ? e.message : String(e)}`, 'err');
       }
