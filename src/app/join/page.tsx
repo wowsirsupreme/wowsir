@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Gamepad2, User, Wifi, Zap, Lock, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { AvatarGrid } from '@/components/ui/Avatar';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -9,6 +9,7 @@ import { findSessionByCode } from '@/lib/firebase/sessions';
 
 export default function JoinPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { configured } = useFirebase();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -16,6 +17,7 @@ export default function JoinPage() {
   const [step, setStep] = useState<'code' | 'name'>('code');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const autoJoined = useRef(false);
 
   useEffect(() => {
     try {
@@ -25,6 +27,28 @@ export default function JoinPage() {
       if (savedAvatar) setAvatarId(parseInt(savedAvatar, 10));
     } catch {}
   }, []);
+
+  // Auto-fill code from URL ?code=XXXXXX and skip to name step
+  useEffect(() => {
+    if (autoJoined.current) return;
+    const urlCode = searchParams.get('code')?.replace(/\s/g, '').toUpperCase();
+    if (!urlCode || urlCode.length !== 6) return;
+    autoJoined.current = true;
+    setCode(urlCode);
+    setLoading(true);
+    findSessionByCode(urlCode)
+      .then(result => {
+        if (!result) {
+          setError('Room not found. The session may have ended.');
+        } else if (result.session.status === 'ended') {
+          setError('This session has already ended.');
+        } else {
+          setStep('name');
+        }
+      })
+      .catch(() => setError('Could not connect. Check your connection.'))
+      .finally(() => setLoading(false));
+  }, [searchParams]);
 
   async function handleCodeSubmit() {
     const clean = code.replace(/\s/g, '').toUpperCase();
