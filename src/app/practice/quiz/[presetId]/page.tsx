@@ -10,6 +10,9 @@ import type { LeaderboardEntry } from '@/lib/firebase/leaderboard';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import type { PresetQuiz } from '@/lib/firebase/presetQuizzes';
 import type { Question } from '@/types/question';
+import { audioEngine } from '@/lib/audioEngine';
+import AudioControls from '@/components/MuteButton';
+import MusicThemePicker from '@/components/MusicThemePicker';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -279,12 +282,31 @@ export default function PracticeQuizPage() {
   const _remaining = useCountdown(timeLimit, timerRunning, handleTimerExpire);
   const remaining = timerRunning ? _remaining : timeLimit;
 
+  // ── Music ─────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (phase === 'playing') {
+      audioEngine.startMusic();
+    }
+    if (phase === 'results') {
+      audioEngine.stopMusic();
+      setTimeout(() => {
+        if (pct >= 60) audioEngine.win();
+        else audioEngine.lose();
+      }, 300);
+    }
+    // Fade music back in on round-review (don't stop it)
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Answer selection ──────────────────────────────────────────────────────
 
   function handleAnswer(index: number) {
     if (phase !== 'playing' || selected !== null) return;
     setSelected(index);
     setPhase('reveal');
+    const correctIndex = parseInt(currentQ?.answer ?? '-1', 10);
+    if (index === correctIndex) audioEngine.correct();
+    else audioEngine.wrong();
   }
 
   // ── Advance to next question ──────────────────────────────────────────────
@@ -456,6 +478,7 @@ export default function PracticeQuizPage() {
 
     return (
       <main style={bgStyle}>
+        <AudioControls />
         {starOverlay}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 120px' }}>
 
@@ -595,8 +618,14 @@ export default function PracticeQuizPage() {
   if (phase === 'results') {
     return (
       <main style={bgStyle}>
+        <AudioControls />
         {starOverlay}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 60px' }}>
+
+          {/* Music theme picker — top-right of results */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
+            <MusicThemePicker onChange={() => audioEngine.startMusic()} />
+          </div>
 
           {/* Score card */}
           <div
@@ -751,6 +780,8 @@ export default function PracticeQuizPage() {
 
   return (
     <main style={bgStyle}>
+      {/* Floating audio controls — bottom-left */}
+      <AudioControls />
       {showNameModal && (
         <NameModal
           accent={accent}
