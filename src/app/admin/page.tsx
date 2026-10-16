@@ -12,6 +12,8 @@ import {
   wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, backupDatabase,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
+import { loginTeacher, logoutTeacher, onAuthChange } from '@/lib/firebase/auth';
+import type { User } from 'firebase/auth';
 import { useFirebase } from '@/hooks/useFirebase';
 import type { UserProfile } from '@/types/user';
 import { TOPIC_LABELS } from '@/types/question';
@@ -110,6 +112,13 @@ export default function AdminPage() {
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [backupMsg, setBackupMsg] = useState('');
 
+  // Firebase Auth state (for wipe operations that require credentials)
+  const [fbUser, setFbUser] = useState<User | null>(null);
+  const [fbEmail, setFbEmail] = useState('');
+  const [fbPass, setFbPass] = useState('');
+  const [fbLoginErr, setFbLoginErr] = useState('');
+  const [fbLogging, setFbLogging] = useState(false);
+
   // Restore session on mount, and set up lockout countdown timer
   useEffect(() => {
     if (isSessionValid()) setAuthed(true);
@@ -128,6 +137,25 @@ export default function AdminPage() {
     }, 1000);
     return () => clearInterval(id);
   }, [lockRemaining]);
+
+  // Track Firebase Auth state so Database tab wipe ops have credentials
+  useEffect(() => {
+    return onAuthChange(u => setFbUser(u));
+  }, [configured]);
+
+  async function handleFbLogin() {
+    setFbLoginErr('');
+    setFbLogging(true);
+    try {
+      await loginTeacher(fbEmail, fbPass);
+      setFbEmail('');
+      setFbPass('');
+    } catch (e: unknown) {
+      setFbLoginErr(e instanceof Error ? e.message.replace('Firebase: ', '') : 'Sign-in failed');
+    } finally {
+      setFbLogging(false);
+    }
+  }
 
   function tryLogin() {
     const state = getLockoutState();
@@ -368,6 +396,15 @@ export default function AdminPage() {
                 setBackupMsg(e instanceof Error ? e.message : 'Backup failed');
               }
             }}
+            fbUser={fbUser}
+            fbEmail={fbEmail}
+            fbPass={fbPass}
+            fbLoginErr={fbLoginErr}
+            fbLogging={fbLogging}
+            onFbEmailChange={setFbEmail}
+            onFbPassChange={setFbPass}
+            onFbLogin={handleFbLogin}
+            onFbLogout={() => logoutTeacher()}
           />
         )}
       </div>
@@ -835,9 +872,19 @@ interface DatabaseTabProps {
   onWipe: (key: ResetKey) => void;
   onCancel: (key: ResetKey) => void;
   onBackup: () => void;
+  fbUser: User | null;
+  fbEmail: string;
+  fbPass: string;
+  fbLoginErr: string;
+  fbLogging: boolean;
+  onFbEmailChange: (v: string) => void;
+  onFbPassChange: (v: string) => void;
+  onFbLogin: () => void;
+  onFbLogout: () => void;
 }
 
-function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, onCancel, onBackup }: DatabaseTabProps) {
+function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, onCancel, onBackup,
+  fbUser, fbEmail, fbPass, fbLoginErr, fbLogging, onFbEmailChange, onFbPassChange, onFbLogin, onFbLogout }: DatabaseTabProps) {
   const actions: { key: ResetKey; label: string; desc: string; accent: string }[] = [
     {
       key: 'results',
@@ -868,6 +915,60 @@ function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, o
   return (
     <div>
       <SectionHeader title="Database Reset" accent="#f87171" />
+
+      {/* Firebase Auth — needed for RTDB and Firestore wipe operations */}
+      <div style={{
+        borderRadius: 12, padding: '16px 20px', marginBottom: 28,
+        background: fbUser ? 'rgba(74,222,128,0.06)' : 'rgba(251,191,36,0.06)',
+        border: `1.5px solid ${fbUser ? 'rgba(74,222,128,0.25)' : 'rgba(251,191,36,0.25)'}`,
+      }}>
+        {fbUser ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 13, color: '#4ade80', flex: 1 }}>
+              🔓 Firebase signed in as <strong>{fbUser.email}</strong>
+            </span>
+            <button
+              onClick={onFbLogout}
+              style={{ padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' }}
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p style={{ fontSize: 13, color: 'rgba(251,191,36,0.9)', marginBottom: 10, fontWeight: 600 }}>
+              🔒 Sign in with your Firebase teacher account to allow wipe operations
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                type="email"
+                placeholder="Email"
+                value={fbEmail}
+                onChange={e => onFbEmailChange(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && onFbLogin()}
+                style={{ padding: '7px 12px', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', outline: 'none', width: 200 }}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={fbPass}
+                onChange={e => onFbPassChange(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && onFbLogin()}
+                style={{ padding: '7px 12px', borderRadius: 8, fontSize: 13, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', outline: 'none', width: 160 }}
+              />
+              <button
+                onClick={onFbLogin}
+                disabled={fbLogging || !fbEmail || !fbPass}
+                style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: fbLogging ? 'wait' : 'pointer', background: 'rgba(251,191,36,0.18)', border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24', opacity: (!fbEmail || !fbPass) ? 0.5 : 1 }}
+              >
+                {fbLogging ? 'Signing in…' : 'Sign in'}
+              </button>
+            </div>
+            {fbLoginErr && <p style={{ fontSize: 12, color: '#f87171', marginTop: 8 }}>{fbLoginErr}</p>}
+          </div>
+        )}
+      </div>
+
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 28 }}>
         Permanently delete data from the database. These actions cannot be undone.
       </p>

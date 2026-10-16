@@ -198,7 +198,12 @@ async function deleteCollection(colName: string): Promise<ResetResult> {
   const { fs } = getFirebaseInstances();
   if (!fs) return { deleted: 0, errors: 0 };
   const { writeBatch, doc: _doc } = await import('firebase/firestore');
-  const snap = await getDocs(collection(fs, colName));
+  let snap: Awaited<ReturnType<typeof getDocs>>;
+  try {
+    snap = await getDocs(collection(fs, colName));
+  } catch {
+    return { deleted: 0, errors: 1 };
+  }
   let deleted = 0, errors = 0;
   // Process in batches of 400
   const batchSize = 400;
