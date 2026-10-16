@@ -2,100 +2,6 @@ import Papa from 'papaparse';
 import type { Question, QuestionType } from '@/types/question';
 import { uid } from '@/lib/utils';
 
-/* ── Wayground format detection & import ── */
-
-const WAYGROUND_HEADERS = ['Question Text', 'Question Type', 'Option 1', 'Option 2', 'Correct Answer'];
-
-export function isWaygroundFormat(headers: string[]): boolean {
-  return WAYGROUND_HEADERS.every(h => headers.includes(h));
-}
-
-/** Supported Wayground types — all others are skipped with a warning */
-const WAYGROUND_SUPPORTED: Record<string, QuestionType> = {
-  'multiple choice': 'mcq',
-  'fill-in-the-blank': 'fillinblank',
-  'open-ended': 'shortanswer',
-};
-
-export interface WaygroundParseResult {
-  parsed: ParsedRow[];
-  skipped: Array<{ rowIndex: number; type: string; text: string }>;
-}
-
-export function mapWayground(
-  rows: RawRow[],
-  defaultTopic: string,
-  quizId: string | null
-): WaygroundParseResult {
-  const parsed: ParsedRow[] = [];
-  const skipped: Array<{ rowIndex: number; type: string; text: string }> = [];
-
-  rows.forEach((row, i) => {
-    const rowIndex = i + 2;
-    const typeRaw = (row['Question Type'] || 'Multiple Choice').trim().toLowerCase();
-    const type = WAYGROUND_SUPPORTED[typeRaw];
-
-    if (!type) {
-      skipped.push({ rowIndex, type: row['Question Type'] || '?', text: (row['Question Text'] || '').slice(0, 60) });
-      return;
-    }
-
-    const errors: string[] = [];
-    const text = (row['Question Text'] || '').trim();
-    if (!text) errors.push('Question text is empty');
-
-    // Options 1–4 only (we cap at 4; Option 5 is dropped)
-    const options = [
-      (row['Option 1'] || '').trim(),
-      (row['Option 2'] || '').trim(),
-      (row['Option 3'] || '').trim(),
-      (row['Option 4'] || '').trim(),
-    ].filter(Boolean);
-
-    if (type === 'mcq' && options.length < 2) {
-      errors.push('Multiple Choice requires at least 2 options');
-    }
-
-    // Answer: Wayground is 1-based integer → convert to 0-based string
-    let answer = '0';
-    if (type === 'mcq') {
-      const raw = (row['Correct Answer'] || '').trim();
-      const n = parseInt(raw, 10);
-      if (!isNaN(n) && n >= 1) {
-        answer = String(n - 1);
-      } else if (!raw) {
-        errors.push('Correct Answer is missing');
-      }
-    } else if (type === 'fillinblank') {
-      // For fill-in-the-blank, Wayground puts accepted answers in Option slots
-      // Store all non-empty options joined with | as the answer (flexible matching)
-      answer = options.join('|');
-      if (!answer) errors.push('Fill-in-the-Blank requires at least one accepted answer in Option 1');
-    }
-    // shortanswer: no answer needed
-
-    const question: Partial<Question> = {
-      id: uid(),
-      quizId,
-      topicKey: defaultTopic,
-      type,
-      text,
-      options: type === 'fillinblank' ? [] : options,
-      answer,
-      explanation: (row['Answer explanation'] || '').trim(),
-      imageUrl: (row['Image Link'] || '').trim() || null,
-      approvalStatus: errors.length === 0 ? 'pending' : 'rejected',
-      source: 'imported',
-      points: 10,
-      createdAt: Date.now(),
-    };
-
-    parsed.push({ raw: row, question, errors, rowIndex });
-  });
-
-  return { parsed, skipped };
-}
-
 export interface RawRow {
   [key: string]: string;
 }
@@ -137,6 +43,33 @@ export function parseCSV(file: File): Promise<{ headers: string[]; rows: RawRow[
   });
 }
 
+/**
+ * Resolve an MCQ answer to a 0-based index.
+ * Accepts all of: A/B/C/D, a/b/c/d, 1/2/3/4 (1-based), 0/1/2/3 (0-based), or the option text itself.
+ */
+function resolveMCQAnswer(raw: string, options: string[]): string {
+  const trimmed = raw.trim();
+
+  // Letter: A/B/C/D (case-insensitive)
+  if (/^[a-dA-D]$/.test(trimmed)) {
+    return String('abcd'.indexOf(trimmed.toLowerCase()));
+  }
+
+  const n = parseInt(trimmed, 10);
+  if (!isNaN(n)) {
+    // 1-based (1–4) — most natural for teachers
+    if (n >= 1 && n <= 4) return String(n - 1);
+    // 0-based (0–3) — also accepted
+    if (n >= 0 && n <= 3) return String(n);
+  }
+
+  // Full option text match (case-insensitive)
+  const idx = options.findIndex(o => o.toLowerCase() === trimmed.toLowerCase());
+  if (idx >= 0) return String(idx);
+
+  return '0'; // fallback
+}
+
 export function mapAndValidate(
   rows: RawRow[],
   mapping: ColumnMapping,
@@ -150,7 +83,7 @@ export function mapAndValidate(
 
     if (!text) errors.push('Question text is empty');
 
-    // Normalise type
+    // Normalise type — accept common aliases
     let type: QuestionType = 'mcq';
     if (typeRaw.includes('true') || typeRaw.includes('false') || typeRaw === 'tf') {
       type = 'truefalse';
@@ -173,24 +106,19 @@ export function mapAndValidate(
 
     const answerRaw = (row[mapping.answer] || '').trim();
     let answer = '0';
+
     if (type === 'mcq') {
-      // Accept: 0/1/2/3, A/B/C/D, "Option text"
-      if (/^[0-3]$/.test(answerRaw)) {
-        answer = answerRaw;
-      } else if (/^[a-dA-D]$/.test(answerRaw)) {
-        answer = String('abcd'.indexOf(answerRaw.toLowerCase()));
-      } else {
-        const idx = options.findIndex(o => o.toLowerCase() === answerRaw.toLowerCase());
-        answer = idx >= 0 ? String(idx) : '0';
-      }
+      answer = resolveMCQAnswer(answerRaw, options);
     } else if (type === 'truefalse') {
-      // Store as '0' (True) or '1' (False) — matches resolveAnswerIndex convention
-      answer = answerRaw.toLowerCase().startsWith('t') ? '0' : '1';
+      // Accept: True/False, T/F, 1/2, Yes/No — store as '0' (True) or '1' (False)
+      const lower = answerRaw.toLowerCase();
+      answer = (lower.startsWith('t') || lower === '1' || lower === 'yes') ? '0' : '1';
     } else {
+      // shortanswer / fillinblank — answer is the expected text
       answer = answerRaw;
     }
 
-    if (!answerRaw) errors.push('Answer is empty');
+    if (!answerRaw && type !== 'shortanswer') errors.push('Answer is empty');
 
     const question: Partial<Question> = {
       id: uid(),
@@ -214,13 +142,74 @@ export function mapAndValidate(
 }
 
 export function downloadTemplate() {
-  const headers = ['type', 'text', 'option_a', 'option_b', 'option_c', 'option_d', 'answer', 'explanation', 'difficulty', 'topic', 'tags'];
-  const examples = [
-    ['mcq', 'What does HTML stand for?', 'Hyper Text Markup Language', 'High Tech Modern Language', 'Home Tool Markup Language', 'Hyperlink Text Model Language', 'A', 'HTML = HyperText Markup Language', 'easy', 'html-basics', 'html,web'],
-    ['truefalse', 'CSS stands for Cascading Style Sheets.', 'True', 'False', '', '', 'True', 'CSS = Cascading Style Sheets — answer True means index 0, False means index 1', 'easy', 'css-styling', 'css'],
-    ['shortanswer', 'Name the HTML tag used to create a hyperlink.', '', '', '', '', '<a>', 'The anchor tag <a> creates hyperlinks', 'medium', 'html-basics', 'html,tags'],
+  const headers = [
+    'type', 'text',
+    'option_a', 'option_b', 'option_c', 'option_d',
+    'answer', 'explanation', 'difficulty', 'topic', 'tags',
   ];
-  const csv = [headers, ...examples].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+
+  // Row 2 — instruction row (not imported, just guidance)
+  const instructions = [
+    'mcq / truefalse / shortanswer / fillinblank',
+    'The question (required)',
+    'Option A', 'Option B', 'Option C (optional)', 'Option D (optional)',
+    'MCQ: A B C D  or  1 2 3 4  or  0 1 2 3  |  TrueFalse: True or False  |  Short/Fill: the expected answer',
+    'Why this answer is correct (optional)',
+    'easy / medium / hard',
+    'Topic key e.g. gr9-cpu',
+    'comma,separated,tags (optional)',
+  ];
+
+  const examples = [
+    // MCQ — answer as letter
+    [
+      'mcq',
+      'Which component is considered the brain of a computer?',
+      'Hard Disk Drive', 'Random Access Memory', 'Central Processing Unit', 'Graphics Card',
+      'C',
+      'The CPU (Central Processing Unit) executes all instructions.',
+      'easy', 'gr9-cpu', 'hardware,cpu',
+    ],
+    // MCQ — answer as number (1-based, more natural)
+    [
+      'mcq',
+      'What does RAM stand for?',
+      'Read Access Memory', 'Random Access Memory', 'Rapid Action Module', 'Read And Modify',
+      '2',
+      'RAM = Random Access Memory — temporary storage while the computer is on.',
+      'easy', 'gr9-memory', 'hardware,memory',
+    ],
+    // True/False
+    [
+      'truefalse',
+      'The CPU carries out the Fetch-Decode-Execute cycle.',
+      'True', 'False', '', '',
+      'True',
+      'The FDE cycle is the fundamental operation of the CPU.',
+      'easy', 'gr9-fde', 'cpu',
+    ],
+    // Short answer
+    [
+      'shortanswer',
+      'Name the part of the CPU that performs arithmetic calculations.',
+      '', '', '', '',
+      'ALU',
+      'ALU = Arithmetic Logic Unit.',
+      'medium', 'gr9-cpu', 'cpu,hardware',
+    ],
+    // Fill in the blank
+    [
+      'fillinblank',
+      'The operating system manages the computer\'s ___ and software resources.',
+      '', '', '', '',
+      'hardware',
+      'An OS manages both hardware and software resources.',
+      'medium', 'gr9-os', 'os',
+    ],
+  ];
+
+  const allRows = [headers, instructions, ...examples];
+  const csv = allRows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

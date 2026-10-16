@@ -8,7 +8,6 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { batchSaveQuestions, getExistingQuestionTexts } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import type { Question } from '@/types/question';
-import { parseCSV as papaParseCSV, isWaygroundFormat, mapWayground } from '@/lib/import/csv-parser';
 
 const BG = [
   'radial-gradient(ellipse 70% 50% at 20% 10%,  rgba(16,185,129,0.1) 0%, transparent 55%)',
@@ -219,9 +218,21 @@ function _parseCSVRows(text: string): ParsedRow[] {
           parseError = 'MCQ needs at least 2 options (optionA–optionD)';
           break;
         }
-        const idx = parseInt(parsedAnswer, 10);
-        if (isNaN(idx) || idx < 0 || idx >= options.length) {
-          parseError = `MCQ answer must be a 0-based index (0–${options.length - 1}), got "${parsedAnswer}"`;
+        // Accept: A/B/C/D, 1/2/3/4 (1-based), 0/1/2/3 (0-based)
+        let idx: number;
+        if (/^[a-dA-D]$/.test(parsedAnswer)) {
+          idx = 'abcd'.indexOf(parsedAnswer.toLowerCase());
+        } else {
+          const n = parseInt(parsedAnswer, 10);
+          if (isNaN(n)) {
+            parseError = `MCQ answer must be A–D, 1–4, or 0–3, got "${parsedAnswer}"`;
+            break;
+          }
+          // 1-based (1–4) → convert to 0-based
+          idx = (n >= 1 && n <= 4) ? n - 1 : n;
+        }
+        if (idx < 0 || idx >= options.length) {
+          parseError = `MCQ answer index ${idx} is out of range (0–${options.length - 1})`;
           break;
         }
         parsedAnswer = String(idx);
@@ -231,11 +242,14 @@ function _parseCSVRows(text: string): ParsedRow[] {
       case 'truefalse': {
         options = ['True', 'False'];
         const norm = parsedAnswer.toLowerCase();
-        if (norm !== 'true' && norm !== 'false') {
-          parseError = `True/False answer must be "true" or "false", got "${parsedAnswer}"`;
+        if (norm.startsWith('t') || norm === '1' || norm === 'yes') {
+          parsedAnswer = 'true';
+        } else if (norm.startsWith('f') || norm === '0' || norm === 'no' || norm === '2') {
+          parsedAnswer = 'false';
+        } else {
+          parseError = `True/False answer must be "True" or "False", got "${parsedAnswer}"`;
           break;
         }
-        parsedAnswer = norm; // normalise to lowercase
         break;
       }
 
@@ -333,9 +347,7 @@ export default function ImportCSVPage() {
   const [filename, setFilename] = useState('');
   const [importing, setImporting] = useState(false);
   const [done, setDone] = useState(false);
-  const [waygroundSkipped, setWaygroundSkipped] = useState<Array<{ rowIndex: number; type: string; text: string }>>([]);
-  const [isWayground, setIsWayground] = useState(false);
-  const [importedCount, setImportedCount] = useState(0);
+const [importedCount, setImportedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [autoApprove, setAutoApprove] = useState(false);
 
@@ -356,51 +368,10 @@ export default function ImportCSVPage() {
     setDone(false);
     setImportedCount(0);
     setSkippedCount(0);
-    setWaygroundSkipped([]);
-    setIsWayground(false);
+
     const reader = new FileReader();
     reader.onload = async e => {
       const text = e.target?.result as string;
-
-      // Detect Wayground format via PapaParse headers
-      const { headers, rows: rawRows } = await papaParseCSV(new File([text], file.name, { type: 'text/csv' }));
-
-      if (isWaygroundFormat(headers)) {
-        // Wayground path — auto-detect topic from filename or use generic
-        const defaultTopic = 'imported';
-        const { parsed: wRows, skipped } = mapWayground(rawRows, defaultTopic, null);
-        setIsWayground(true);
-        setWaygroundSkipped(skipped);
-        // Convert to page's ParsedRow format
-        const converted: ParsedRow[] = wRows.map(r => {
-          if (r.errors.length > 0) {
-            return { ok: false, row: r.rowIndex, error: r.errors.join('; ') };
-          }
-          const q = r.question!;
-          return {
-            ok: true,
-            row: r.rowIndex,
-            data: {
-              quizId: null,
-              topicKey: q.topicKey ?? 'imported',
-              type: q.type!,
-              text: q.text!,
-              options: q.options ?? [],
-              answer: q.answer ?? '',
-              explanation: q.explanation ?? '',
-              imageUrl: q.imageUrl ?? null,
-              difficulty: 'medium' as Question['difficulty'],
-              points: 10,
-              approvalStatus: 'pending',
-              source: 'imported' as const,
-              createdAt: Date.now(),
-            },
-          };
-        });
-        setParsed(converted);
-        setParseMeta({ remapped: 0 });
-        return;
-      }
 
       // Standard WOW format
       const { rows, meta } = parseCSV(text);
@@ -601,8 +572,7 @@ export default function ImportCSVPage() {
               </div>
             )}
 
-            {/* Wayground format notice */}
-            {isWayground && (
+            {false && (
               <div style={{
                 borderRadius: 10, background: 'rgba(56,189,248,0.07)',
                 border: '1px solid rgba(56,189,248,0.25)', padding: '10px 14px',
@@ -613,11 +583,7 @@ export default function ImportCSVPage() {
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
                   <strong style={{ color: '#38bdf8' }}>Wayground format detected.</strong>
                   {' '}Importing Multiple Choice, Fill-in-the-Blank, and Open-Ended questions.
-                  {waygroundSkipped.length > 0 && (
-                    <span style={{ color: 'rgba(255,255,255,0.35)', display: 'block', marginTop: 4 }}>
-                      {waygroundSkipped.length} row{waygroundSkipped.length !== 1 ? 's' : ''} skipped (unsupported types: {[...new Set(waygroundSkipped.map(s => s.type))].join(', ')})
-                    </span>
-                  )}
+                  {null}
                 </span>
               </div>
             )}
