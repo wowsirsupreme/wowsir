@@ -92,6 +92,19 @@ export async function deleteQuestion(id: string): Promise<void> {
   await deleteDoc(doc(fs(), 'questions', id));
 }
 
+export async function deleteQuestionsByTopic(topicKey: string): Promise<{ deleted: number; errors: number }> {
+  const snap = await getDocs(query(collection(fs(), 'questions'), where('topicKey', '==', topicKey)));
+  let deleted = 0, errors = 0;
+  const batchSize = 400;
+  for (let i = 0; i < snap.docs.length; i += batchSize) {
+    const batch = writeBatch(fs());
+    snap.docs.slice(i, i + batchSize).forEach(d => batch.delete(d.ref));
+    try { await batch.commit(); deleted += Math.min(batchSize, snap.docs.length - i); }
+    catch { errors++; }
+  }
+  return { deleted, errors };
+}
+
 export async function batchSaveQuestions(questions: Omit<Question, 'id'>[]): Promise<string[]> {
   const fsDb = fs();
   const ids: string[] = [];

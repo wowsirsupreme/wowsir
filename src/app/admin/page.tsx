@@ -12,6 +12,7 @@ import {
   wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, backupDatabase,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
+import { deleteQuestionsByTopic } from '@/lib/firebase/questions';
 import { loginTeacher, logoutTeacher, onAuthChange } from '@/lib/firebase/auth';
 import type { User } from 'firebase/auth';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -590,6 +591,10 @@ function GeoTab({ points }: { points: GeoPoint[] }) {
 
 /* ─────────────── Question Bank Tab ─────────────── */
 function QuestionBankTab() {
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // topicKey pending confirm
+  const [deleting, setDeleting] = useState<string | null>(null);           // topicKey being deleted
+  const [deleteResult, setDeleteResult] = useState<{ topicKey: string; deleted: number; errors: number } | null>(null);
+
   // Group built-in questions by subject → chapter
   const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
 
@@ -609,12 +614,60 @@ function QuestionBankTab() {
 
   const total = allGradeQuestions.length;
 
+  const handleDelete = async (topicKey: string) => {
+    setDeleting(topicKey);
+    setConfirmDelete(null);
+    try {
+      const result = await deleteQuestionsByTopic(topicKey);
+      setDeleteResult({ topicKey, ...result });
+    } catch {
+      setDeleteResult({ topicKey, deleted: 0, errors: 1 });
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div>
       <SectionHeader title="Question Bank" count={total} accent="#34d399" />
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>
-        Built-in questions per class and chapter. These are hardcoded in the app and always available.
-      </p>
+
+      {/* Grand total summary */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 20px', borderRadius: 12, marginBottom: 20,
+        background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)',
+      }}>
+        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+          Total questions across all classes ({subjects.length} classes)
+        </span>
+        <span style={{ fontSize: 22, fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
+          {total.toLocaleString()}
+        </span>
+      </div>
+
+      {/* Delete result banner */}
+      {deleteResult && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderRadius: 10, marginBottom: 16,
+          background: deleteResult.errors > 0 ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
+          border: `1px solid ${deleteResult.errors > 0 ? 'rgba(251,191,36,0.3)' : 'rgba(52,211,153,0.3)'}`,
+        }}>
+          <span style={{ fontSize: 13, color: deleteResult.errors > 0 ? '#fbbf24' : '#34d399' }}>
+            {deleteResult.errors > 0
+              ? `⚠️ Deleted ${deleteResult.deleted} questions with ${deleteResult.errors} batch error(s)`
+              : deleteResult.deleted === 0
+                ? `✓ No Firestore questions found for that chapter (built-in questions are read-only)`
+                : `✓ Deleted ${deleteResult.deleted} Firestore question${deleteResult.deleted !== 1 ? 's' : ''} for ${TOPIC_LABELS[deleteResult.topicKey]?.title ?? deleteResult.topicKey}`
+            }
+          </span>
+          <button
+            onClick={() => setDeleteResult(null)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 16, padding: 0 }}
+          >×</button>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gap: 16 }}>
         {subjects.map(subj => {
           const chapters = bySubject[subj];
@@ -637,50 +690,119 @@ function QuestionBankTab() {
                 background: 'rgba(52,211,153,0.06)',
               }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{subj}</span>
-                <span style={{
-                  fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                  padding: '3px 10px', borderRadius: 999,
-                  background: 'rgba(52,211,153,0.15)', color: '#34d399',
-                  border: '1px solid rgba(52,211,153,0.3)',
-                }}>
-                  {classTotal} Q
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                    {chapters.length} chapter{chapters.length !== 1 ? 's' : ''}
+                  </span>
+                  <span style={{
+                    fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                    padding: '3px 12px', borderRadius: 999,
+                    background: 'rgba(52,211,153,0.15)', color: '#34d399',
+                    border: '1px solid rgba(52,211,153,0.3)',
+                  }}>
+                    {classTotal} questions
+                  </span>
+                </div>
               </div>
               {/* Chapters */}
               <div style={{ padding: '10px 0' }}>
-                {chapters.map((ch, i) => (
-                  <div
-                    key={ch.topicKey}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '8px 20px',
-                      borderBottom: i < chapters.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 16 }}>{ch.emoji}</span>
-                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{ch.title}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                      {/* Mini progress bar */}
-                      <div style={{ width: 60, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%', borderRadius: 2,
-                          width: `${Math.min(100, (ch.count / 100) * 100)}%`,
-                          background: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
-                          transition: 'width 0.4s',
-                        }} />
+                {chapters.map((ch, i) => {
+                  const isConfirming = confirmDelete === ch.topicKey;
+                  const isDeleting = deleting === ch.topicKey;
+                  return (
+                    <div
+                      key={ch.topicKey}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '9px 20px',
+                        borderBottom: i < chapters.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                        background: isConfirming ? 'rgba(239,68,68,0.06)' : 'transparent',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 16 }}>{ch.emoji}</span>
+                        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{ch.title}</span>
                       </div>
-                      <span style={{
-                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600,
-                        color: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
-                        minWidth: 32, textAlign: 'right',
-                      }}>
-                        {ch.count}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                        {/* Mini progress bar */}
+                        <div style={{ width: 60, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', borderRadius: 2,
+                            width: `${Math.min(100, (ch.count / 100) * 100)}%`,
+                            background: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
+                            transition: 'width 0.4s',
+                          }} />
+                        </div>
+                        <span style={{
+                          fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700,
+                          color: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
+                          minWidth: 80, textAlign: 'right',
+                        }}>
+                          {ch.count} question{ch.count !== 1 ? 's' : ''}
+                        </span>
+
+                        {/* Delete controls */}
+                        {isDeleting ? (
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', minWidth: 80, textAlign: 'right' }}>
+                            Deleting…
+                          </span>
+                        ) : isConfirming ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+                            <span style={{ fontSize: 11, color: '#f87171' }}>Delete all?</span>
+                            <button
+                              onClick={() => handleDelete(ch.topicKey)}
+                              style={{
+                                padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                background: 'rgba(239,68,68,0.2)', color: '#f87171',
+                                border: '1px solid rgba(239,68,68,0.4)', cursor: 'pointer',
+                              }}
+                            >Yes</button>
+                            <button
+                              onClick={() => setConfirmDelete(null)}
+                              style={{
+                                padding: '3px 10px', borderRadius: 6, fontSize: 11,
+                                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)',
+                                border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer',
+                              }}
+                            >No</button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDelete(ch.topicKey)}
+                            title={`Delete all Firestore questions for ${ch.title}`}
+                            style={{
+                              marginLeft: 6,
+                              padding: '3px 8px', borderRadius: 6, fontSize: 12,
+                              background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.5)',
+                              border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.18)';
+                              (e.currentTarget as HTMLElement).style.color = '#f87171';
+                            }}
+                            onMouseLeave={e => {
+                              (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)';
+                              (e.currentTarget as HTMLElement).style.color = 'rgba(239,68,68,0.5)';
+                            }}
+                          >🗑</button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {/* Chapter subtotal footer */}
+                <div style={{
+                  display: 'flex', justifyContent: 'flex-end',
+                  padding: '8px 20px 4px',
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  marginTop: 4,
+                }}>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+                    Total: <strong style={{ color: 'rgba(255,255,255,0.55)' }}>{classTotal}</strong>
+                  </span>
+                </div>
               </div>
             </div>
           );

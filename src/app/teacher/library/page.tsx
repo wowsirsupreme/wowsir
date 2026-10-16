@@ -8,6 +8,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped, deleteQuestion } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
+import { allGradeQuestions } from '@/data/grades';
 import { resolveAnswerIndex } from '@/lib/utils';
 import TopicPicker from '@/components/TopicPicker';
 import type { Question } from '@/types/question';
@@ -77,6 +78,24 @@ export default function QuestionBankPage() {
   const [addSaving, setAddSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
+  // Built-in question counts per subject/chapter
+  const builtInStats = (() => {
+    const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
+    for (const q of allGradeQuestions) {
+      const topic = TOPIC_LABELS[q.topicKey];
+      if (!topic) continue;
+      const subj = topic.subject;
+      if (!bySubject[subj]) bySubject[subj] = [];
+      const existing = bySubject[subj].find(c => c.topicKey === q.topicKey);
+      if (existing) { existing.count++; }
+      else bySubject[subj].push({ topicKey: q.topicKey, title: topic.title, emoji: topic.emoji, count: 1 });
+    }
+    const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
+    const subjects = subjectOrder.filter(s => bySubject[s]);
+    return { bySubject, subjects, total: allGradeQuestions.length };
+  })();
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -299,6 +318,70 @@ export default function QuestionBankPage() {
           </p>
         </div>
 
+        {/* Question count summary */}
+        <div style={{ marginBottom: 24, borderRadius: 14, border: '1px solid rgba(196,181,253,0.2)', overflow: 'hidden', background: 'rgba(196,181,253,0.04)' }}>
+          {/* Summary header — always visible */}
+          <button
+            onClick={() => setShowStats(v => !v)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '13px 18px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Built-in questions</span>
+              <span style={{
+                fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)',
+                color: '#c4b5fd', padding: '2px 10px', borderRadius: 999,
+                background: 'rgba(196,181,253,0.12)', border: '1px solid rgba(196,181,253,0.25)',
+              }}>
+                {builtInStats.total.toLocaleString()} total
+              </span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
+                across {builtInStats.subjects.length} classes
+              </span>
+            </div>
+            <ChevronDown
+              size={15}
+              style={{ color: 'rgba(255,255,255,0.35)', transform: showStats ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+            />
+          </button>
+
+          {/* Expanded breakdown */}
+          {showStats && (
+            <div style={{ borderTop: '1px solid rgba(196,181,253,0.12)', padding: '12px 18px 14px' }}>
+              {builtInStats.subjects.map(subj => {
+                const chapters = builtInStats.bySubject[subj];
+                const classTotal = chapters.reduce((s, c) => s + c.count, 0);
+                return (
+                  <div key={subj} style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.03em' }}>{subj}</span>
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#c4b5fd' }}>{classTotal} questions</span>
+                    </div>
+                    <div style={{ display: 'grid', gap: 3 }}>
+                      {chapters.map(ch => (
+                        <div key={ch.topicKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 10px', borderRadius: 7, background: 'rgba(255,255,255,0.025)' }}>
+                          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={{ fontSize: 13 }}>{ch.emoji}</span>
+                            {ch.title}
+                          </span>
+                          <span style={{
+                            fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600,
+                            color: ch.count >= 50 ? '#6ee7b7' : ch.count >= 20 ? '#7dd3fc' : '#fcd34d',
+                          }}>
+                            {ch.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* Add Question Form */}
         {showAddForm && (
           <div style={{ borderRadius: 18, padding: '20px 22px', background: 'rgba(196,181,253,0.06)', border: '1.5px solid rgba(196,181,253,0.25)', marginBottom: 24 }}>
@@ -477,6 +560,9 @@ export default function QuestionBankPage() {
               <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.25)' }}>
                 <BookOpen size={48} strokeWidth={1} style={{ margin: '0 auto 16px' }} />
                 <p style={{ fontSize: 15 }}>Select a topic to view questions</p>
+                <p style={{ fontSize: 13, marginTop: 6, color: 'rgba(255,255,255,0.18)' }}>
+                  {builtInStats.total.toLocaleString()} built-in questions available
+                </p>
               </div>
             )}
 
