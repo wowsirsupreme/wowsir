@@ -7,6 +7,7 @@ import { TimerRing } from '@/components/quiz/TimerRing';
 import { ScoreBar } from '@/components/quiz/ScoreBar';
 import { Leaderboard } from '@/components/quiz/Leaderboard';
 import { Avatar } from '@/components/ui/Avatar';
+import { ChevronRight, RotateCcw, Flag, CheckCircle, XCircle, BarChart2 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useFirebase } from '@/hooks/useFirebase';
 import {
@@ -289,10 +290,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     const hasMore = remaining.length > 0;
 
     return (
-      <div className="play-screen flex flex-col min-h-screen">
+      <div className="play-screen flex flex-col" style={{ height: '100dvh' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(2,12,6,0.5)', backdropFilter: 'blur(12px)' }}>
-          <div className="text-6xl">🏁</div>
+        <div className="flex items-center justify-between px-5 py-3.5 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(2,12,6,0.5)', backdropFilter: 'blur(12px)' }}>
+          <Flag size={28} color="#34d399" strokeWidth={1.5} />
           <div className="text-center">
             <h2 className="font-display text-2xl" style={{ color: '#fff' }}>Round {roundNum} Done!</h2>
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
@@ -306,12 +307,13 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         </div>
 
         {/* Stats row */}
-        <div className="flex gap-3 px-4 pt-4 pb-2">
+        <div className="flex gap-3 px-4 pt-4 pb-2 flex-shrink-0">
           {[
-            { label: 'Correct', value: roundCorrect, color: '#34d399', bg: 'rgba(16,185,129,0.1)', border: 'rgba(52,211,153,0.25)' },
-            { label: 'Wrong',   value: roundWrong,   color: '#f87171', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(248,113,113,0.25)' },
+            { label: 'Correct', value: roundCorrect, color: '#34d399', bg: 'rgba(16,185,129,0.1)', border: 'rgba(52,211,153,0.25)', Icon: CheckCircle },
+            { label: 'Wrong',   value: roundWrong,   color: '#f87171', bg: 'rgba(239,68,68,0.1)',  border: 'rgba(248,113,113,0.25)', Icon: XCircle },
           ].map(s => (
             <div key={s.label} className="flex-1 rounded-xl py-3 text-center" style={{ background: s.bg, border: `1.5px solid ${s.border}` }}>
+              <s.Icon size={18} color={s.color} strokeWidth={1.5} style={{ margin: '0 auto 4px' }} />
               <p className="font-mono text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{s.label}</p>
             </div>
@@ -320,14 +322,14 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
         {/* Progress bar */}
         {fullBank.length > 0 && (
-          <div className="px-4 py-2">
+          <div className="px-4 py-2 flex-shrink-0">
             <div className="w-full h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
               <div className="h-2 rounded-full" style={{ width: `${(totalDone / fullBank.length) * 100}%`, background: 'linear-gradient(90deg,#10b981,#34d399)', transition: 'width 0.6s ease' }} />
             </div>
           </div>
         )}
 
-        {/* Question review */}
+        {/* Question review — scrollable */}
         <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
           {roundResults.map((r, i) => {
             const correctIndex = parseInt(r.question.answer, 10);
@@ -335,7 +337,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
             return (
               <div key={i} className="rounded-2xl p-4" style={{ background: r.correct ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)', border: `1.5px solid ${r.correct ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}` }}>
                 <div className="flex items-start gap-2 mb-3">
-                  <span style={{ fontSize: 18, lineHeight: 1, marginTop: 2 }}>{r.correct ? '✅' : '❌'}</span>
+                  {r.correct
+                    ? <CheckCircle size={16} color="#34d399" strokeWidth={2} style={{ marginTop: 2, flexShrink: 0 }} />
+                    : <XCircle size={16} color="#f87171" strokeWidth={2} style={{ marginTop: 2, flexShrink: 0 }} />
+                  }
                   <p className="text-[14px] font-medium leading-snug" style={{ color: '#fff' }}>
                     <span className="text-xs font-mono mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Q{roundResultsStartIdx + i + 1}</span>
                     {r.question.text}
@@ -352,8 +357,8 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
                       <div key={oi} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm" style={{ background: bg, border: `1px solid ${border}`, color }}>
                         <span style={{ fontSize: 11, opacity: 0.6 }}>{String.fromCharCode(65 + oi)}.</span>
                         <span className="flex-1">{opt}</span>
-                        {isCorrectOpt && <span>✓</span>}
-                        {isSelected && !isCorrectOpt && <span>✗</span>}
+                        {isCorrectOpt && <CheckCircle size={12} strokeWidth={2.5} />}
+                        {isSelected && !isCorrectOpt && <XCircle size={12} strokeWidth={2.5} />}
                       </div>
                     );
                   })}
@@ -363,29 +368,37 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
           })}
         </div>
 
-        {/* Action buttons — sticky at bottom */}
-        <div className="px-4 py-4 flex flex-col gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(2,12,6,0.8)', backdropFilter: 'blur(12px)' }}>
+        {/* Action buttons — sticky footer, always visible */}
+        <div className="flex-shrink-0 px-4 py-4 flex flex-col gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(2,12,6,0.92)', backdropFilter: 'blur(16px)' }}>
           {hasMore && (
             <button
               onClick={() => handleStartNextRound(usedIndices)}
-              className="btn-glass btn-glass-green"
-              style={{ width: '100%', fontSize: 16, padding: '15px 24px' }}
+              style={{
+                width: '100%', padding: '15px 24px', borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: 'pointer',
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.25), rgba(52,211,153,0.15))',
+                border: '1.5px solid rgba(52,211,153,0.45)', color: '#34d399',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: '0 0 20px rgba(16,185,129,0.15)',
+              }}
             >
-              ▶ Round {roundNum + 1} — {remaining.length} more question{remaining.length !== 1 ? 's' : ''}
+              <ChevronRight size={20} strokeWidth={2.5} />
+              Round {roundNum + 1} — {remaining.length} more question{remaining.length !== 1 ? 's' : ''}
             </button>
           )}
-          <button
-            onClick={handleRetake}
-            style={{ width: '100%', padding: '13px', borderRadius: 14, background: 'rgba(52,211,153,0.08)', border: '1.5px solid rgba(52,211,153,0.2)', color: '#34d399', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}
-          >
-            🔄 Retake Quiz
-          </button>
-          <button
-            onClick={() => setPhase('ended')}
-            style={{ width: '100%', padding: '10px', color: 'rgba(255,255,255,0.28)', fontWeight: 500, fontSize: 14, cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            {hasMore ? "I'm done for now →" : '📊 See Final Results →'}
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={handleRetake}
+              style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            >
+              <RotateCcw size={14} strokeWidth={2} /> Retake
+            </button>
+            <button
+              onClick={() => setPhase('ended')}
+              style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1.5px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            >
+              <BarChart2 size={14} strokeWidth={2} /> {hasMore ? 'Finish' : 'Results'}
+            </button>
+          </div>
         </div>
       </div>
     );
