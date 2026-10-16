@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, BarChart2, Users, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Users, Trophy, Zap, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
@@ -18,17 +18,18 @@ const BG = [
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { user, profile, ready } = useAuth();
+  const { user, ready } = useAuth();
   const { configured } = useFirebase();
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [results, setResults] = useState<SessionResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [tab, setTab] = useState<'recent' | 'quizzes'>('recent');
 
+  // ── Fix: include `configured` so the fetch re-runs when Firebase is ready ──
   useEffect(() => {
-    if (!ready || !user) return;
+    if (!ready || !user || !configured) return;
+    setLoading(true);
     Promise.all([
       getTeacherQuizzes(user.uid),
       getResultsByTeacher(user.uid),
@@ -37,7 +38,7 @@ export default function ResultsPage() {
       setResults(rs);
       setLoading(false);
     });
-  }, [ready, user]);
+  }, [ready, user, configured]);
 
   if (!ready) return null;
   if (!configured || !user) {
@@ -51,201 +52,215 @@ export default function ResultsPage() {
     );
   }
 
-  const firstName = (profile?.name || 'Teacher').split(' ')[0];
+  // ── Aggregate stats ──
+  const totalPlayers = results.reduce((a, r) => a + (r.playerResults?.length || 0), 0);
+  const quizzesUsed  = new Set(results.map(r => r.quizId)).size;
+  const avgAccuracy  = results.length > 0
+    ? results.reduce((a, r) => a + (r.summary?.avgAccuracy || 0), 0) / results.length
+    : 0;
+
+  // Quiz map for labels
+  const quizMap = new Map(quizzes.map(q => [q.id, q]));
+
+  // Recent sessions (newest first)
+  const recentSessions = [...results].sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+
+  // Per-quiz breakdown
+  const quizBreakdown = quizzes.map(q => {
+    const qResults = results.filter(r => r.quizId === q.id);
+    const players  = qResults.reduce((a, r) => a + (r.playerResults?.length || 0), 0);
+    const lastRun  = qResults.length ? Math.max(...qResults.map(r => r.completedAt || 0)) : 0;
+    return { quiz: q, sessions: qResults.length, players, lastRun };
+  }).sort((a, b) => b.lastRun - a.lastRun);
 
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
-      {/* Nav */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(5,8,20,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button onClick={() => router.push('/teacher')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 4 }}>
+
+      {/* ── Nav ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(5,8,20,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button onClick={() => router.push('/teacher')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer' }}>
             <ChevronLeft size={14} /> Teacher
           </button>
           <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em' }}>RESULTS</span>
-          <div style={{ width: 80 }} />
+          <div style={{ width: 64 }} />
         </div>
       </div>
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 64px' }}>
-        {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, color: '#fff', marginBottom: 6 }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 20px 80px' }}>
+
+        {/* ── Header ── */}
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, color: '#fff', marginBottom: 4 }}>
             Quiz <span style={{ color: '#fcd34d' }}>Results</span>
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>
-            Session data and scores for your quizzes
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+            {results.length} session{results.length !== 1 ? 's' : ''} across {quizzesUsed} quiz{quizzesUsed !== 1 ? 'zes' : ''}
           </p>
         </div>
 
-        {/* Stats row */}
-        {!loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
-            {[
-              { label: 'Sessions', value: results.length, icon: BarChart2, color: '#fcd34d', glow: 'rgba(245,158,11,0.2)' },
-              { label: 'Total Players', value: results.reduce((a, r) => a + (r.playerResults?.length || 0), 0), icon: Users, color: '#6ee7b7', glow: 'rgba(16,185,129,0.2)' },
-              { label: 'Quizzes Used', value: new Set(results.map(r => r.quizId)).size, icon: Trophy, color: '#c4b5fd', glow: 'rgba(139,92,246,0.2)' },
-            ].map(s => (
-              <div
-                key={s.label}
-                style={{
-                  borderRadius: 16, padding: '18px 16px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  textAlign: 'center',
-                }}
-              >
-                <s.icon size={22} color={s.color} strokeWidth={1.5} style={{ margin: '0 auto 10px' }} />
-                <p style={{ fontSize: 28, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Loading */}
-        {loading && (
+        {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Loading…</div>
-        )}
-
-        {/* Quiz list with host links */}
-        {!loading && quizzes.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', border: '2px dashed rgba(255,255,255,0.08)', borderRadius: 20 }}>
-            <BarChart2 size={48} strokeWidth={1} color="rgba(255,255,255,0.2)" style={{ margin: '0 auto 16px' }} />
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>No quizzes yet</p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Create a quiz to start seeing results here.</p>
-            <button
-              onClick={() => router.push('/teacher/quiz/new')}
-              style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
-            >
-              Create a Quiz →
-            </button>
-          </div>
-        )}
-
-        {!loading && quizzes.length > 0 && (
+        ) : (
           <>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginBottom: 14 }}>
-              YOUR QUIZZES
-            </p>
-            <div style={{ display: 'grid', gap: 10 }}>
-              {quizzes.map((q) => {
-                const hov = hovered === q.id;
-                const quizResults = results.filter(r => r.quizId === q.id);
-                const totalPlayers = quizResults.reduce((acc, r) => acc + (r.playerResults?.length || 0), 0);
-                const isExpanded = expanded === q.id;
-                return (
-                  <div
-                    key={q.id}
-                    style={{
-                      borderRadius: 16,
-                      background: hov ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.03)',
-                      border: `1.5px solid ${hov ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)'}`,
-                      transition: 'all 0.15s', overflow: 'hidden',
-                    }}
-                    onMouseEnter={() => setHovered(q.id!)}
-                    onMouseLeave={() => setHovered(null)}
-                  >
-                    {/* Quiz header row */}
-                    <div style={{ padding: '18px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {q.title}
-                          </h3>
-                          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
-                            {q.questionIds?.length || 0} questions · {q.topicKey}
-                          </p>
-                        </div>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', flexShrink: 0,
-                          padding: '4px 10px', borderRadius: 999,
-                          background: q.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
-                          color: q.status === 'published' ? '#34d399' : 'rgba(255,255,255,0.3)',
-                          border: `1px solid ${q.status === 'published' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
-                        }}>
-                          {q.status?.toUpperCase()}
-                        </span>
-                      </div>
-
-                      {/* Stats row */}
-                      <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-                          <Trophy size={13} style={{ color: '#fcd34d' }} />
-                          <span>{quizResults.length} session{quizResults.length !== 1 ? 's' : ''}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-                          <Users size={13} style={{ color: '#6ee7b7' }} />
-                          <span>{totalPlayers} total player{totalPlayers !== 1 ? 's' : ''}</span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => router.push(`/teacher/host/${q.id}`)}
-                          style={{
-                            flex: 1, padding: '10px 0', borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                            background: 'linear-gradient(135deg,#c9a84c,#e8d08a)',
-                            color: '#0d0d14', border: 'none',
-                            boxShadow: '0 3px 14px rgba(201,168,76,0.25)',
-                          }}
-                        >
-                          Host Session
-                        </button>
-                        {quizResults.length > 0 && (
-                          <button
-                            onClick={() => setExpanded(isExpanded ? null : q.id!)}
-                            className="btn-glass"
-                            style={{ fontSize: 13, padding: '10px 14px', borderRadius: 11, display: 'flex', alignItems: 'center', gap: 5 }}
-                          >
-                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            History
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Session history */}
-                    {isExpanded && quizResults.length > 0 && (
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '10px 20px 16px' }}>
-                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: 8 }}>SESSION HISTORY</p>
-                        <div style={{ display: 'grid', gap: 6 }}>
-                          {quizResults.map(r => {
-                            const date = new Date(r.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                            const topScore = r.playerResults?.length ? Math.max(...r.playerResults.map(p => p.score)) : 0;
-                            const avgAcc = r.playerResults?.length
-                              ? Math.round(r.playerResults.reduce((a, p) => a + (p.accuracy || 0), 0) / r.playerResults.length * 100)
-                              : 0;
-                            return (
-                              <button
-                                key={r.id}
-                                onClick={() => router.push(`/teacher/results/${r.id}`)}
-                                style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                  padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-                                  color: '#fff', textAlign: 'left', transition: 'background 0.1s',
-                                }}
-                              >
-                                <div>
-                                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: '#fcd34d', marginRight: 10 }}>{r.code}</span>
-                                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{date}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                                  <span>{r.playerResults?.length || 0} players</span>
-                                  <span>top {topScore}pts</span>
-                                  <span>{avgAcc}% avg</span>
-                                  <ChevronRight size={13} style={{ color: 'rgba(255,255,255,0.25)' }} />
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {/* ── Stat tiles ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 24 }}>
+              {[
+                { label: 'Sessions',   value: results.length,                        color: '#fcd34d', icon: BarChart2 },
+                { label: 'Players',    value: totalPlayers,                           color: '#6ee7b7', icon: Users },
+                { label: 'Quizzes',    value: quizzesUsed,                            color: '#c4b5fd', icon: Trophy },
+                { label: 'Avg Acc',    value: `${Math.round(avgAccuracy * 100)}%`,    color: avgAccuracy >= 0.7 ? '#34d399' : avgAccuracy >= 0.4 ? '#fcd34d' : '#f87171', icon: Zap },
+              ].map(s => (
+                <div key={s.label} style={{ borderRadius: 14, padding: '14px 10px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <s.icon size={16} color={s.color} strokeWidth={1.5} style={{ margin: '0 auto 8px' }} />
+                  <p style={{ fontSize: 22, fontWeight: 800, color: s.color, margin: '0 0 3px', lineHeight: 1, fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
             </div>
+
+            {results.length === 0 ? (
+              /* ── Empty state ── */
+              <div style={{ textAlign: 'center', padding: '60px 24px', border: '2px dashed rgba(255,255,255,0.08)', borderRadius: 20 }}>
+                <div style={{ fontSize: 52, marginBottom: 16 }}>📊</div>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>No sessions yet</p>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Host a live session to start collecting results.</p>
+                <button
+                  onClick={() => router.push('/teacher/quizzes')}
+                  style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
+                >
+                  Go to Quizzes →
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* ── Tab bar ── */}
+                <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', marginBottom: 18 }}>
+                  {([
+                    { id: 'recent',  label: '🕐 Recent Sessions' },
+                    { id: 'quizzes', label: '📚 By Quiz' },
+                  ] as const).map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      style={{
+                        flex: 1, padding: '8px 4px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s',
+                        background: tab === t.id ? 'rgba(252,211,77,0.12)' : 'transparent',
+                        color: tab === t.id ? '#fcd34d' : 'rgba(255,255,255,0.4)',
+                        border: tab === t.id ? '1px solid rgba(252,211,77,0.25)' : '1px solid transparent',
+                      }}
+                    >{t.label}</button>
+                  ))}
+                </div>
+
+                {/* ══ RECENT SESSIONS TAB ══ */}
+                {tab === 'recent' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {recentSessions.map((r, i) => {
+                      const quiz      = quizMap.get(r.quizId);
+                      const date      = new Date(r.completedAt).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                      const time      = new Date(r.completedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                      const topPlayer = r.playerResults?.length ? [...r.playerResults].sort((a, b) => b.score - a.score)[0] : null;
+                      const avgAcc    = r.summary?.avgAccuracy ?? 0;
+                      const accColor  = avgAcc >= 0.7 ? '#34d399' : avgAcc >= 0.4 ? '#fcd34d' : '#f87171';
+                      return (
+                        <button
+                          key={r.id || i}
+                          onClick={() => router.push(`/teacher/results/${r.id}`)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                            padding: '14px 16px', borderRadius: 16, cursor: 'pointer',
+                            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                            transition: 'background 0.1s', color: '#fff',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                        >
+                          {/* Room code */}
+                          <div style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 12, background: 'rgba(252,211,77,0.08)', border: '1px solid rgba(252,211,77,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#fcd34d', letterSpacing: 1 }}>{r.code}</span>
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>room</span>
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {/* Quiz name */}
+                            <p style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {quiz?.title || r.quizTitle || 'Unknown Quiz'}
+                            </p>
+                            {/* Meta row */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 12px', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Clock size={11} /> {date} · {time}
+                              </span>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Users size={11} /> {r.playerResults?.length || 0} players
+                              </span>
+                              <span style={{ color: accColor }}>{Math.round(avgAcc * 100)}% avg acc</span>
+                              {topPlayer && (
+                                <span>🏆 {topPlayer.name} — {topPlayer.score.toLocaleString()}pts</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <ChevronRight size={15} color="rgba(255,255,255,0.2)" style={{ flexShrink: 0 }} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ══ BY QUIZ TAB ══ */}
+                {tab === 'quizzes' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {quizBreakdown.map(({ quiz: q, sessions, players, lastRun }) => (
+                      <button
+                        key={q.id}
+                        onClick={() => router.push(`/teacher/results/quiz/${q.id}`)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                          padding: '16px 18px', borderRadius: 16, cursor: 'pointer',
+                          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                          transition: 'background 0.1s', color: '#fff',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                            <p style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.title}</p>
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, flexShrink: 0,
+                              padding: '3px 8px', borderRadius: 999,
+                              background: q.status === 'published' ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
+                              color: q.status === 'published' ? '#34d399' : 'rgba(255,255,255,0.3)',
+                              border: `1px solid ${q.status === 'published' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`,
+                            }}>{q.status?.toUpperCase()}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Trophy size={11} color="#fcd34d" /> {sessions} session{sessions !== 1 ? 's' : ''}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Users size={11} color="#6ee7b7" /> {players} player{players !== 1 ? 's' : ''}</span>
+                            <span>{q.questionIds?.length || 0} questions</span>
+                            {lastRun > 0 && <span>last run {new Date(lastRun).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                          {sessions === 0 ? (
+                            <span
+                              onClick={e => { e.stopPropagation(); router.push(`/teacher/host/${q.id}`); }}
+                              style={{ fontSize: 12, fontWeight: 700, color: '#0d0d14', background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', padding: '5px 12px', borderRadius: 8, cursor: 'pointer' }}
+                            >
+                              Host →
+                            </span>
+                          ) : (
+                            <ChevronRight size={15} color="rgba(255,255,255,0.2)" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
       </div>
