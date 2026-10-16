@@ -8,10 +8,11 @@
  * Optionally shows an "End Game" button (pass showEndGame + onEndGame).
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Home, BookOpen, Swords, Flame, GraduationCap, X, Music } from 'lucide-react';
+import { Home, BookOpen, Swords, Flame, GraduationCap, X, Music, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { useMusicContext } from '@/contexts/MusicContext';
+import { audioEngine } from '@/lib/audioEngine';
 
 interface NavItem {
   label: string;
@@ -46,6 +47,13 @@ export default function QuizNav({ showEndGame, onEndGame, endGameLabel = 'End Ga
   const [showAddCustom, setShowAddCustom] = useState(false);
   const { tracks, nowPlaying, volume, toggleTrack, setVolume, addCustomTrack } = useMusicContext();
   const nowTrack = tracks.find(t => t.id === nowPlaying);
+
+  // audioEngine FX controls (game sounds — separate from persistent music)
+  const [fxMuted, setFxMuted] = useState(false);
+  const [fxPaused, setFxPaused] = useState(false);
+  useEffect(() => { setFxMuted(audioEngine.loadMutePref()); }, []);
+  function toggleFxMute() { const next = !fxMuted; audioEngine.setMuted(next); setFxMuted(next); }
+  function toggleFxPause() { const nowP = audioEngine.togglePause(); setFxPaused(nowP); }
 
   function activeSection() {
     // join/play are part of the student home flow — keep Home tab active
@@ -199,6 +207,35 @@ export default function QuizNav({ showEndGame, onEndGame, endGameLabel = 'End Ga
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>🔊</span>
             </div>
           )}
+
+          {/* Game FX controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', flex: 1 }}>Game FX</span>
+            <button
+              onClick={toggleFxPause}
+              title={fxPaused ? 'Resume FX' : 'Pause FX'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer', color: fxPaused ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)',
+              }}
+            >
+              {fxPaused ? <Play size={13} /> : <Pause size={13} />}
+            </button>
+            <button
+              onClick={toggleFxMute}
+              title={fxMuted ? 'Unmute FX' : 'Mute FX'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 28, height: 28, borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                cursor: 'pointer', color: fxMuted ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.7)',
+              }}
+            >
+              {fxMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+            </button>
+          </div>
 
           {!showAddCustom ? (
             <button

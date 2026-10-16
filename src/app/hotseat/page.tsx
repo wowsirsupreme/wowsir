@@ -12,7 +12,6 @@ import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
-import MuteButton from '@/components/MuteButton';
 import { submitScore } from '@/lib/firebase/leaderboard';
 import QuizNav from '@/components/QuizNav';
 
@@ -219,7 +218,6 @@ export default function HotSeatPage() {
 
   return (
     <div className="hotseat-screen flex flex-col min-h-screen">
-      <MuteButton />
 
       {/* Nav */}
       <div

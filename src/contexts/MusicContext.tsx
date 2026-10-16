@@ -3,14 +3,14 @@
 /**
  * MusicContext — global persistent audio player.
  *
- * A single <audio> element lives here for the entire app lifetime.
- * Route changes and quiz phase transitions never stop playback.
+ * The Audio element lives at MODULE scope (outside React) so it is truly
+ * immortal — no React lifecycle, no cleanup, no navigation can kill it.
+ * Route changes, quiz phase transitions, and re-renders never stop playback.
  */
 
 import {
   createContext,
   useContext,
-  useRef,
   useState,
   useCallback,
   ReactNode,
@@ -29,6 +29,12 @@ const DEFAULT_TRACKS: Track[] = [
   { id: 'lush-life', label: 'Lush Life', artist: 'Zara Larsson', src: '/music/lush-life.mp3', emoji: '🌸' },
 ];
 
+// ─── Module-level singletons — survive every React render/remount ──────────
+let _audio: HTMLAudioElement | null = null;
+let _nowPlaying: string | null = null;
+let _volume = 0.5;
+// ──────────────────────────────────────────────────────────────────────────
+
 interface MusicContextValue {
   tracks: Track[];
   nowPlaying: string | null;
@@ -41,33 +47,33 @@ interface MusicContextValue {
 const MusicContext = createContext<MusicContextValue | null>(null);
 
 export function MusicProvider({ children }: { children: ReactNode }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
-  const [volume, setVolumeState] = useState(0.5);
+  // React state is just for triggering UI re-renders — real state lives above
+  const [nowPlaying, setNowPlaying] = useState<string | null>(_nowPlaying);
+  const [volume, setVolumeState] = useState(_volume);
   const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
 
   const toggleTrack = useCallback((id: string, src: string) => {
-    if (nowPlaying === id) {
-      audioRef.current?.pause();
+    if (_nowPlaying === id) {
+      _audio?.pause();
+      _nowPlaying = null;
       setNowPlaying(null);
     } else {
       // Stop whatever was playing
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
+      if (_audio) { _audio.pause(); _audio.src = ''; }
       const a = new Audio(src);
       a.loop = true;
-      a.volume = volume;
+      a.volume = _volume;
       a.play().catch(() => {});
-      audioRef.current = a;
+      _audio = a;
+      _nowPlaying = id;
       setNowPlaying(id);
     }
-  }, [nowPlaying, volume]);
+  }, []);
 
   const handleSetVolume = useCallback((v: number) => {
+    _volume = v;
     setVolumeState(v);
-    if (audioRef.current) audioRef.current.volume = v;
+    if (_audio) _audio.volume = v;
   }, []);
 
   const addCustomTrack = useCallback((label: string, src: string) => {
@@ -75,14 +81,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const track: Track = { id, label: label || 'Custom', artist: 'Custom', src, emoji: '🎵' };
     setTracks(prev => [...prev, track]);
     // Auto-play it
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; }
+    if (_audio) { _audio.pause(); _audio.src = ''; }
     const a = new Audio(src);
     a.loop = true;
-    a.volume = volume;
+    a.volume = _volume;
     a.play().catch(() => {});
-    audioRef.current = a;
+    _audio = a;
+    _nowPlaying = id;
     setNowPlaying(id);
-  }, [volume]);
+  }, []);
 
   return (
     <MusicContext.Provider value={{

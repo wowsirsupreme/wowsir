@@ -10,7 +10,6 @@ import { getRandomQuestions } from '@/lib/firebase/questions';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
-import MuteButton from '@/components/MuteButton';
 import QuizNav from '@/components/QuizNav';
 
 const BATTLE_COUNT = 10;
@@ -221,7 +220,6 @@ export default function BattlePage() {
       className="battle-screen flex flex-col min-h-screen"
       style={{ overflowX: 'hidden' }}
     >
-      <MuteButton />
 
       {/* Nav */}
       <div
