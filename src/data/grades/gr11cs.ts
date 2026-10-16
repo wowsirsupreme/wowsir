@@ -8,5 +8,4 @@ import type { Question } from '@/types/question';
 
 const META = { grade: 11 as const, subject: 'Grade 11 CS (A-Level 9618)', sourceVersion: '2026-27' };
 
-export const gr11csQuestions: Omit<Question, 'quizId'>[] = 
-];
+export const gr11csQuestions: Omit<Question, 'quizId'>[] = [];

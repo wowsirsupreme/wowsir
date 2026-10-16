@@ -74,7 +74,10 @@ function downloadCSV(csv: string, filename: string) {
 // ── Firestore helpers ─────────────────────────────────────────────────────────
 async function getAllFirestoreQuestions(fsDb: Firestore): Promise<Array<Question & { source?: string }>> {
   const snap = await getDocs(collection(fsDb, 'questions'));
-  return snap.docs.map(d => ({ ...(d.data() as Question), id: d.id, source: 'firestore' }));
+  return snap.docs.map(d => {
+    const data = d.data() as Omit<Question, 'id'>;
+    return { ...data, id: d.id, source: data.source ?? 'imported' };
+  });
 }
 
 async function wipeFirestoreQuestions(fsDb: Firestore, questions: Question[]): Promise<number> {
