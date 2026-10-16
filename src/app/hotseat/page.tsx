@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getRandomQuestions } from '@/lib/firebase/questions';
+import { getQuestionsByTopic } from '@/lib/firebase/questions';
 import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import TopicPicker from '@/components/TopicPicker';
 import { allGradeQuestions } from '@/data/grades';
@@ -19,7 +19,7 @@ import QuizNav from '@/components/QuizNav';
 const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
 const VALID_KEYS = new Set(getGroupedTopics().flatMap(g => g.topics.map(t => t.key)));
 const TOPIC_KEYS = Object.keys(TOPIC_LABELS).filter(k => LOCAL_TOPIC_KEYS.has(k) && VALID_KEYS.has(k));
-const HOT_SEAT_COUNT = 10;
+const ROUND_SIZE = 10;
 const MAX_LIVES = 3;
 
 // Timer per question band: q1-3 easy 15s, q4-7 medium 12s, q8-10 hard 10s
@@ -59,7 +59,7 @@ function mergeQuestions(remote: Question[], topicKey: string): Question[] {
   return merged;
 }
 
-type Phase = 'setup' | 'playing' | 'reveal' | 'dead' | 'done';
+type Phase = 'setup' | 'playing' | 'reveal' | 'dead' | 'between_rounds' | 'done';
 
 export default function HotSeatPage() {
   const router = useRouter();
@@ -83,6 +83,14 @@ export default function HotSeatPage() {
   const [error, setError] = useState('');
   const [scoreSaved, setScoreSaved] = useState(false);
 
+  // Round / progression state
+  const [rounds, setRounds] = useState<Question[][]>([]);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);   // sum from completed rounds
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [totalQs, setTotalQs] = useState(0);         // total questions in all rounds
+  const [grandMaxStreak, setGrandMaxStreak] = useState(0);
+
   // Ref to track lives within handleAnswer without stale closure issues
   const livesRef = useRef(MAX_LIVES);
 
@@ -90,12 +98,22 @@ export default function HotSeatPage() {
     if (!topicKey) return;
     setLoading(true);
     let remote: Question[] = [];
-    try { remote = await getRandomQuestions(topicKey, 50); } catch { /* offline */ }
+    try { remote = await getQuestionsByTopic(topicKey); } catch { /* offline */ }
     const pool = mergeQuestions(remote, topicKey);
     if (pool.length === 0) { setError('No questions available for this topic yet.'); setLoading(false); return; }
     const sorted = sortByDifficulty(pool);
-    const picked = sorted.slice(0, Math.min(HOT_SEAT_COUNT, sorted.length)).map(prepareQuestion);
-    setQuestions(picked);
+    // Split the full pool into rounds of ROUND_SIZE
+    const rds: Question[][] = [];
+    for (let i = 0; i < sorted.length; i += ROUND_SIZE) {
+      rds.push(sorted.slice(i, i + ROUND_SIZE).map(prepareQuestion));
+    }
+    setRounds(rds);
+    setTotalQs(sorted.length);
+    setCurrentRound(0);
+    setTotalScore(0);
+    setTotalCorrect(0);
+    setGrandMaxStreak(0);
+    setQuestions(rds[0]);
     setCurrentIdx(0);
     setScore(0);
     setCorrect(0);
@@ -109,6 +127,33 @@ export default function HotSeatPage() {
     setLoading(false);
     setPhase('playing');
     setQuestionStart(Date.now());
+  }
+
+  function handleNextRound() {
+    const next = currentRound + 1;
+    setTotalScore(ts => ts + score);
+    setTotalCorrect(tc => tc + correct);
+    setGrandMaxStreak(g => Math.max(g, maxStreak));
+    setCurrentRound(next);
+    setQuestions(rounds[next]);
+    setCurrentIdx(0);
+    setScore(0);
+    setCorrect(0);
+    setLives(MAX_LIVES);
+    livesRef.current = MAX_LIVES;
+    setStreak(0);
+    setMaxStreak(0);
+    setResults([]);
+    setSelected(null);
+    setPhase('playing');
+    setQuestionStart(Date.now());
+  }
+
+  function handleEndEarly() {
+    setTotalScore(ts => ts + score);
+    setTotalCorrect(tc => tc + correct);
+    setGrandMaxStreak(g => Math.max(g, maxStreak));
+    setPhase('done');
   }
 
   const handleAnswer = useCallback((index: number) => {
@@ -162,7 +207,11 @@ export default function HotSeatPage() {
 
   function handleNext() {
     const nextIdx = currentIdx + 1;
-    if (nextIdx >= questions.length) { setPhase('done'); return; }
+    if (nextIdx >= questions.length) {
+      const isLastRound = currentRound + 1 >= rounds.length;
+      setPhase(isLastRound ? 'done' : 'between_rounds');
+      return;
+    }
     setCurrentIdx(nextIdx);
     setSelected(null);
     setPhase('playing');
@@ -185,19 +234,22 @@ export default function HotSeatPage() {
     if (phase === 'dead') setTimeout(() => audioEngine.lose(), 300);
   }, [phase]);
 
-  // Save score to leaderboard when 'done' (survived all questions)
+  // Save score to leaderboard when 'done'
   useEffect(() => {
     if (phase !== 'done' || scoreSaved) return;
     setScoreSaved(true);
-    const totalTimeMs = results.reduce((s, r) => s + r.timeMs, 0);
+    const roundTimeMs = results.reduce((s, r) => s + r.timeMs, 0);
+    const grandScore = totalScore + score;
+    const grandCorrect = totalCorrect + correct;
+    const grandTotal = totalQs || questions.length;
     submitScore({
       name: name.trim() || 'Anonymous',
-      score,
+      score: grandScore,
       gradeKey: topicKey,
-      level: 0,
-      accuracy: Math.round(accuracy * 100),
-      streak: maxStreak,
-      totalTimeMs,
+      level: currentRound + 1,
+      accuracy: grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0,
+      streak: Math.max(grandMaxStreak, maxStreak),
+      totalTimeMs: roundTimeMs,
       source: 'hotseat',
     }).catch(() => { /* best-effort */ });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -260,7 +312,7 @@ export default function HotSeatPage() {
             Hot Seat
           </h2>
           <p className="text-sm mb-8 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            10 questions · 3 lives · Timer shrinks · Streak multiplier
+            Rounds of 10 · 3 lives/round · Timer shrinks · Streak multiplier
           </p>
 
           <div className="w-full max-w-sm">
@@ -351,6 +403,9 @@ export default function HotSeatPage() {
 
           {/* Q counter + difficulty badge + time */}
           <div className="flex items-center gap-3 mb-5 self-start">
+            <span className="text-xs font-mono px-2 py-0.5 rounded-full" style={{ background: 'rgba(249,115,22,0.15)', color: '#fb923c', border: '1px solid rgba(249,115,22,0.3)' }}>
+              Round {currentRound + 1}/{rounds.length || 1}
+            </span>
             <p className="text-sm font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Q{currentIdx + 1}/{questions.length}
             </p>
@@ -447,83 +502,152 @@ export default function HotSeatPage() {
         </div>
       )}
 
-      {/* ── DONE (survived all 10) ── */}
-      {phase === 'done' && (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 animate-slideUp">
-          <div
-            className="text-[88px] leading-none mb-3 animate-crownPop select-none"
-            style={{ filter: `drop-shadow(0 0 20px ${accuracy >= 0.8 ? 'rgba(249,115,22,0.9)' : accuracy >= 0.6 ? 'rgba(234,179,8,0.8)' : 'rgba(255,255,255,0.4)'})` }}
-          >
-            {accuracy >= 0.8 ? '🏆' : accuracy >= 0.6 ? '🎉' : '💪'}
-          </div>
-          <h2 className="font-display text-4xl mb-1 text-center" style={{ color: '#fff', textShadow: '0 0 30px rgba(249,115,22,0.5)' }}>
-            {name ? `${name}'s Result` : 'You Survived!'}
-          </h2>
-          <div
-            className="font-mono text-5xl font-bold my-4 animate-scoreSlide"
-            style={{ color: '#fdba74', textShadow: '0 0 20px rgba(249,115,22,0.5)' }}
-          >
-            {score.toLocaleString()}
-          </div>
-          <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>points · {lives} {lives === 1 ? 'life' : 'lives'} remaining</p>
+      {/* ── BETWEEN ROUNDS ── */}
+      {phase === 'between_rounds' && (() => {
+        const roundAcc = results.length > 0 ? correct / results.length : 0;
+        const doneQs = rounds.slice(0, currentRound + 1).reduce((s, r) => s + r.length, 0);
+        const pct = Math.round((doneQs / totalQs) * 100);
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 animate-slideUp">
+            <div className="text-[64px] leading-none mb-2 select-none">
+              {roundAcc >= 0.8 ? '🔥' : roundAcc >= 0.6 ? '👍' : '💪'}
+            </div>
+            <h2 className="font-display text-3xl mb-1 text-center" style={{ color: '#fff' }}>
+              Round {currentRound + 1} Complete!
+            </h2>
+            <p className="text-sm mb-6 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {doneQs} of {totalQs} questions done · {pct}% through the bank
+            </p>
 
-          <div className="grid grid-cols-2 gap-3 mb-6 w-full max-w-sm">
-            {[
-              { label: 'Accuracy', val: `${Math.round(accuracy * 100)}%`, color: '#fdba74' },
-              { label: 'Correct',  val: `${correct}/${questions.length}`, color: '#4ade80' },
-              { label: 'Best Streak', val: `🔥 ${maxStreak}`, color: '#fb923c' },
-              { label: 'Total Time', val: `⏱ ${totalTimeSec}s`, color: '#a78bfa' },
-            ].map(({ label, val, color }) => (
-              <div
-                key={label}
-                className="rounded-xl p-4 text-center"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
+            {/* Progress bar across full bank */}
+            <div className="w-full max-w-sm h-2 rounded-full overflow-hidden mb-6" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#f97316,#ef4444)', boxShadow: '0 0 8px rgba(249,115,22,0.5)' }} />
+            </div>
+
+            {/* Round stats */}
+            <div className="grid grid-cols-3 gap-3 mb-8 w-full max-w-sm">
+              {[
+                { label: 'Score', val: score.toLocaleString(), color: '#fdba74' },
+                { label: 'Correct', val: `${correct}/${questions.length}`, color: '#4ade80' },
+                { label: 'Streak', val: `🔥 ${maxStreak}`, color: '#fb923c' },
+              ].map(({ label, val, color }) => (
+                <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="font-mono text-lg font-bold" style={{ color }}>{val}</div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3 w-full max-w-sm">
+              <button
+                onClick={handleEndEarly}
+                className="flex-1 py-4 rounded-2xl text-sm font-semibold"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1.5px solid rgba(255,255,255,0.12)' }}
               >
-                <div className="font-mono text-xl font-bold" style={{ color }}>{val}</div>
-                <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</div>
+                Stop here
+              </button>
+              <button
+                onClick={handleNextRound}
+                className="flex-1 py-4 rounded-2xl text-sm font-bold"
+                style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
+              >
+                Round {currentRound + 2} →
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── DONE ── */}
+      {phase === 'done' && (() => {
+        const isConquest = rounds.length > 1 && currentRound + 1 >= rounds.length;
+        const grandScore = totalScore + score;
+        const grandCorrect = totalCorrect + correct;
+        const grandTotal = totalQs || questions.length;
+        const grandAcc = grandTotal > 0 ? grandCorrect / grandTotal : accuracy;
+        const bestStreak = Math.max(grandMaxStreak, maxStreak);
+        const emoji = isConquest ? '🏆' : grandAcc >= 0.8 ? '🎉' : grandAcc >= 0.6 ? '👍' : '💪';
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 animate-slideUp">
+            <div
+              className="text-[88px] leading-none mb-3 animate-crownPop select-none"
+              style={{ filter: `drop-shadow(0 0 20px ${isConquest ? 'rgba(250,204,21,0.9)' : grandAcc >= 0.8 ? 'rgba(249,115,22,0.9)' : grandAcc >= 0.6 ? 'rgba(234,179,8,0.8)' : 'rgba(255,255,255,0.4)'})` }}
+            >
+              {emoji}
+            </div>
+
+            {isConquest && (
+              <div className="px-4 py-1.5 rounded-full text-xs font-bold mb-3 tracking-wide"
+                style={{ background: 'linear-gradient(90deg,rgba(250,204,21,0.2),rgba(249,115,22,0.2))', border: '1px solid rgba(250,204,21,0.4)', color: '#fde047' }}>
+                🎓 Topic Conquered · All {grandTotal} Questions Done
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Per-question dots */}
-          <div className="w-full max-w-sm flex gap-1 mb-12">
-            {results.map((r, i) => (
-              <div
-                key={i}
-                className="flex-1 h-2 rounded-full"
-                title={`Q${i + 1}: ${r.correct ? '✓' : '✗'}`}
-                style={{
-                  background: r.correct
-                    ? 'linear-gradient(90deg, #22c55e, #4ade80)'
-                    : 'rgba(239,68,68,0.6)',
-                  boxShadow: r.correct ? '0 0 4px rgba(34,197,94,0.4)' : 'none',
-                }}
-              />
-            ))}
-          </div>
+            <h2 className="font-display text-4xl mb-1 text-center" style={{ color: '#fff', textShadow: '0 0 30px rgba(249,115,22,0.5)' }}>
+              {name ? `${name}'s Result` : (isConquest ? 'Conquered!' : 'You Survived!')}
+            </h2>
 
-<div className="flex gap-5 w-full max-w-sm px-2">
-            <button
-              onClick={handleStart}
-              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.07)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.15)' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+            {rounds.length > 1 && (
+              <p className="text-sm mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {currentRound + 1} round{currentRound + 1 !== 1 ? 's' : ''} · {grandCorrect}/{grandTotal} questions
+              </p>
+            )}
+
+            <div
+              className="font-mono text-5xl font-bold my-4 animate-scoreSlide"
+              style={{ color: '#fdba74', textShadow: '0 0 20px rgba(249,115,22,0.5)' }}
             >
-              ↩ Play Again
-            </button>
-            <button
-              onClick={() => router.push('/student')}
-              className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
-              style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(249,115,22,0.4)'; }}
-            >
-              🏠 Home
-            </button>
+              {grandScore.toLocaleString()}
+            </div>
+            <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {rounds.length > 1 ? 'total points' : `points · ${lives} ${lives === 1 ? 'life' : 'lives'} remaining`}
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6 w-full max-w-sm">
+              {[
+                { label: 'Accuracy', val: `${Math.round(grandAcc * 100)}%`, color: '#fdba74' },
+                { label: 'Correct',  val: `${grandCorrect}/${grandTotal}`, color: '#4ade80' },
+                { label: 'Best Streak', val: `🔥 ${bestStreak}`, color: '#fb923c' },
+                { label: 'Total Time', val: `⏱ ${totalTimeSec}s`, color: '#a78bfa' },
+              ].map(({ label, val, color }) => (
+                <div key={label} className="rounded-xl p-4 text-center"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="font-mono text-xl font-bold" style={{ color }}>{val}</div>
+                  <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Per-question dots — last round only */}
+            <div className="w-full max-w-sm flex gap-1 mb-12">
+              {results.map((r, i) => (
+                <div key={i} className="flex-1 h-2 rounded-full" title={`Q${i + 1}: ${r.correct ? '✓' : '✗'}`}
+                  style={{
+                    background: r.correct ? 'linear-gradient(90deg, #22c55e, #4ade80)' : 'rgba(239,68,68,0.6)',
+                    boxShadow: r.correct ? '0 0 4px rgba(34,197,94,0.4)' : 'none',
+                  }} />
+              ))}
+            </div>
+
+            <div className="flex gap-5 w-full max-w-sm px-2">
+              <button onClick={handleStart}
+                className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.07)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.15)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}>
+                ↩ Play Again
+              </button>
+              <button onClick={() => router.push('/student')}
+                className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
+                style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(249,115,22,0.4)'; }}>
+                🏠 Home
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       <QuizNav />
     </div>
   );

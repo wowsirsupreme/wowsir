@@ -6,16 +6,32 @@ import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import TopicPicker from '@/components/TopicPicker';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getRandomQuestions } from '@/lib/firebase/questions';
+import { getQuestionsByTopic } from '@/lib/firebase/questions';
+import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import QuizNav from '@/components/QuizNav';
 
-const BATTLE_COUNT = 10;
+const ROUND_SIZE   = 10;
 const TIME_LIMIT   = 12;
 
-type Phase = 'setup' | 'countdown' | 'playing' | 'reveal' | 'done';
+type Phase = 'setup' | 'countdown' | 'playing' | 'reveal' | 'between_rounds' | 'done';
+
+/** Normalise answer index → text, shuffle options */
+function prepareQuestion(q: Question): Question {
+  let answerText = q.answer as string;
+  const idx = parseInt(answerText, 10);
+  if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
+    answerText = q.options[idx];
+  }
+  const opts = [...(q.options ?? [])];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { ...q, answer: answerText, options: opts };
+}
 
 interface Competitor {
   name: string;
@@ -48,6 +64,15 @@ export default function BattlePage() {
   const [currentIdx,   setCurrentIdx]   = useState(0);
   const [countdown,    setCountdown]    = useState(3);
 
+  /* ── rounds state ── */
+  const [rounds,       setRounds]       = useState<Question[][]>([]);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [totalQs,      setTotalQs]      = useState(0);
+  const [p1TotalScore, setP1TotalScore] = useState(0);
+  const [p2TotalScore, setP2TotalScore] = useState(0);
+  const [p1TotalCorrect, setP1TotalCorrect] = useState(0);
+  const [p2TotalCorrect, setP2TotalCorrect] = useState(0);
+
   const [p1, setP1] = useState<Competitor>({ name: 'Player 1', isHuman: true,  score: 0, correct: 0, streak: 0 });
   const [p2, setP2] = useState<Competitor>({ name: 'Player 2', isHuman: false, score: 0, correct: 0, streak: 0 });
 
@@ -73,9 +98,26 @@ export default function BattlePage() {
   /* ── start ── */
   async function handleStart() {
     if (!topicKey || !p1Name) return;
-    const qs = await getRandomQuestions(topicKey, BATTLE_COUNT);
-    if (qs.length === 0) { alert('No questions found for this topic.'); return; }
-    setQuestions(qs);
+    let remote: Question[] = [];
+    try { remote = await getQuestionsByTopic(topicKey); } catch { /* offline */ }
+    // merge with local
+    const local = (allGradeQuestions as Question[]).filter(q => q.topicKey === topicKey && (q as unknown as { approved?: boolean }).approved !== false);
+    const remoteIds = new Set(remote.map(q => q.id));
+    const merged = [...remote, ...local.filter(q => !remoteIds.has(q.id))];
+    const pool = merged.length > 0 ? merged : local;
+    if (pool.length === 0) { alert('No questions found for this topic.'); return; }
+    // shuffle and split into rounds
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const rds: Question[][] = [];
+    for (let i = 0; i < shuffled.length; i += ROUND_SIZE) {
+      rds.push(shuffled.slice(i, i + ROUND_SIZE).map(prepareQuestion));
+    }
+    setRounds(rds);
+    setCurrentRound(0);
+    setTotalQs(shuffled.length);
+    setP1TotalScore(0); setP1TotalCorrect(0);
+    setP2TotalScore(0); setP2TotalCorrect(0);
+    setQuestions(rds[0]);
     setCurrentIdx(0);
     setP1({ name: p1Name, isHuman: true, score: 0, correct: 0, streak: 0 });
     setP2({ name: vsAI ? `AI · ${difficulty}` : (p2Name || 'Player 2'), isHuman: !vsAI, score: 0, correct: 0, streak: 0 });
@@ -83,6 +125,33 @@ export default function BattlePage() {
     setCountdown(3);
     setPhase('countdown');
     phaseRef.current = 'countdown';
+  }
+
+  /* ── next round ── */
+  function handleNextRound() {
+    const next = currentRound + 1;
+    setP1TotalScore(ts => ts + p1.score);
+    setP2TotalScore(ts => ts + p2.score);
+    setP1TotalCorrect(tc => tc + p1.correct);
+    setP2TotalCorrect(tc => tc + p2.correct);
+    setCurrentRound(next);
+    setQuestions(rounds[next]);
+    setCurrentIdx(0);
+    setP1(prev => ({ ...prev, score: 0, correct: 0, streak: 0 }));
+    setP2(prev => ({ ...prev, score: 0, correct: 0, streak: 0 }));
+    resetRound();
+    setCountdown(3);
+    setPhase('countdown');
+    phaseRef.current = 'countdown';
+  }
+
+  function handleEndEarly() {
+    setP1TotalScore(ts => ts + p1.score);
+    setP2TotalScore(ts => ts + p2.score);
+    setP1TotalCorrect(tc => tc + p1.correct);
+    setP2TotalCorrect(tc => tc + p2.correct);
+    setPhase('done');
+    phaseRef.current = 'done';
   }
 
   /* ── pre-fill player name from localStorage ── */
@@ -199,10 +268,24 @@ export default function BattlePage() {
     }
   }
 
-  /* ── next round ── */
+  /* ── next question ── */
   function handleNext() {
     const nextIdx = currentIdx + 1;
-    if (nextIdx >= questions.length) { setPhase('done'); phaseRef.current = 'done'; return; }
+    if (nextIdx >= questions.length) {
+      const isLastRound = currentRound + 1 >= rounds.length;
+      if (isLastRound) {
+        setP1TotalScore(ts => ts + p1.score);
+        setP2TotalScore(ts => ts + p2.score);
+        setP1TotalCorrect(tc => tc + p1.correct);
+        setP2TotalCorrect(tc => tc + p2.correct);
+        setPhase('done');
+        phaseRef.current = 'done';
+      } else {
+        setPhase('between_rounds');
+        phaseRef.current = 'between_rounds' as Phase;
+      }
+      return;
+    }
     setCurrentIdx(nextIdx);
     resetRound();
     setPhase('playing');
@@ -503,13 +586,69 @@ export default function BattlePage() {
         </div>
       )}
 
+      {/* ────── BETWEEN ROUNDS ────── */}
+      {phase === 'between_rounds' && (() => {
+        const roundWinner = p1.score > p2.score ? p1 : p2.score > p1.score ? p2 : null;
+        const doneQs = rounds.slice(0, currentRound + 1).reduce((s, r) => s + r.length, 0);
+        const pct = Math.round((doneQs / totalQs) * 100);
+        return (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }} className="animate-slideUp">
+            <div style={{ fontSize: 64, lineHeight: 1, marginBottom: 8 }} className="select-none">⚔️</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: '#fff', marginBottom: 4, textAlign: 'center' }}>
+              Round {currentRound + 1} Done
+            </h2>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>
+              {roundWinner ? `${roundWinner.name} takes the round!` : 'Tied!'}
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 20 }}>
+              {doneQs} of {totalQs} questions · {pct}% done
+            </p>
+
+            {/* Progress bar */}
+            <div style={{ width: '100%', maxWidth: 380, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', marginBottom: 24, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#8b5cf6,#d946ef)', borderRadius: 2 }} />
+            </div>
+
+            {/* Round scores */}
+            <div style={{ display: 'flex', gap: 16, width: '100%', maxWidth: 380, marginBottom: 24 }}>
+              {[p1, p2].map((p, i) => {
+                const other = i === 0 ? p2 : p1;
+                const isRoundWinner = p.score > other.score;
+                const accent = i === 0 ? '139,92,246' : '217,70,239';
+                return (
+                  <div key={i} style={{ flex: 1, borderRadius: 16, padding: '16px 12px', textAlign: 'center', background: isRoundWinner ? `rgba(${accent},0.12)` : 'rgba(255,255,255,0.04)', border: `1.5px solid ${isRoundWinner ? `rgba(${accent},0.4)` : 'rgba(255,255,255,0.07)'}` }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: `rgba(${accent.split(',').map(n => Math.min(255, parseInt(n) + 60)).join(',')},1)`, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: isRoundWinner ? `rgb(${accent})` : 'rgba(255,255,255,0.5)' }}>{p.score.toLocaleString()}</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>{p.correct}/{questions.length} correct</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 380 }}>
+              <button onClick={handleEndEarly}
+                style={{ flex: 1, padding: '14px 0', borderRadius: 14, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1.5px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}>
+                Stop here
+              </button>
+              <button onClick={handleNextRound} className="btn-battle"
+                style={{ flex: 1, width: 'auto', fontSize: 14, padding: '14px 0' }}>
+                Round {currentRound + 2} →
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ────── DONE ────── */}
       {phase === 'done' && (() => {
-        const p1Won  = p1.score > p2.score;
-        const p2Won  = p2.score > p1.score;
+        const isConquest = rounds.length > 1 && currentRound + 1 >= rounds.length;
+        const gs1 = p1TotalScore;
+        const gs2 = p2TotalScore;
+        const p1Won  = gs1 > gs2;
+        const p2Won  = gs2 > gs1;
         const winner = p1Won ? p1 : p2Won ? p2 : null;
-        // Play result sound once when we land here
-        // (useEffect with phase dep already stopped music)
         return (
           <div
             style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}
@@ -521,40 +660,45 @@ export default function BattlePage() {
             >
               {p1Won ? '🏆' : p2Won ? '🎊' : '🤝'}
             </div>
+
+            {isConquest && (
+              <div style={{ padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 700, marginBottom: 12, background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd' }}>
+                🎓 Topic Conquered · All {totalQs} Questions Done
+              </div>
+            )}
+
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 40, color: '#fff', marginBottom: 4, textAlign: 'center', textShadow: '0 0 30px rgba(139,92,246,0.5)' }}>
               {winner ? `${winner.name} wins!` : "It's a draw!"}
             </h2>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 32 }}>
-              {BATTLE_COUNT} rounds complete
+              {rounds.length > 1 ? `${rounds.length} rounds · ${totalQs} questions` : `${questions.length} questions`}
             </p>
 
             {/* Score cards */}
             <div style={{ display: 'flex', gap: 16, width: '100%', maxWidth: 380, marginBottom: 32 }}>
-              {[p1, p2].map((p, i) => {
-                const other    = i === 0 ? p2 : p1;
-                const isWinner = p.score > other.score;
-                const accent   = i === 0 ? '139,92,246' : '217,70,239';
-                return (
-                  <div
-                    key={i}
-                    style={{
-                      flex: 1, borderRadius: 20, padding: '20px 16px', textAlign: 'center',
-                      background: isWinner ? `linear-gradient(160deg,rgba(${accent},0.2),rgba(${accent},0.05))` : 'rgba(255,255,255,0.04)',
-                      border: `1.5px solid ${isWinner ? `rgba(${accent},0.5)` : 'rgba(255,255,255,0.08)'}`,
-                      boxShadow: isWinner ? `0 0 24px rgba(${accent},0.2)` : 'none',
-                    }}
-                  >
-                    {isWinner && <div style={{ fontSize: 20, marginBottom: 6 }}>👑</div>}
-                    <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.55)' }}>{p.name}</p>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: isWinner ? `rgb(${accent})` : 'rgba(255,255,255,0.5)' }}>
-                      {p.score.toLocaleString()}
-                    </p>
-                    <p style={{ fontSize: 12, marginTop: 8, color: 'rgba(255,255,255,0.3)' }}>
-                      {p.correct}/{BATTLE_COUNT} correct
-                    </p>
-                  </div>
-                );
-              })}
+              {[
+                { p: p1, total: gs1, totalCorrect: p1TotalCorrect, accent: '139,92,246', isWinner: p1Won },
+                { p: p2, total: gs2, totalCorrect: p2TotalCorrect, accent: '217,70,239', isWinner: p2Won },
+              ].map(({ p, total, totalCorrect, accent, isWinner }, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1, borderRadius: 20, padding: '20px 16px', textAlign: 'center',
+                    background: isWinner ? `linear-gradient(160deg,rgba(${accent},0.2),rgba(${accent},0.05))` : 'rgba(255,255,255,0.04)',
+                    border: `1.5px solid ${isWinner ? `rgba(${accent},0.5)` : 'rgba(255,255,255,0.08)'}`,
+                    boxShadow: isWinner ? `0 0 24px rgba(${accent},0.2)` : 'none',
+                  }}
+                >
+                  {isWinner && <div style={{ fontSize: 20, marginBottom: 6 }}>👑</div>}
+                  <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.55)' }}>{p.name}</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: isWinner ? `rgb(${accent})` : 'rgba(255,255,255,0.5)' }}>
+                    {total.toLocaleString()}
+                  </p>
+                  <p style={{ fontSize: 12, marginTop: 8, color: 'rgba(255,255,255,0.3)' }}>
+                    {totalCorrect}/{totalQs || questions.length} correct
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>
