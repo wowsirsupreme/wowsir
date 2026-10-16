@@ -10,7 +10,7 @@ import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import TopicPicker from '@/components/TopicPicker';
 import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
-import { calcTimeBonus } from '@/lib/utils';
+import { calcTimeBonus, resolveAnswerIndex } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import { submitScore } from '@/lib/firebase/leaderboard';
 import QuizNav from '@/components/QuizNav';
@@ -32,7 +32,7 @@ function timeForIdx(idx: number): number {
 /** Normalise q.answer (may be numeric index string) → option text, then shuffle options. */
 function prepareQuestion(q: Question): Question {
   let answerText = q.answer as string;
-  const idx = parseInt(answerText, 10);
+  const idx = resolveAnswerIndex(answerText);
   if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
     answerText = q.options[idx];
   }

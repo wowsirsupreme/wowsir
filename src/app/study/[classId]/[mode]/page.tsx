@@ -222,8 +222,8 @@ function PracticeMode({ accentColor, classId }: { accentColor: string; classId: 
                     <p style={{ fontSize: 14, marginBottom: 4 }}><strong>Q{i+1}:</strong> {q.text}</p>
                     {q.type === 'mcq' && (
                       <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                        Your answer: <span style={{ color: isCorrect ? '#4ade80' : '#f87171' }}>{q.options[parseInt(userAns ?? '-1')] ?? '(not answered)'}</span>
-                        {!isCorrect && <> · Correct: <span style={{ color: '#4ade80' }}>{q.options[parseInt(q.answer)]}</span></>}
+                        Your answer: <span style={{ color: isCorrect ? '#4ade80' : '#f87171' }}>{q.options[resolveAnswerIndex(userAns ?? '-1')] ?? '(not answered)'}</span>
+                        {!isCorrect && <> · Correct: <span style={{ color: '#4ade80' }}>{q.options[resolveAnswerIndex(q.answer)]}</span></>}
                       </p>
                     )}
                     {q.explanation && <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>{q.explanation}</p>}
@@ -362,7 +362,7 @@ function ChaptersMode({ accentColor, classId }: { accentColor: string; classId: 
                                 {answers[q.id] === q.answer
                                   ? <><CheckCircle size={14} color="#4ade80" /> <span style={{ color: '#4ade80', fontWeight: 600 }}>Correct!</span></>
                                   : <><XCircle size={14} color="#f87171" /> <span style={{ color: '#f87171', fontWeight: 600 }}>
-                                      Correct answer: {q.type === 'mcq' ? q.options[parseInt(q.answer)] : q.answer}
+                                      Correct answer: {q.type === 'mcq' ? q.options[resolveAnswerIndex(q.answer)] : q.answer}
                                     </span></>}
                               </div>
                               {q.explanation && <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12 }}>{q.explanation}</p>}

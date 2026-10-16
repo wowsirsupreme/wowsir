@@ -9,7 +9,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { getQuestionsByTopic } from '@/lib/firebase/questions';
 import { allGradeQuestions } from '@/data/grades';
 import type { Question } from '@/types/question';
-import { calcTimeBonus } from '@/lib/utils';
+import { calcTimeBonus, resolveAnswerIndex } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import QuizNav from '@/components/QuizNav';
 
@@ -21,7 +21,7 @@ type Phase = 'setup' | 'countdown' | 'playing' | 'reveal' | 'between_rounds' | '
 /** Normalise answer index → text, shuffle options */
 function prepareQuestion(q: Question): Question {
   let answerText = q.answer as string;
-  const idx = parseInt(answerText, 10);
+  const idx = resolveAnswerIndex(answerText);
   if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
     answerText = q.options[idx];
   }
@@ -214,7 +214,7 @@ export default function BattlePage() {
     const diff  = AI_DIFFICULTY[difficulty];
     const timeMs = diff.minTime + Math.random() * (diff.maxTime - diff.minTime);
     const willBeCorrect = Math.random() < diff.accuracy;
-    const correctIdx    = parseInt(q.answer, 10);
+    const correctIdx    = resolveAnswerIndex(q.answer);
     const aiChoice      = willBeCorrect ? correctIdx : (correctIdx === 0 ? 1 : 0);
 
     const t = setTimeout(() => {
@@ -239,7 +239,7 @@ export default function BattlePage() {
     if (p1SelectedRef.current !== null || phaseRef.current !== 'playing') return;
     const timeMs   = Date.now() - questionStart;
     const q        = questions[currentIdx];
-    const isCorrect = index === parseInt(q.answer, 10);
+    const isCorrect = index === resolveAnswerIndex(q.answer);
     const earned   = calcScore(isCorrect, timeMs);
     const newStreak = isCorrect ? (p1.streak + 1) : 0;
     if (isCorrect) {
@@ -509,8 +509,8 @@ export default function BattlePage() {
                 {p1.score.toLocaleString()}
               </p>
               {p1Selected !== null && (
-                <p style={{ fontSize: 11, fontWeight: 700, marginLeft: 32, color: p1Selected !== -1 && p1Selected === parseInt(currentQ.answer) ? '#4ade80' : '#f87171' }}>
-                  {p1Selected !== -1 && p1Selected === parseInt(currentQ.answer) ? '✓ correct' : p1Selected === -1 ? '⏱ timed out' : '✗ wrong'}
+                <p style={{ fontSize: 11, fontWeight: 700, marginLeft: 32, color: p1Selected !== -1 && p1Selected === resolveAnswerIndex(currentQ.answer) ? '#4ade80' : '#f87171' }}>
+                  {p1Selected !== -1 && p1Selected === resolveAnswerIndex(currentQ.answer) ? '✓ correct' : p1Selected === -1 ? '⏱ timed out' : '✗ wrong'}
                 </p>
               )}
             </div>
@@ -540,8 +540,8 @@ export default function BattlePage() {
                 {p2.score.toLocaleString()}
               </p>
               {p2Selected !== null && (
-                <p style={{ fontSize: 11, fontWeight: 700, marginRight: 32, color: p2Selected !== -1 && p2Selected === parseInt(currentQ.answer) ? '#4ade80' : '#f87171' }}>
-                  {p2Selected !== -1 && p2Selected === parseInt(currentQ.answer) ? '✓ correct' : p2Selected === -1 ? '⏱ timed out' : '✗ wrong'}
+                <p style={{ fontSize: 11, fontWeight: 700, marginRight: 32, color: p2Selected !== -1 && p2Selected === resolveAnswerIndex(currentQ.answer) ? '#4ade80' : '#f87171' }}>
+                  {p2Selected !== -1 && p2Selected === resolveAnswerIndex(currentQ.answer) ? '✓ correct' : p2Selected === -1 ? '⏱ timed out' : '✗ wrong'}
                 </p>
               )}
             </div>

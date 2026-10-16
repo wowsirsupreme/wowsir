@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, resolveAnswerIndex } from '@/lib/utils';
 import type { Question } from '@/types/question';
 
 interface QuestionCardProps {
@@ -15,7 +15,7 @@ interface QuestionCardProps {
 
 export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerText, disabled }: QuestionCardProps) {
   const labels = ['A', 'B', 'C', 'D'];
-  const parsedIdx = parseInt(question.answer, 10);
+  const parsedIdx = resolveAnswerIndex(question.answer);
   const correctIndex = !isNaN(parsedIdx) && parsedIdx >= 0 && parsedIdx < (question.options?.length ?? 0)
     ? parsedIdx
     : (question.options ?? []).findIndex(o => o === question.answer);

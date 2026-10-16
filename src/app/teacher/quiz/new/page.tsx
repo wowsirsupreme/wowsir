@@ -13,7 +13,7 @@ import { saveQuiz, getQuiz } from '@/lib/firebase/quizzes';
 import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question } from '@/types/question';
 import type { Quiz } from '@/types/quiz';
-import { uid } from '@/lib/utils';
+import { uid, resolveAnswerIndex } from '@/lib/utils';
 import TopicPicker from '@/components/TopicPicker';
 import { Printer, Plus, X as XIcon } from 'lucide-react';
 
@@ -183,7 +183,7 @@ function QuizBuilderInner() {
 ${qHtml}
 <div class="answer-key">
   <h2>Answer Key</h2>
-  <div class="answers">${selected.map((q, i) => { const ans = parseInt(q.answer ?? '0', 10); return `<span>Q${i + 1}: ${OPTS[isNaN(ans) ? 0 : ans] ?? q.answer}</span>`; }).join('')}</div>
+  <div class="answers">${selected.map((q, i) => { const ans = resolveAnswerIndex(q.answer ?? '0'); return `<span>Q${i + 1}: ${OPTS[ans >= 0 ? ans : 0] ?? q.answer}</span>`; }).join('')}</div>
 </div>
 </body></html>`;
     const w = window.open('', '_blank');

@@ -425,7 +425,7 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
                 {betweenResult.correct ? `+${betweenResult.myScore} pts` : 'Incorrect'}
               </p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
-                {betweenResult.correct ? 'Nice one!' : `Correct: ${q.options[parseInt(q.answer)]}`}
+                {betweenResult.correct ? 'Nice one!' : `Correct: ${q.options[resolveAnswerIndex(q.answer)]}`}
               </p>
             </div>
           )}
@@ -440,7 +440,7 @@ export default function BattleMatchPage({ params }: { params: Promise<{ battleId
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {q.options.map((opt, i) => {
               const isSelected = myChoiceThisQ === i;
-              const correctIdx = parseInt(q.answer);
+              const correctIdx = resolveAnswerIndex(q.answer);
               const showCorrect = phase === 'between' && i === correctIdx;
               const showWrong = phase === 'between' && isSelected && i !== correctIdx;
 

@@ -845,7 +845,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {currentQ.options.map((opt, i) => {
-                  const isCorrect = phase === 'reveal' && parseInt(currentQ.answer) === i;
+                  const isCorrect = phase === 'reveal' && resolveAnswerIndex(currentQ.answer) === i;
                   return (
                     <div
                       key={i}

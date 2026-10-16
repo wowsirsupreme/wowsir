@@ -41,6 +41,18 @@ export function trophy(accuracy: number): string {
   return '🎓';
 }
 
+/** Resolve a question's answer field to a numeric option index.
+ *  Handles both numeric-string ('0'–'3') and legacy true/false strings
+ *  ('true' → 0, 'false' → 1), since True is always index 0 in ['True','False']. */
+export function resolveAnswerIndex(answer: string | undefined | null): number {
+  if (answer == null) return -1;
+  const lower = answer.toLowerCase().trim();
+  if (lower === 'true') return 0;
+  if (lower === 'false') return 1;
+  const n = parseInt(answer, 10);
+  return isNaN(n) ? -1 : n;
+}
+
 // Shuffle array in place (Fisher-Yates)
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];

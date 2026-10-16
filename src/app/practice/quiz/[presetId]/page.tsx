@@ -303,7 +303,7 @@ export default function PracticeQuizPage() {
     if (phase !== 'playing' || selected !== null) return;
     setSelected(index);
     setPhase('reveal');
-    const correctIndex = parseInt(currentQ?.answer ?? '-1', 10);
+    const correctIndex = resolveAnswerIndex(currentQ?.answer ?? '-1');
     if (index === correctIndex) audioEngine.correct();
     else audioEngine.wrong();
   }
@@ -313,7 +313,7 @@ export default function PracticeQuizPage() {
   function handleNext() {
     if (!currentQ) return;
     const timeMs = Date.now() - questionStart.current;
-    const correctIndex = parseInt(currentQ.answer, 10);
+    const correctIndex = resolveAnswerIndex(currentQ.answer);
     const isCorrect = selected !== null && selected === correctIndex;
 
     const result: QuestionResult = { question: currentQ, selected, correct: isCorrect, timeMs };
@@ -511,7 +511,7 @@ export default function PracticeQuizPage() {
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
             {roundResults.map((r, i) => {
-              const correctIndex = parseInt(r.question.answer, 10);
+              const correctIndex = resolveAnswerIndex(r.question.answer);
               const correctLabel = r.question.options?.[correctIndex];
               const selectedLabel = r.selected !== null ? r.question.options?.[r.selected] : null;
               return (
@@ -715,7 +715,7 @@ export default function PracticeQuizPage() {
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {results.map((r, i) => {
-              const correctIndex = parseInt(r.question.answer, 10);
+              const correctIndex = resolveAnswerIndex(r.question.answer);
               const correctLabel = r.question.options?.[correctIndex];
               const selectedLabel = r.selected !== null ? r.question.options?.[r.selected] : null;
               return (

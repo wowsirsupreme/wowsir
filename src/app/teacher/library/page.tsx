@@ -8,6 +8,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped, deleteQuestion } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
+import { resolveAnswerIndex } from '@/lib/utils';
 import TopicPicker from '@/components/TopicPicker';
 import type { Question } from '@/types/question';
 
@@ -142,7 +143,7 @@ export default function QuestionBankPage() {
       if (editType === 'mcq') {
         options = editOptions.map(o => o.trim()).filter(Boolean);
         if (options.length < 2) { toast('MCQ needs at least 2 options', 'error'); setSaving(false); return; }
-        const idx = parseInt(answer, 10);
+        const idx = resolveAnswerIndex(answer);
         if (isNaN(idx) || idx < 0 || idx >= options.length) {
           toast(`Answer index must be 0–${options.length - 1}`, 'error'); setSaving(false); return;
         }
@@ -196,7 +197,7 @@ export default function QuestionBankPage() {
       if (addType === 'mcq') {
         options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
         if (options.length < 2) { toast('MCQ needs at least 2 options', 'error'); setAddSaving(false); return; }
-        const idx = parseInt(answer, 10);
+        const idx = resolveAnswerIndex(answer);
         if (isNaN(idx) || idx < 0 || idx >= options.length) { toast(`MCQ answer must be a 0-based index (0–${options.length - 1})`, 'error'); setAddSaving(false); return; }
       } else if (addType === 'truefalse') {
         options = ['True', 'False'];

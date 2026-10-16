@@ -264,7 +264,7 @@ export default function CustomPracticePage() {
       const qs: Question[] = (JSON.parse(raw) as Question[]).map(q => {
         // 1. Resolve answer text from index if needed
         let answerText = q.answer as string;
-        const idx = parseInt(answerText, 10);
+        const idx = resolveAnswerIndex(answerText);
         if (!isNaN(idx) && Array.isArray(q.options) && q.options[idx] !== undefined) {
           answerText = q.options[idx];
         }

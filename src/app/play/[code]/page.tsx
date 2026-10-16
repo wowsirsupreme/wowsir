@@ -19,12 +19,22 @@ import {
   getSessionPublicQuestions,
 } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
-import { calcTimeBonus } from '@/lib/utils';
+import { calcTimeBonus, resolveAnswerIndex } from '@/lib/utils';
 import QuizNav from '@/components/QuizNav';
 import type { Question } from '@/types/question';
 import type { SessionPlayer } from '@/types/session';
 
 type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'round-review';
+
+/** Resolve correct option index from a question's answer field.
+ *  Handles both numeric-string ('0','1','2','3') and legacy
+ *  true/false string answers ('true' → 0, 'false' → 1). */
+function getCorrectIndex(answer: string): number {
+  const lower = answer.toLowerCase().trim();
+  if (lower === 'true') return 0;   // 'True' is index 0 in ['True','False']
+  if (lower === 'false') return 1;  // 'False' is index 1
+  return parseInt(answer, 10);
+}
 
 export default function PlayPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -179,7 +189,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     setAnswerTime(timeMs);
     setPhase('reveal');
 
-    const correctIndex = parseInt(q.answer, 10);
+    const correctIndex = getCorrectIndex(q.answer);
     const isCorrect = index === correctIndex;
     const timeLimit = session?.settings?.timeLimit || 20;
     const timeBonus = isCorrect ? calcTimeBonus(timeMs, timeLimit * 1000) : 0;
@@ -333,7 +343,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         {/* Question review — scrollable */}
         <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
           {roundResults.map((r, i) => {
-            const correctIndex = parseInt(r.question.answer, 10);
+            const correctIndex = getCorrectIndex(r.question.answer);
             const opts = r.question.options || [];
             return (
               <div key={i} className="rounded-2xl p-4" style={{ background: r.correct ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)', border: `1.5px solid ${r.correct ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}` }}>
@@ -933,7 +943,7 @@ function EndedScreen({
               </div>
             ) : (
               questionResults.map((r, i) => {
-                const correctIndex = parseInt(r.question.answer, 10);
+                const correctIndex = getCorrectIndex(r.question.answer);
                 const opts = r.question.options || [];
                 return (
                   <div
