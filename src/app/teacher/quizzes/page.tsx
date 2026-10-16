@@ -289,7 +289,7 @@ export default function MyQuizzesPage() {
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                       <button
-                        onClick={() => router.push(`/teacher/results?quiz=${q.id}`)}
+                        onClick={() => router.push(`/teacher/results/quiz/${q.id}`)}
                         title="View results"
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
