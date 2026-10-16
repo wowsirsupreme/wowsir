@@ -236,3 +236,52 @@ export async function wipeRTDBSessions(): Promise<ResetResult> {
   }
   return { deleted, errors };
 }
+
+/** Wipe ALL data — results, practice leaderboard, and RTDB sessions */
+export async function wipeAllData(): Promise<{ deleted: number; errors: number }> {
+  const [r1, r2, r3] = await Promise.all([
+    wipeResults(),
+    wipePracticeLeaderboard(),
+    wipeRTDBSessions(),
+  ]);
+  return {
+    deleted: r1.deleted + r2.deleted + r3.deleted,
+    errors: (r1.errors ?? 0) + (r2.errors ?? 0) + (r3.errors ?? 0),
+  };
+}
+
+/** Export a full JSON backup of all Firestore collections + RTDB root */
+export async function backupDatabase(): Promise<void> {
+  const { fs, db } = getFirebaseInstances();
+  const backup: Record<string, unknown> = { exportedAt: new Date().toISOString() };
+
+  // Firestore collections
+  const fsCollections = ['users', 'quizzes', 'questions', 'results', 'practiceLeaderboard'];
+  if (fs) {
+    const { collection: col, getDocs: gd } = await import('firebase/firestore');
+    for (const name of fsCollections) {
+      try {
+        const snap = await gd(col(fs, name));
+        backup[`firestore_${name}`] = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+      } catch { backup[`firestore_${name}`] = null; }
+    }
+  }
+
+  // RTDB root
+  if (db) {
+    const { ref, get } = await import('firebase/database');
+    try {
+      const snap = await get(ref(db, '/'));
+      backup['rtdb'] = snap.exists() ? snap.val() : null;
+    } catch { backup['rtdb'] = null; }
+  }
+
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `wowquiz-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

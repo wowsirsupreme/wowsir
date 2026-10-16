@@ -9,7 +9,7 @@ import {
 import {
   getAllUsers, getPendingTeachers, approveTeacher, suspendTeacher,
   getUsageStats, getGeoStats, getAllQuestions,
-  wipeResults, wipePracticeLeaderboard, wipeRTDBSessions,
+  wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, backupDatabase,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -103,8 +103,11 @@ export default function AdminPage() {
     results: 'idle',
     practice: 'idle',
     rtdb: 'idle',
+    all: 'idle',
   });
   const [resetMsg, setResetMsg] = useState<Record<string, string>>({});
+  const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [backupMsg, setBackupMsg] = useState('');
 
   // Restore session on mount, and set up lockout countdown timer
   useEffect(() => {
@@ -328,6 +331,8 @@ export default function AdminPage() {
           <DatabaseTab
             resetStatus={resetStatus}
             resetMsg={resetMsg}
+            backupStatus={backupStatus}
+            backupMsg={backupMsg}
             onWipe={async (key) => {
               if (resetStatus[key] !== 'confirm') {
                 setResetStatus(s => ({ ...s, [key]: 'confirm' }));
@@ -338,6 +343,7 @@ export default function AdminPage() {
                 let result;
                 if (key === 'results') result = await wipeResults();
                 else if (key === 'practice') result = await wipePracticeLeaderboard();
+                else if (key === 'all') result = await wipeAllData();
                 else result = await wipeRTDBSessions();
                 setResetMsg(m => ({ ...m, [key]: `Deleted ${result.deleted} record${result.deleted !== 1 ? 's' : ''}${result.errors ? ` (${result.errors} errors)` : ''}` }));
                 setResetStatus(s => ({ ...s, [key]: 'done' }));
@@ -347,6 +353,17 @@ export default function AdminPage() {
               }
             }}
             onCancel={(key) => setResetStatus(s => ({ ...s, [key]: 'idle' }))}
+            onBackup={async () => {
+              setBackupStatus('running');
+              try {
+                await backupDatabase();
+                setBackupStatus('done');
+                setBackupMsg('Backup downloaded successfully');
+              } catch (e: unknown) {
+                setBackupStatus('error');
+                setBackupMsg(e instanceof Error ? e.message : 'Backup failed');
+              }
+            }}
           />
         )}
       </div>
@@ -703,15 +720,18 @@ function UserRow({ user, onApprove, onSuspend }: {
 }
 
 /* ─────────────── Database Tab ─────────────── */
-type ResetKey = 'results' | 'practice' | 'rtdb';
+type ResetKey = 'results' | 'practice' | 'rtdb' | 'all';
 interface DatabaseTabProps {
   resetStatus: Record<string, 'idle' | 'confirm' | 'running' | 'done' | 'error'>;
   resetMsg: Record<string, string>;
+  backupStatus: 'idle' | 'running' | 'done' | 'error';
+  backupMsg: string;
   onWipe: (key: ResetKey) => void;
   onCancel: (key: ResetKey) => void;
+  onBackup: () => void;
 }
 
-function DatabaseTab({ resetStatus, resetMsg, onWipe, onCancel }: DatabaseTabProps) {
+function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, onCancel, onBackup }: DatabaseTabProps) {
   const actions: { key: ResetKey; label: string; desc: string; accent: string }[] = [
     {
       key: 'results',
@@ -730,6 +750,12 @@ function DatabaseTab({ resetStatus, resetMsg, onWipe, onCancel }: DatabaseTabPro
       label: 'Wipe RTDB Sessions',
       desc: 'Removes all live-session data from Realtime Database (sessions, session_codes, teacher_sessions, session_pub_questions, sessions_questions).',
       accent: '#facc15',
+    },
+    {
+      key: 'all',
+      label: 'Reset Everything',
+      desc: 'Wipes session results, practice leaderboard, AND all RTDB sessions in one go. Use this for a full clean slate.',
+      accent: '#e879f9',
     },
   ];
 
@@ -807,6 +833,35 @@ function DatabaseTab({ resetStatus, resetMsg, onWipe, onCancel }: DatabaseTabPro
             </div>
           );
         })}
+      </div>
+
+      {/* Backup */}
+      <div style={{ marginTop: 28, borderRadius: 16, padding: '20px 24px', background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(99,179,237,0.2)' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Backup Database</h3>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', marginBottom: 16 }}>
+          Downloads a full JSON snapshot of all Firestore collections (users, quizzes, questions, results, leaderboard) and the Realtime Database.
+        </p>
+        {backupStatus === 'done' && (
+          <div style={{ fontSize: 13, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Check size={14} /> {backupMsg}
+          </div>
+        )}
+        {backupStatus === 'error' && (
+          <div style={{ fontSize: 13, color: '#f87171', marginBottom: 12 }}>⚠ {backupMsg}</div>
+        )}
+        <button
+          onClick={onBackup}
+          disabled={backupStatus === 'running'}
+          style={{
+            padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: backupStatus === 'running' ? 'not-allowed' : 'pointer',
+            background: 'rgba(99,179,237,0.12)', border: '1px solid rgba(99,179,237,0.3)',
+            color: '#93c5fd', transition: 'background 0.15s', opacity: backupStatus === 'running' ? 0.6 : 1,
+          }}
+          onMouseEnter={e => { if (backupStatus !== 'running') (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,179,237,0.22)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,179,237,0.12)'; }}
+        >
+          {backupStatus === 'running' ? '⏳ Exporting…' : backupStatus === 'done' ? 'Download again' : '⬇ Download Backup'}
+        </button>
       </div>
     </div>
   );

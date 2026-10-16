@@ -90,7 +90,8 @@ export function mapAndValidate(
         answer = idx >= 0 ? String(idx) : '0';
       }
     } else if (type === 'truefalse') {
-      answer = answerRaw.toLowerCase().startsWith('t') ? 'true' : 'false';
+      // Store as '0' (True) or '1' (False) — matches resolveAnswerIndex convention
+      answer = answerRaw.toLowerCase().startsWith('t') ? '0' : '1';
     } else {
       answer = answerRaw;
     }
@@ -122,7 +123,7 @@ export function downloadTemplate() {
   const headers = ['type', 'text', 'option_a', 'option_b', 'option_c', 'option_d', 'answer', 'explanation', 'difficulty', 'topic', 'tags'];
   const examples = [
     ['mcq', 'What does HTML stand for?', 'Hyper Text Markup Language', 'High Tech Modern Language', 'Home Tool Markup Language', 'Hyperlink Text Model Language', 'A', 'HTML = HyperText Markup Language', 'easy', 'html-basics', 'html,web'],
-    ['truefalse', 'CSS stands for Cascading Style Sheets.', 'True', 'False', '', '', 'True', 'CSS = Cascading Style Sheets', 'easy', 'css-styling', 'css'],
+    ['truefalse', 'CSS stands for Cascading Style Sheets.', 'True', 'False', '', '', 'True', 'CSS = Cascading Style Sheets — answer True means index 0, False means index 1', 'easy', 'css-styling', 'css'],
     ['shortanswer', 'Name the HTML tag used to create a hyperlink.', '', '', '', '', '<a>', 'The anchor tag <a> creates hyperlinks', 'medium', 'html-basics', 'html,tags'],
   ];
   const csv = [headers, ...examples].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
