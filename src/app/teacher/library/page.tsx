@@ -169,11 +169,14 @@ export default function QuestionBankPage() {
       } else if (editType === 'truefalse') {
         options = ['True', 'False'];
         const n = answer.toLowerCase();
+        // Accept index ('0'/'1') or word ('true'/'false')
         if (n !== '0' && n !== '1' && n !== 'true' && n !== 'false') {
-          toast('True/False answer: 0 = True, 1 = False', 'error'); setSaving(false); return;
+          toast('True/False answer must be 0 (True) or 1 (False)', 'error'); setSaving(false); return;
         }
-        // Normalise to index string format used elsewhere
         answer = (n === 'true' || n === '0') ? '0' : '1';
+      } else if (editType === 'shortanswer' || editType === 'fillinblank') {
+        answer = answer.toLowerCase(); // store lowercase — grading is case-insensitive
+        options = editOptions.map(o => o.trim()).filter(Boolean);
       } else {
         options = editOptions.map(o => o.trim()).filter(Boolean);
       }
@@ -217,12 +220,13 @@ export default function QuestionBankPage() {
         options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
         if (options.length < 2) { toast('MCQ needs at least 2 options', 'error'); setAddSaving(false); return; }
         const idx = resolveAnswerIndex(answer);
-        if (isNaN(idx) || idx < 0 || idx >= options.length) { toast(`MCQ answer must be a 0-based index (0–${options.length - 1})`, 'error'); setAddSaving(false); return; }
+        if (isNaN(idx) || idx < 0 || idx >= options.length) { toast('Select the correct answer option', 'error'); setAddSaving(false); return; }
       } else if (addType === 'truefalse') {
         options = ['True', 'False'];
-        const n = answer.toLowerCase();
-        if (n !== 'true' && n !== 'false') { toast('True/False answer must be "true" or "false"', 'error'); setAddSaving(false); return; }
-        answer = n;
+        if (answer !== '0' && answer !== '1') { toast('Select True or False as the correct answer', 'error'); setAddSaving(false); return; }
+      } else if (addType === 'shortanswer' || addType === 'fillinblank') {
+        if (!answer) { toast('Enter the correct answer', 'error'); setAddSaving(false); return; }
+        answer = answer.toLowerCase(); // store lowercase — grading is case-insensitive
       } else if (addType === 'matching') {
         options = [addOptionA, addOptionB, addOptionC, addOptionD].map(o => o.trim()).filter(Boolean);
         if (options.length < 2) { toast('Matching needs at least 2 left-side items', 'error'); setAddSaving(false); return; }
@@ -432,16 +436,82 @@ export default function QuestionBankPage() {
               )}
 
               {/* Answer field */}
-              <div>
-                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>
-                  {addType === 'mcq' ? 'CORRECT OPTION (0=A, 1=B, 2=C, 3=D) *' :
-                   addType === 'truefalse' ? 'ANSWER (true / false) *' :
-                   addType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated, in matching order) *' :
-                   addType === 'ordering' ? 'CORRECT ORDER (pipe-separated 0-based indices, e.g. 2|0|3|1) *' :
-                   'CORRECT ANSWER *'}
-                </label>
-                <input value={addAnswer} onChange={e => setAddAnswer(e.target.value)} placeholder={addType === 'mcq' ? '0' : addType === 'truefalse' ? 'true' : addType === 'matching' ? 'Router|Switch|Hub|Modem' : addType === 'ordering' ? '2|0|3|1' : 'Expected answer'} style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
-              </div>
+              {addType === 'mcq' && (
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 8 }}>CORRECT ANSWER *</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[['A', '0', addOptionA], ['B', '1', addOptionB], ['C', '2', addOptionC], ['D', '3', addOptionD]].map(([lbl, idx, optText]) => {
+                      const isSelected = addAnswer === idx;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setAddAnswer(idx as string)}
+                          style={{
+                            flex: 1, padding: '10px 6px', borderRadius: 10, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                            cursor: 'pointer', textAlign: 'center',
+                            background: isSelected ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.05)',
+                            border: `1.5px solid ${isSelected ? 'rgba(52,211,153,0.6)' : 'rgba(255,255,255,0.1)'}`,
+                            color: isSelected ? '#34d399' : 'rgba(255,255,255,0.45)',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', marginBottom: 2 }}>{lbl}</div>
+                          <div style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 }}>
+                            {optText ? String(optText) : '—'}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {addType === 'truefalse' && (
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 8 }}>CORRECT ANSWER *</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[['True', '0'], ['False', '1']].map(([lbl, val]) => {
+                      const isSelected = addAnswer === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setAddAnswer(val as string)}
+                          style={{
+                            flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: isSelected ? 700 : 500,
+                            cursor: 'pointer',
+                            background: isSelected ? (val === '0' ? 'rgba(52,211,153,0.2)' : 'rgba(239,68,68,0.15)') : 'rgba(255,255,255,0.05)',
+                            border: `1.5px solid ${isSelected ? (val === '0' ? 'rgba(52,211,153,0.6)' : 'rgba(239,68,68,0.5)') : 'rgba(255,255,255,0.1)'}`,
+                            color: isSelected ? (val === '0' ? '#34d399' : '#f87171') : 'rgba(255,255,255,0.45)',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {lbl}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {(addType === 'shortanswer' || addType === 'fillinblank') && (
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>
+                    CORRECT ANSWER * <span style={{ fontFamily: 'inherit', color: 'rgba(255,255,255,0.25)', textTransform: 'none', letterSpacing: 0 }}>(spelling must match; case doesn&apos;t matter)</span>
+                  </label>
+                  <input value={addAnswer} onChange={e => setAddAnswer(e.target.value)} placeholder="Expected answer" style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                </div>
+              )}
+
+              {(addType === 'matching' || addType === 'ordering') && (
+                <div>
+                  <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>
+                    {addType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated, in matching order) *' : 'CORRECT ORDER (pipe-separated 0-based indices, e.g. 2|0|3|1) *'}
+                  </label>
+                  <input value={addAnswer} onChange={e => setAddAnswer(e.target.value)} placeholder={addType === 'matching' ? 'Router|Switch|Hub|Modem' : '2|0|3|1'} style={{ width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                </div>
+              )}
 
               {/* Explanation + meta */}
               <div>
@@ -657,7 +727,7 @@ export default function QuestionBankPage() {
                           {(editType === 'shortanswer' || editType === 'fillinblank' || editType === 'matching' || editType === 'ordering') && (
                             <div>
                               <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>
-                                {editType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated)' : editType === 'ordering' ? 'CORRECT ORDER (pipe-separated 0-based, e.g. 2|0|3|1)' : 'CORRECT ANSWER'}
+                                {editType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated)' : editType === 'ordering' ? 'CORRECT ORDER (pipe-separated 0-based, e.g. 2|0|3|1)' : <>CORRECT ANSWER <span style={{ fontFamily: 'inherit', color: 'rgba(255,255,255,0.25)', textTransform: 'none', letterSpacing: 0 }}>(case doesn&apos;t matter)</span></>}
                               </label>
                               <input value={editAnswer} onChange={e => setEditAnswer(e.target.value)}
                                 style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
