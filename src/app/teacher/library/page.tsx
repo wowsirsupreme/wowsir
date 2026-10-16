@@ -11,6 +11,7 @@ import { TOPIC_LABELS } from '@/types/question';
 import { allGradeQuestions } from '@/data/grades';
 import { resolveAnswerIndex } from '@/lib/utils';
 import TopicPicker from '@/components/TopicPicker';
+import ImageUploader from '@/components/ImageUploader';
 import type { Question } from '@/types/question';
 
 /** Human-readable label + colour for each question type */
@@ -75,8 +76,10 @@ export default function QuestionBankPage() {
   const [addExplanation, setAddExplanation] = useState('');
   const [addDifficulty, setAddDifficulty] = useState<Question['difficulty']>('medium');
   const [addPoints, setAddPoints] = useState(1);
+  const [addImageUrl, setAddImageUrl] = useState<string | null>(null);
   const [addSaving, setAddSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
@@ -149,6 +152,7 @@ export default function QuestionBankPage() {
     while (opts.length < 4) opts.push('');
     setEditOptions(opts);
     setEditAnswer(q.answer ?? '');
+    setEditImageUrl(q.imageUrl ?? null);
   }
 
   async function saveEdit(q: Question) {
@@ -181,7 +185,7 @@ export default function QuestionBankPage() {
         options = editOptions.map(o => o.trim()).filter(Boolean);
       }
 
-      const update = { text: editText, explanation: editExplanation, type: editType as Question['type'], options, answer, teacherModified: true };
+      const update: Partial<Question> = { text: editText, explanation: editExplanation, type: editType as Question['type'], options, answer, teacherModified: true, imageUrl: editImageUrl ?? null };
       await updateQuestion(editingId, update);
       setQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
       setPendingQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
@@ -249,6 +253,7 @@ export default function QuestionBankPage() {
         approvalStatus: 'pending',
         source: 'manual' as const,
         createdAt: Date.now(),
+        ...(addImageUrl ? { imageUrl: addImageUrl } : {}),
       };
 
       const result = await saveQuestionDeduped(q);
@@ -264,7 +269,7 @@ export default function QuestionBankPage() {
       // Reset form
       setShowAddForm(false);
       setAddText(''); setAddOptionA(''); setAddOptionB(''); setAddOptionC(''); setAddOptionD('');
-      setAddAnswer(''); setAddExplanation(''); setAddDifficulty('medium'); setAddPoints(1);
+      setAddAnswer(''); setAddExplanation(''); setAddDifficulty('medium'); setAddPoints(1); setAddImageUrl(null);
     } catch (e) {
       console.error('Add question error:', e);
       toast('Failed to save question', 'error');
@@ -513,6 +518,12 @@ export default function QuestionBankPage() {
                 </div>
               )}
 
+              {/* Image (optional) */}
+              <div>
+                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>IMAGE (optional)</label>
+                <ImageUploader value={addImageUrl} onChange={setAddImageUrl} disabled={addSaving} />
+              </div>
+
               {/* Explanation + meta */}
               <div>
                 <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>EXPLANATION</label>
@@ -733,6 +744,11 @@ export default function QuestionBankPage() {
                                 style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
                             </div>
                           )}
+                          {/* Image */}
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>IMAGE (optional)</label>
+                            <ImageUploader value={editImageUrl} onChange={setEditImageUrl} disabled={saving} />
+                          </div>
                           {/* Explanation */}
                           <div>
                             <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>
@@ -918,6 +934,10 @@ export default function QuestionBankPage() {
                               style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
                           </div>
                         )}
+                        <div>
+                          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>IMAGE (optional)</label>
+                          <ImageUploader value={editImageUrl} onChange={setEditImageUrl} disabled={saving} />
+                        </div>
                         <div>
                           <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>
                           <textarea value={editExplanation} onChange={e => setEditExplanation(e.target.value)} rows={2}
