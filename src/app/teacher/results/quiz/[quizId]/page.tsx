@@ -2,10 +2,10 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Users, Trophy, Target, TrendingUp, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Trophy, Target, TrendingUp, AlertTriangle, CheckCircle2, Clock, Zap, StopCircle, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getResultsByQuiz } from '@/lib/firebase/sessions';
+import { getResultsByQuiz, findActiveSessionForQuiz, endSession, clearTeacherSession } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
 import type { SessionResult } from '@/types/session';
 import type { Quiz } from '@/types/quiz';
@@ -35,18 +35,33 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
   const [results, setResults] = useState<SessionResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'overview' | 'questions' | 'sessions' | 'students'>('overview');
+  const [liveSession, setLiveSession] = useState<{ sessionId: string; code: string } | null>(null);
+  const [endingSession, setEndingSession] = useState(false);
 
   useEffect(() => {
     if (!ready || !user || !configured) return;
     Promise.all([
       getQuiz(quizId),
       getResultsByQuiz(quizId),
-    ]).then(([q, rs]) => {
+      findActiveSessionForQuiz(user.uid, quizId),
+    ]).then(([q, rs, live]) => {
       setQuiz(q);
       setResults(rs);
+      setLiveSession(live);
       setLoading(false);
     });
   }, [ready, user, configured, quizId]);
+
+  async function handleEndSession() {
+    if (!liveSession || !user) return;
+    setEndingSession(true);
+    try {
+      await endSession(liveSession.sessionId);
+      await clearTeacherSession(user.uid, liveSession.sessionId);
+      setLiveSession(null);
+    } catch { /* ignore */ }
+    setEndingSession(false);
+  }
 
   if (!ready || loading) {
     return (
@@ -153,25 +168,65 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
 
       {/* ── Sticky nav ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(20px)', background: 'rgba(5,8,20,0.85)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px', height: 54, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(20px)', background: 'rgba(5,8,20,0.88)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px', height: 58, display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Back */}
           <button
             onClick={() => router.push('/teacher/quizzes')}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', flexShrink: 0, fontWeight: 500 }}
           >
             <ChevronLeft size={14} /> Quizzes
           </button>
-          <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
-          <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {/* Title */}
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
             {title}
           </span>
-          <button
-            onClick={exportCSV}
-            style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', flexShrink: 0 }}
-          >
-            ⬇ CSV
-          </button>
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={exportCSV}
+              title="Export CSV"
+              style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}
+            >
+              <Download size={12} /> CSV
+            </button>
+            {liveSession ? (
+              <>
+                <button
+                  onClick={() => router.push(`/teacher/host/${quizId}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: '#34d399', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer' }}
+                >
+                  <Zap size={13} strokeWidth={2} /> Manage
+                </button>
+                <button
+                  onClick={handleEndSession}
+                  disabled={endingSession}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#fca5a5', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '6px 14px', cursor: endingSession ? 'default' : 'pointer', opacity: endingSession ? 0.5 : 1 }}
+                >
+                  <StopCircle size={13} strokeWidth={2} /> {endingSession ? 'Ending…' : 'End Session'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => router.push(`/teacher/host/${quizId}`)}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: '#0d0d14', background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', border: 'none', borderRadius: 8, padding: '6px 16px', cursor: 'pointer' }}
+              >
+                <Zap size={13} strokeWidth={2.5} /> Host Session
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Live session banner */}
+        {liveSession && (
+          <div style={{ borderTop: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.06)', padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'pulseDot 1.5s ease-in-out infinite', flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: '#6ee7b7', fontWeight: 600 }}>
+              Session live — Room <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: 2 }}>{liveSession.code}</span>
+            </span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>Students can still be joining</span>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 20px 80px' }}>
@@ -202,16 +257,40 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
         </div>
 
         {totalSessions === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', border: '2px dashed rgba(255,255,255,0.08)', borderRadius: 20 }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>📊</div>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>No sessions yet</p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Host a live session to start collecting results.</p>
-            <button
-              onClick={() => router.push(`/teacher/host/${quizId}`)}
-              style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
-            >
-              Host a Session →
-            </button>
+          <div style={{ textAlign: 'center', padding: '60px 24px', border: `2px dashed ${liveSession ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 20 }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>{liveSession ? '🟢' : '📊'}</div>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>
+              {liveSession ? 'Session in progress' : 'No sessions yet'}
+            </p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>
+              {liveSession
+                ? `Room ${liveSession.code} is live — results will appear here when the session ends.`
+                : 'Host a live session to start collecting results.'}
+            </p>
+            {liveSession ? (
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                <button
+                  onClick={() => router.push(`/teacher/host/${quizId}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 28px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', color: '#34d399', fontWeight: 700, fontSize: 15, border: '1px solid rgba(16,185,129,0.4)', cursor: 'pointer' }}
+                >
+                  <Zap size={15} /> Manage Session
+                </button>
+                <button
+                  onClick={handleEndSession}
+                  disabled={endingSession}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 24px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontWeight: 600, fontSize: 15, border: '1px solid rgba(239,68,68,0.3)', cursor: endingSession ? 'default' : 'pointer', opacity: endingSession ? 0.5 : 1 }}
+                >
+                  <StopCircle size={15} /> {endingSession ? 'Ending…' : 'End Session'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push(`/teacher/host/${quizId}`)}
+                style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
+              >
+                Host a Session →
+              </button>
+            )}
           </div>
         ) : (
           <>
