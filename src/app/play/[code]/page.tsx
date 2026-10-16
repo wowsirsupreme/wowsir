@@ -398,6 +398,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       code={code}
       avatarId={avatarId}
       playerName={playerName}
+      playerId={playerId}
       players={players}
       ready={ready}
       questionsLoading={questionsLoading}
@@ -483,22 +484,27 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
 // ── Lobby View Component ──────────────────────────────────────────────────────
 
-const TRACKS = [
-  { id: 'big-guy',   label: 'Big Guy',   artist: 'Ice Spice',     src: '/music/big-guy.mp3',   emoji: '🎤' },
-  { id: 'lush-life', label: 'Lush Life', artist: 'Zara Larsson',  src: '/music/lush-life.mp3', emoji: '🌸' },
+const DEFAULT_TRACKS = [
+  { id: 'big-guy',   label: 'Big Guy',   artist: 'Ice Spice',    src: '/music/big-guy.mp3',   emoji: '🎤' },
+  { id: 'lush-life', label: 'Lush Life', artist: 'Zara Larsson', src: '/music/lush-life.mp3', emoji: '🌸' },
 ];
 
 function LobbyView({
-  code, avatarId, playerName, players, ready, questionsLoading,
+  code, avatarId, playerName, playerId, players, ready, questionsLoading,
   localQuestions, onStart, onBattle,
 }: {
-  code: string; avatarId: number; playerName: string;
+  code: string; avatarId: number; playerName: string; playerId: string | null;
   players: unknown[]; ready: boolean; questionsLoading: boolean;
   localQuestions: unknown[]; onStart: () => void; onBattle: () => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [nowPlaying, setNowPlaying] = useState<string | null>(null);
   const [volume, setVolume] = useState(0.5);
+  const [musicOpen, setMusicOpen] = useState(false);
+  const [tracks, setTracks] = useState(DEFAULT_TRACKS);
+  const [customUrl, setCustomUrl] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+  const [showAddCustom, setShowAddCustom] = useState(false);
 
   function toggleTrack(id: string, src: string) {
     if (nowPlaying === id) {
@@ -520,15 +526,27 @@ function LobbyView({
     if (audioRef.current) audioRef.current.volume = v;
   }
 
+  function addCustomTrack() {
+    if (!customUrl.trim()) return;
+    const id = `custom-${Date.now()}`;
+    setTracks(prev => [...prev, { id, label: customLabel || 'Custom', artist: 'Custom', src: customUrl.trim(), emoji: '🎵' }]);
+    setCustomUrl('');
+    setCustomLabel('');
+    setShowAddCustom(false);
+    toggleTrack(id, customUrl.trim());
+  }
+
   // Stop music when component unmounts (quiz starts)
   useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  const nowTrack = tracks.find(t => t.id === nowPlaying);
 
   return (
     <div className="play-screen flex flex-col min-h-screen">
       <QuizNav />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-5">
+      {/* Scrollable main content — pb-20 clears the fixed nav */}
+      <div className="flex-1 overflow-y-auto flex flex-col items-center px-4 pt-6 pb-20 gap-5">
 
         {/* Room code chip */}
         <div style={{
@@ -546,24 +564,20 @@ function LobbyView({
 
         {/* Avatar + name + status */}
         <div className="flex flex-col items-center gap-3 animate-fadeUp">
-          <div
-            style={{
-              width: 88, height: 88, borderRadius: 24,
-              background: 'rgba(16,185,129,0.12)',
-              border: '2px solid rgba(16,185,129,0.3)',
-              boxShadow: '0 0 36px rgba(16,185,129,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Avatar id={avatarId} size={56} />
+          <div style={{
+            width: 80, height: 80, borderRadius: 22,
+            background: 'rgba(16,185,129,0.12)',
+            border: '2px solid rgba(16,185,129,0.3)',
+            boxShadow: '0 0 28px rgba(16,185,129,0.18)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Avatar id={avatarId} size={52} />
           </div>
           <p className="font-display text-2xl" style={{ color: '#fff' }}>{playerName}</p>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '5px 14px', borderRadius: 999,
-            background: questionsLoading
-              ? 'rgba(255,255,255,0.05)'
-              : ready ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
+            background: questionsLoading ? 'rgba(255,255,255,0.05)' : ready ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
             border: `1px solid ${ready && !questionsLoading ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.08)'}`,
           }}>
             {questionsLoading ? (
@@ -583,106 +597,153 @@ function LobbyView({
 
         {/* Friends in the room */}
         {(players as SessionPlayer[]).length > 0 && (
-          <div
-            className="w-full animate-fadeUp"
-            style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
+          <div className="w-full animate-fadeUp" style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <p style={{ margin: '0 0 12px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {(players as SessionPlayer[]).length} {(players as SessionPlayer[]).length === 1 ? 'player' : 'players'} in the room
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-              {(players as SessionPlayer[]).map(p => (
-                <div key={p.id} className="animate-fadeIn flex flex-col items-center gap-1.5">
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 14,
-                    background: p.name === playerName ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)',
-                    border: `1.5px solid ${p.name === playerName ? 'rgba(52,211,153,0.45)' : 'rgba(255,255,255,0.1)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: p.name === playerName ? '0 0 14px rgba(16,185,129,0.2)' : 'none',
-                  }}>
-                    <Avatar id={p.avatarId} size={32} />
+              {(players as SessionPlayer[]).map(p => {
+                const isMe = p.id === playerId;
+                return (
+                  <div key={p.id} className="animate-fadeIn flex flex-col items-center gap-1.5">
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 14,
+                      background: isMe ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)',
+                      border: `1.5px solid ${isMe ? 'rgba(52,211,153,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: isMe ? '0 0 14px rgba(16,185,129,0.2)' : 'none',
+                    }}>
+                      <Avatar id={p.avatarId} size={32} />
+                    </div>
+                    <span style={{ fontSize: 11, color: isMe ? '#6ee7b7' : 'rgba(255,255,255,0.55)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                      {isMe ? 'You' : p.name}
+                    </span>
                   </div>
-                  <span style={{ fontSize: 11, color: p.name === playerName ? '#6ee7b7' : 'rgba(255,255,255,0.55)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                    {p.name === playerName ? 'You' : p.name}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Music player */}
-        <div
-          className="w-full animate-fadeUp"
-          style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-        >
-          <p style={{ margin: '0 0 10px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Lobby Music
-          </p>
-          <div className="flex flex-col gap-2">
-            {TRACKS.map(t => {
-              const active = nowPlaying === t.id;
-              return (
+        {/* Music — compact dropdown */}
+        <div className="w-full animate-fadeUp" style={{ maxWidth: 400 }}>
+          <button
+            onClick={() => setMusicOpen(o => !o)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              padding: '11px 16px', borderRadius: musicOpen ? '14px 14px 0 0' : 14,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+              cursor: 'pointer', transition: 'border-radius 0.15s',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{nowTrack ? nowTrack.emoji : '🎵'}</span>
+            <span style={{ flex: 1, textAlign: 'left', fontSize: 13, color: nowTrack ? '#34d399' : 'rgba(255,255,255,0.4)', fontWeight: nowTrack ? 600 : 400 }}>
+              {nowTrack ? `${nowTrack.label} — ${nowTrack.artist}` : 'Lobby music'}
+            </span>
+            {nowTrack && (
+              <span style={{ fontSize: 11, color: 'rgba(52,211,153,0.7)', animation: 'pulseDot 1.5s ease-in-out infinite' }}>▶</span>
+            )}
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', marginLeft: 2 }}>{musicOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {musicOpen && (
+            <div style={{ borderRadius: '0 0 14px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderTop: 'none', overflow: 'hidden' }}>
+              {tracks.map(t => {
+                const active = nowPlaying === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => toggleTrack(t.id, t.src)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 16px', background: active ? 'rgba(16,185,129,0.12)' : 'transparent',
+                      border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>{t.emoji}</span>
+                    <span style={{ flex: 1, fontSize: 13, color: active ? '#34d399' : 'rgba(255,255,255,0.7)', fontWeight: active ? 600 : 400 }}>
+                      {t.label}
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontWeight: 400, marginLeft: 6 }}>{t.artist}</span>
+                    </span>
+                    <span style={{ fontSize: 16, color: active ? '#34d399' : 'rgba(255,255,255,0.2)' }}>{active ? '⏸' : '▶'}</span>
+                  </button>
+                );
+              })}
+
+              {/* Volume — shown when playing */}
+              {nowPlaying && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 16px 10px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>🔈</span>
+                  <input type="range" min={0} max={1} step={0.05} value={volume}
+                    onChange={e => handleVolume(parseFloat(e.target.value))}
+                    style={{ flex: 1, accentColor: '#34d399', height: 4 }}
+                  />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>🔊</span>
+                </div>
+              )}
+
+              {/* Add custom */}
+              {!showAddCustom ? (
                 <button
-                  key={t.id}
-                  onClick={() => toggleTrack(t.id, t.src)}
-                  className="flex items-center gap-3 w-full text-left rounded-xl px-3 py-2.5 transition-all"
-                  style={{
-                    background: active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.04)',
-                    border: `1.5px solid ${active ? 'rgba(52,211,153,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                  }}
+                  onClick={() => setShowAddCustom(true)}
+                  style={{ width: '100%', padding: '9px 16px', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.3)', fontSize: 12, cursor: 'pointer', textAlign: 'left' }}
                 >
-                  <span style={{ fontSize: 22 }}>{t.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: active ? '#34d399' : '#fff' }}>{t.label}</p>
-                    <p className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{t.artist}</p>
-                  </div>
-                  <span style={{ fontSize: 18, color: active ? '#34d399' : 'rgba(255,255,255,0.2)' }}>
-                    {active ? '⏸' : '▶'}
-                  </span>
+                  + Add custom URL…
                 </button>
-              );
-            })}
-          </div>
-          {nowPlaying && (
-            <div className="flex items-center gap-3 mt-3 px-1">
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>🔈</span>
-              <input
-                type="range" min={0} max={1} step={0.05} value={volume}
-                onChange={e => handleVolume(parseFloat(e.target.value))}
-                className="flex-1 h-1 appearance-none rounded-full"
-                style={{ accentColor: '#34d399' }}
-              />
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>🔊</span>
+              ) : (
+                <div style={{ padding: '10px 14px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <input
+                    placeholder="Track name"
+                    value={customLabel}
+                    onChange={e => setCustomLabel(e.target.value)}
+                    style={{ padding: '7px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, outline: 'none' }}
+                  />
+                  <input
+                    placeholder="Audio URL (.mp3, .ogg…)"
+                    value={customUrl}
+                    onChange={e => setCustomUrl(e.target.value)}
+                    style={{ padding: '7px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, outline: 'none' }}
+                  />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={addCustomTrack} style={{ flex: 1, padding: '7px', borderRadius: 8, background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Add & Play</button>
+                    <button onClick={() => setShowAddCustom(false)} style={{ padding: '7px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        {ready && (
-          <div className="w-full animate-fadeUp" style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button
-              className="btn-glass btn-glass-green"
-              style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
-              onClick={onStart}
-            >
-              🚀 Play now ({localQuestions.length} questions)
-            </button>
-            <button
-              onClick={onBattle}
-              style={{
-                width: '100%', padding: '13px', borderRadius: 14,
-                background: 'rgba(239,68,68,0.08)',
-                border: '1.5px solid rgba(239,68,68,0.2)',
-                color: '#f87171', fontWeight: 600, fontSize: 14,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              ⚔️ Battle Mode instead
-            </button>
-          </div>
-        )}
+        {/* Action buttons — always visible, no cutoff */}
+        <div className="w-full animate-fadeUp" style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {ready ? (
+            <>
+              <button
+                className="btn-glass btn-glass-green"
+                style={{ width: '100%', fontSize: 17, padding: '15px 24px' }}
+                onClick={onStart}
+              >
+                🚀 Play now ({localQuestions.length} questions)
+              </button>
+              <button
+                onClick={onBattle}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 14,
+                  background: 'rgba(239,68,68,0.08)', border: '1.5px solid rgba(239,68,68,0.2)',
+                  color: '#f87171', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                ⚔️ Battle Mode instead
+              </button>
+            </>
+          ) : !questionsLoading && (
+            <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>
+              Waiting for session to load…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
