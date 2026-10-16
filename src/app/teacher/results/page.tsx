@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, BarChart2, Users, CheckCircle, Clock, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronLeft, BarChart2, Users, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
@@ -52,8 +52,6 @@ export default function ResultsPage() {
   }
 
   const firstName = (profile?.name || 'Teacher').split(' ')[0];
-  const published = quizzes.filter(q => q.status === 'published');
-  const draft = quizzes.filter(q => q.status !== 'published');
 
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
@@ -83,9 +81,9 @@ export default function ResultsPage() {
         {!loading && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 32 }}>
             {[
-              { label: 'Total Quizzes', value: quizzes.length, icon: BarChart2, color: '#fcd34d', glow: 'rgba(245,158,11,0.2)' },
-              { label: 'Published', value: published.length, icon: CheckCircle, color: '#6ee7b7', glow: 'rgba(16,185,129,0.2)' },
-              { label: 'Drafts', value: draft.length, icon: Clock, color: '#c4b5fd', glow: 'rgba(139,92,246,0.2)' },
+              { label: 'Sessions', value: results.length, icon: BarChart2, color: '#fcd34d', glow: 'rgba(245,158,11,0.2)' },
+              { label: 'Total Players', value: results.reduce((a, r) => a + (r.playerResults?.length || 0), 0), icon: Users, color: '#6ee7b7', glow: 'rgba(16,185,129,0.2)' },
+              { label: 'Quizzes Used', value: new Set(results.map(r => r.quizId)).size, icon: Trophy, color: '#c4b5fd', glow: 'rgba(139,92,246,0.2)' },
             ].map(s => (
               <div
                 key={s.label}
