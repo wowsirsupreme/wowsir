@@ -80,37 +80,39 @@ const BG = [
 //   gr11-programming  gr11-oop  gr11-algorithms  gr11-databases
 // ---------------------------------------------------------------------------
 
-const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter';
+const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter,imageUrl';
 
 const TEMPLATE_ROWS = [
   // ── Grade 4 ──────────────────────────────────────────────────────────────
-  'gr4-ch1-q001,gr4-ch1-peripherals,mcq,Which of these is an OUTPUT device?,Keyboard,Mouse,Monitor,Scanner,2,A monitor displays output from the computer.,easy,1,1',
+  'gr4-ch1-q001,gr4-ch1-peripherals,mcq,Which of these is an OUTPUT device?,Keyboard,Mouse,Monitor,Scanner,2,A monitor displays output from the computer.,easy,1,1,',
   // ── Grade 5 ──────────────────────────────────────────────────────────────
-  'gr5-ch2-q001,gr5-ch2-storage,mcq,Which storage medium uses laser light to read data?,Hard disk,USB drive,CD-ROM,RAM,2,CDs use a laser to read the pits and lands on the disc surface.,easy,1,2',
+  'gr5-ch2-q001,gr5-ch2-storage,mcq,Which storage medium uses laser light to read data?,Hard disk,USB drive,CD-ROM,RAM,2,CDs use a laser to read the pits and lands on the disc surface.,easy,1,2,',
   // ── Grade 6 ──────────────────────────────────────────────────────────────
-  'gr6-ch4-q001,gr6-ch4-excel1,mcq,Which Excel function adds all numbers in a range?,COUNT,SUM,AVERAGE,MAX,1,SUM adds up all the values in the selected range.,easy,1,4',
+  'gr6-ch4-q001,gr6-ch4-excel1,mcq,Which Excel function adds all numbers in a range?,COUNT,SUM,AVERAGE,MAX,1,SUM adds up all the values in the selected range.,easy,1,4,',
   // ── Grade 7 — MCQ ────────────────────────────────────────────────────────
-  'gr7-ch1-q001,gr7-ch1-numbers,mcq,What is the denary value of binary 1010?,8,10,12,14,1,1×8 + 0×4 + 1×2 + 0×1 = 10.,easy,1,1',
+  'gr7-ch1-q001,gr7-ch1-numbers,mcq,What is the denary value of binary 1010?,8,10,12,14,1,1×8 + 0×4 + 1×2 + 0×1 = 10.,easy,1,1,',
   // ── Grade 7 — True/False (leave optionA-D blank) ─────────────────────────
-  'gr7-ch4-q001,gr7-ch4-excel-charts,truefalse,A pie chart is best for showing changes over time.,,,,,false,Pie charts show proportions of a whole — use a line chart for trends.,easy,1,4',
+  'gr7-ch4-q001,gr7-ch4-excel-charts,truefalse,A pie chart is best for showing changes over time.,,,,,false,Pie charts show proportions of a whole — use a line chart for trends.,easy,1,4,',
   // ── Grade 7 — Short Answer ───────────────────────────────────────────────
-  'gr7-ch6-q001,gr7-ch6-html1,shortanswer,What HTML tag creates the largest heading?,,,,, h1,The <h1> tag defines the most important heading on a page.,easy,1,6',
+  'gr7-ch6-q001,gr7-ch6-html1,shortanswer,What HTML tag creates the largest heading?,,,,, h1,The <h1> tag defines the most important heading on a page.,easy,1,6,',
   // ── Grade 7 — Fill-in-the-blank (use ___ for the missing word) ───────────
-  'gr7-ch10-q001,gr7-ch10-python,fillinblank,In Python the ___ keyword starts a conditional statement.,,,,,if,if is the keyword used to begin a conditional statement in Python.,easy,1,10',
+  'gr7-ch10-q001,gr7-ch10-python,fillinblank,In Python the ___ keyword starts a conditional statement.,,,,,if,if is the keyword used to begin a conditional statement in Python.,easy,1,10,',
   // ── Grade 8 — Matching ───────────────────────────────────────────────────
   // optionA-D are LEFT-side items; answer gives the matching RIGHT-side labels pipe-separated
-  'gr8-ch8-q001,gr8-ch8-malware,matching,Match each malware type to its behaviour.,Self-replicates via email attachments,Disguises itself as useful software,Silently records keystrokes,Locks files and demands payment,Virus|Trojan horse|Spyware|Ransomware,Each malware type has a distinct attack method.,medium,2,8',
+  'gr8-ch8-q001,gr8-ch8-malware,matching,Match each malware type to its behaviour.,Self-replicates via email attachments,Disguises itself as useful software,Silently records keystrokes,Locks files and demands payment,Virus|Trojan horse|Spyware|Ransomware,Each malware type has a distinct attack method.,medium,2,8,',
   // ── Grade 8 — Ordering ───────────────────────────────────────────────────
   // answer gives the correct sequence as pipe-separated 0-based indices of optionA-D
-  'gr8-ch3-q001,gr8-ch3-access1,ordering,Place the database design steps in the correct order.,Define the fields,Create the table,Set the primary key,Enter records,0|2|1|3,You define fields first then choose a primary key before creating the table and finally entering data.,medium,2,3',
-  // ── Grade 9 CS IGCSE ─────────────────────────────────────────────────────
-  'gr9-cpu-q001,gr9-cpu,mcq,Which component temporarily holds data the CPU is using?,Hard disk,ROM,RAM,SSD,2,RAM is volatile memory that holds data the CPU is actively processing.,medium,1,0',
+  'gr8-ch3-q001,gr8-ch3-access1,ordering,Place the database design steps in the correct order.,Define the fields,Create the table,Set the primary key,Enter records,0|2|1|3,You define fields first then choose a primary key before creating the table and finally entering data.,medium,2,3,',
+  // ── Grade 9 CS IGCSE — with image example ────────────────────────────────
+  // imageUrl column (col 14): paste a full https:// URL to attach an image to the question
+  'gr9-cpu-q001,gr9-cpu,mcq,Which component temporarily holds data the CPU is using?,Hard disk,ROM,RAM,SSD,2,RAM is volatile memory that holds data the CPU is actively processing.,medium,1,0,',
+  'gr9-cpu-q002,gr9-cpu,mcq,Identify the component highlighted in the diagram.,CPU,RAM,GPU,HDD,0,The highlighted chip is the CPU — the central processing unit.,medium,1,0,https://res.cloudinary.com/example/image/upload/cpu-diagram.jpg',
   // ── Grade 9 DT IGCSE ─────────────────────────────────────────────────────
-  'gr9dt-materials-q001,gr9dt-materials,mcq,Which material property describes resistance to scratching?,Toughness,Hardness,Elasticity,Conductivity,1,Hardness means resistance to indentation or scratching.,easy,1,0',
+  'gr9dt-materials-q001,gr9dt-materials,mcq,Which material property describes resistance to scratching?,Toughness,Hardness,Elasticity,Conductivity,1,Hardness means resistance to indentation or scratching.,easy,1,0,',
   // ── Grade 10 CS IGCSE ────────────────────────────────────────────────────
-  'gr10-cybersec-q001,gr10-cybersecurity,mcq,What does a firewall primarily do?,Speeds up the network,Blocks unauthorised network access,Encrypts stored files,Backs up data automatically,1,A firewall monitors and filters incoming and outgoing network traffic.,medium,1,0',
+  'gr10-cybersec-q001,gr10-cybersecurity,mcq,What does a firewall primarily do?,Speeds up the network,Blocks unauthorised network access,Encrypts stored files,Backs up data automatically,1,A firewall monitors and filters incoming and outgoing network traffic.,medium,1,0,',
   // ── Grade 11 CS A-Level ──────────────────────────────────────────────────
-  'gr11-oop-q001,gr11-oop,mcq,Which OOP concept hides internal implementation details?,Inheritance,Polymorphism,Encapsulation,Abstraction,2,Encapsulation bundles data and methods and restricts direct access to object internals.,medium,2,0',
+  'gr11-oop-q001,gr11-oop,mcq,Which OOP concept hides internal implementation details?,Inheritance,Polymorphism,Encapsulation,Abstraction,2,Encapsulation bundles data and methods and restricts direct access to object internals.,medium,2,0,',
 ];
 
 const TEMPLATE_CSV = TEMPLATE_HEADERS + '\n' + TEMPLATE_ROWS.join('\n');
@@ -184,7 +186,7 @@ function _parseCSVRows(text: string): ParsedRow[] {
     const [
       id, topicKey, rawType, text,
       optA, optB, optC, optD,
-      answer, explanation, difficulty, pointsStr, chapterStr,
+      answer, explanation, difficulty, pointsStr, chapterStr, imageUrlRaw,
     ] = cols;
 
     const type = rawType?.trim().toLowerCase();
@@ -322,6 +324,7 @@ function _parseCSVRows(text: string): ParsedRow[] {
         difficulty: (['easy', 'medium', 'hard'].includes(difficulty?.trim()) ? difficulty.trim() : 'medium') as Question['difficulty'],
         points: parseInt(pointsStr?.trim() || '1', 10) || 1,
         chapter: parseInt(chapterStr?.trim() || '1', 10) || 1,
+        ...(imageUrlRaw?.trim() ? { imageUrl: imageUrlRaw.trim() } : {}),
         approvalStatus: 'pending',
         source: 'imported' as const,
         createdAt: Date.now(),
@@ -482,6 +485,7 @@ const [importedCount, setImportedCount] = useState(0);
                   Download the template to see answer formats for all 6 question types. New questions start as{' '}
                   <strong style={{ color: 'rgba(255,255,255,0.7)' }}>pending</strong> unless you enable auto-approve below.
                   Exact duplicates are skipped automatically. Legacy topicKeys (e.g. <code style={{ fontSize: 11 }}>gr5-computer-evolution</code>) are remapped automatically.
+                  Add an <code style={{ fontSize: 11 }}>imageUrl</code> column (col 14) with a full <code style={{ fontSize: 11 }}>https://</code> URL to attach an image to a question — leave it blank for text-only questions.
                 </p>
                 {/* Type legend */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
