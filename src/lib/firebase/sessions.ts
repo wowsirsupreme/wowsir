@@ -1,7 +1,7 @@
 'use client';
 
 import { ref, set, get, update, remove, onValue, off, type DatabaseReference } from 'firebase/database';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
 import { getFirebaseInstances } from './config';
 import type { LiveSession, SessionPlayer, SessionResult } from '@/types/session';
 import type { Question } from '@/types/question';
@@ -313,10 +313,26 @@ export async function getTeacherActiveSessions(teacherId: string): Promise<Teach
   await Promise.all(
     Object.entries(entries).map(async ([sessionId, { quizId, code }]) => {
       try {
-        const [metaSnap, playersSnap] = await Promise.all([
+        const [metaSnap, playersSnap, quizSnap] = await Promise.all([
           get(ref(db(), `sessions/${sessionId}/meta`)),
           get(ref(db(), `sessions/${sessionId}/players`)),
+          getDoc(doc(fs(), 'quizzes', quizId)),
         ]);
+        // Clean up orphaned sessions whose quiz was deleted
+        if (!quizSnap.exists()) {
+          const rtdb = db();
+          await Promise.all([
+            remove(ref(rtdb, `sessions/${sessionId}`)),
+            remove(ref(rtdb, `sessions_questions/${sessionId}`)),
+            remove(ref(rtdb, `session_pub_questions/${sessionId}`)),
+            remove(ref(rtdb, `teacher_sessions/${teacherId}/${sessionId}`)),
+          ]);
+          if (metaSnap.exists()) {
+            const meta = metaSnap.val() as { code?: string };
+            if (meta.code) await remove(ref(rtdb, `session_codes/${meta.code}`));
+          }
+          return;
+        }
         if (!metaSnap.exists()) return;
         const session = metaSnap.val() as LiveSession;
         if (session.status === 'ended') return;
