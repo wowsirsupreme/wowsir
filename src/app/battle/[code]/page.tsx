@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Avatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
 import { findSessionByCode } from '@/lib/firebase/sessions';
@@ -33,10 +33,11 @@ type Phase = 'join' | 'lobby' | 'waiting_accept';
 export default function BattleLobbyPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [phase, setPhase] = useState<Phase>('join');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => searchParams.get('name') ?? '');
   const [avatarId, setAvatarId] = useState(() => Math.floor(Math.random() * AVATARS));
   const [playerId] = useState(() => `player_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`);
 
