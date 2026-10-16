@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, BookOpen, Search, CheckCircle, Clock, Edit2, X, Save, Plus, ChevronDown } from 'lucide-react';
+import { ChevronLeft, BookOpen, Search, CheckCircle, Clock, Edit2, X, Save, Plus, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
-import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped } from '@/lib/firebase/questions';
+import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped, deleteQuestion } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
 import TopicPicker from '@/components/TopicPicker';
@@ -71,6 +71,8 @@ export default function QuestionBankPage() {
   const [addDifficulty, setAddDifficulty] = useState<Question['difficulty']>('medium');
   const [addPoints, setAddPoints] = useState(1);
   const [addSaving, setAddSaving] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -133,6 +135,21 @@ export default function QuestionBankPage() {
       toast('Save failed', 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeleting(true);
+    try {
+      await deleteQuestion(id);
+      setQuestions(prev => prev.filter(q => q.id !== id));
+      setPendingQuestions(prev => prev.filter(q => q.id !== id));
+      toast('Question deleted', 'success');
+    } catch {
+      toast('Delete failed', 'error');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
     }
   }
 
@@ -503,17 +520,43 @@ export default function QuestionBankPage() {
                             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}>
                               {q.difficulty} · {q.points} pt{q.points !== 1 ? 's' : ''}
                             </p>
-                            <button
-                              onClick={() => startEdit(q)}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 5,
-                                padding: '5px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
-                                background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                              }}
-                            >
-                              <Edit2 size={11} /> Edit
-                            </button>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button
+                                onClick={() => startEdit(q)}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: 5,
+                                  padding: '5px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+                                  background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                }}
+                              >
+                                <Edit2 size={11} /> Edit
+                              </button>
+                              {confirmDeleteId === q.id ? (
+                                <div style={{ display: 'flex', gap: 5 }}>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
+                                  >
+                                    <X size={11} /> No
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(q.id!)}
+                                    disabled={deleting}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.35)' }}
+                                  >
+                                    <Trash2 size={11} /> {deleting ? '…' : 'Yes, delete'}
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmDeleteId(q.id!)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
+                                >
+                                  <Trash2 size={11} /> Delete
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </>
                       )}
@@ -641,6 +684,30 @@ export default function QuestionBankPage() {
                             >
                               <CheckCircle size={12} /> Approve
                             </button>
+                            {confirmDeleteId === q.id ? (
+                              <div style={{ display: 'flex', gap: 5 }}>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 9, fontSize: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.1)' }}
+                                >
+                                  <X size={11} /> No
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(q.id!)}
+                                  disabled={deleting}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'rgba(239,68,68,0.15)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.35)' }}
+                                >
+                                  <Trash2 size={11} /> {deleting ? '…' : 'Yes, delete'}
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteId(q.id!)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 9, fontSize: 12, cursor: 'pointer', background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
+                              >
+                                <Trash2 size={11} /> Delete
+                              </button>
+                            )}
                           </div>
                         </div>
                       </>
