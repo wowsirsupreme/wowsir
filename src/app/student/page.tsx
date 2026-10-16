@@ -136,12 +136,11 @@ export default function StudentHomePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}
         >
-          <button
-            onClick={() => router.push('/')}
-            style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', minHeight: 44, display: 'flex', alignItems: 'center' }}
+          <span
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', userSelect: 'none' }}
           >
             WOW Sir
-          </button>
+          </span>
 
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em' }}>
             STUDENT
