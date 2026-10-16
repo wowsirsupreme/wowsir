@@ -721,8 +721,6 @@ export const gr9csQuestions: Omit<Question, 'quizId'>[] = [
     approvalStatus: 'pending', source: 'builtin', cognitiveLevel: 'recall',
   },
 
-];
-
   // ════════════════════════════════════════════════════════════
   // gr9-cpu  q011–q100  (90 new questions)
   // ════════════════════════════════════════════════════════════
@@ -2513,3 +2511,5 @@ export const gr9csQuestions: Omit<Question, 'quizId'>[] = [
     answer: '1', explanation: 'Correct OS function mapping: Memory management → RAM allocation/protection; Process management → CPU scheduling, process creation/termination; File management → directory structure, file permissions, storage I/O.',
     difficulty: 'easy', points: 1, cognitiveLevel: 'recall', sourceLesson: 'gr9-os', approvalStatus: 'pending', source: 'builtin', ...META },
 
+
+];

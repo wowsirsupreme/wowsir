@@ -1,4 +1,5 @@
 'use client';
+import { resolveAnswerIndex } from '@/lib/utils';
 
 import { useState, useEffect, useRef, use, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
