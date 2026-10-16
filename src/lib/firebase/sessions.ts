@@ -31,6 +31,25 @@ export async function createSession(
   settings: LiveSession['settings'],
   closeAt?: number
 ): Promise<string> {
+  // End all previous sessions for this quiz before creating a new one
+  try {
+    const prevSnap = await get(ref(db(), `teacher_sessions/${teacherId}`));
+    if (prevSnap.exists()) {
+      const entries = prevSnap.val() as Record<string, { quizId: string; code: string }>;
+      await Promise.all(
+        Object.entries(entries)
+          .filter(([, v]) => v.quizId === quizId)
+          .map(async ([sid, v]) => {
+            await Promise.all([
+              update(ref(db(), `sessions/${sid}/meta`), { status: 'ended' }),
+              remove(ref(db(), `teacher_sessions/${teacherId}/${sid}`)),
+              remove(ref(db(), `session_codes/${v.code}`)),
+            ]);
+          })
+      );
+    }
+  } catch { /* best-effort: proceed even if cleanup fails */ }
+
   const code = genCode();
   const sessionId = `${code.toLowerCase()}_${Date.now().toString(36)}`;
 
@@ -333,9 +352,28 @@ export async function getTeacherActiveSessions(teacherId: string): Promise<Teach
           }
           return;
         }
-        if (!metaSnap.exists()) return;
+        if (!metaSnap.exists()) {
+          // Meta gone but index entry exists — clean up the index
+          await remove(ref(db(), `teacher_sessions/${teacherId}/${sessionId}`));
+          return;
+        }
         const session = metaSnap.val() as LiveSession;
-        if (session.status === 'ended') return;
+        if (session.status === 'ended') {
+          // Clean up ended sessions from the index
+          await remove(ref(db(), `teacher_sessions/${teacherId}/${sessionId}`));
+          return;
+        }
+        // Auto-expire sessions stuck in lobby/paused for more than 24 hours
+        const AGE_LIMIT = 24 * 60 * 60 * 1000;
+        const createdAt = (entries[sessionId] as { createdAt?: number }).createdAt ?? 0;
+        if (createdAt && Date.now() - createdAt > AGE_LIMIT && session.status !== 'active') {
+          await Promise.all([
+            update(ref(db(), `sessions/${sessionId}/meta`), { status: 'ended' }),
+            remove(ref(db(), `teacher_sessions/${teacherId}/${sessionId}`)),
+            remove(ref(db(), `session_codes/${session.code || code}`)),
+          ]);
+          return;
+        }
         const playerCount = playersSnap.exists() ? Object.keys(playersSnap.val()).length : 0;
         results.push({ sessionId, quizId, code: session.code || code, session, playerCount });
       } catch { /* skip broken entries */ }
