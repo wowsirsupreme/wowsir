@@ -64,6 +64,24 @@ export async function getQuestionsByQuiz(quizId: string): Promise<Question[]> {
   return snap.docs.map(d => ({ ...d.data(), id: d.id } as Question));
 }
 
+/** Fetch the current Firestore state of specific questions by their IDs.
+ *  Returns questions in the same order as the input ids array. */
+export async function getQuestionsByIds(ids: string[]): Promise<Question[]> {
+  if (ids.length === 0) return [];
+  // Firestore 'in' queries support up to 30 items per call
+  const CHUNK = 30;
+  const results: Question[] = [];
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const q = query(collection(fs(), 'questions'), where('__name__', 'in', chunk));
+    const snap = await getDocs(q);
+    snap.docs.forEach(d => results.push({ ...d.data(), id: d.id } as Question));
+  }
+  // Re-order to match input order
+  const map = new Map(results.map(q => [q.id!, q]));
+  return ids.map(id => map.get(id)).filter(Boolean) as Question[];
+}
+
 export async function saveQuestion(question: Omit<Question, 'id'> & { id?: string }): Promise<string> {
   const ref = question.id ? doc(fs(), 'questions', question.id) : doc(collection(fs(), 'questions'));
   await setDoc(ref, { ...question, id: ref.id });

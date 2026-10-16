@@ -55,6 +55,9 @@ export default function QuestionBankPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [editExplanation, setEditExplanation] = useState('');
+  const [editType, setEditType] = useState<string>('mcq');
+  const [editOptions, setEditOptions] = useState<string[]>(['', '', '', '']);
+  const [editAnswer, setEditAnswer] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Add Question form state
@@ -120,15 +123,45 @@ export default function QuestionBankPage() {
     setEditingId(q.id!);
     setEditText(q.text);
     setEditExplanation(q.explanation || '');
+    setEditType(q.type || 'mcq');
+    // Pad options array to 4 slots for the UI
+    const opts = q.options ? [...q.options] : [];
+    while (opts.length < 4) opts.push('');
+    setEditOptions(opts);
+    setEditAnswer(q.answer ?? '');
   }
 
   async function saveEdit(q: Question) {
     if (!editingId) return;
     setSaving(true);
     try {
-      await updateQuestion(editingId, { text: editText, explanation: editExplanation, teacherModified: true });
-      setQuestions(prev => prev.map(x => x.id === editingId ? { ...x, text: editText, explanation: editExplanation, teacherModified: true } : x));
-      setPendingQuestions(prev => prev.map(x => x.id === editingId ? { ...x, text: editText, explanation: editExplanation, teacherModified: true } : x));
+      // Build options based on type
+      let options: string[] = q.options ?? [];
+      let answer = editAnswer.trim();
+
+      if (editType === 'mcq') {
+        options = editOptions.map(o => o.trim()).filter(Boolean);
+        if (options.length < 2) { toast('MCQ needs at least 2 options', 'error'); setSaving(false); return; }
+        const idx = parseInt(answer, 10);
+        if (isNaN(idx) || idx < 0 || idx >= options.length) {
+          toast(`Answer index must be 0–${options.length - 1}`, 'error'); setSaving(false); return;
+        }
+      } else if (editType === 'truefalse') {
+        options = ['True', 'False'];
+        const n = answer.toLowerCase();
+        if (n !== '0' && n !== '1' && n !== 'true' && n !== 'false') {
+          toast('True/False answer: 0 = True, 1 = False', 'error'); setSaving(false); return;
+        }
+        // Normalise to index string format used elsewhere
+        answer = (n === 'true' || n === '0') ? '0' : '1';
+      } else {
+        options = editOptions.map(o => o.trim()).filter(Boolean);
+      }
+
+      const update = { text: editText, explanation: editExplanation, type: editType as Question['type'], options, answer, teacherModified: true };
+      await updateQuestion(editingId, update);
+      setQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
+      setPendingQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
       toast('Question saved', 'success');
       setEditingId(null);
     } catch {
@@ -470,31 +503,84 @@ export default function QuestionBankPage() {
                     >
                       {editingId === q.id ? (
                         <div style={{ display: 'grid', gap: 10 }}>
+                          {/* Type selector */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            <div>
+                              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>TYPE</label>
+                              <select value={editType} onChange={e => { setEditType(e.target.value); setEditAnswer(''); }}
+                                style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.25)', background: 'rgba(255,255,255,0.07)', color: '#f5f3ee', fontSize: 13 }}>
+                                <option value="mcq">Multiple Choice (MCQ)</option>
+                                <option value="truefalse">True / False</option>
+                                <option value="shortanswer">Short Answer</option>
+                                <option value="fillinblank">Fill in the Blank</option>
+                                <option value="matching">Matching</option>
+                                <option value="ordering">Ordering</option>
+                              </select>
+                            </div>
+                          </div>
+                          {/* Question text */}
                           <div>
                             <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>QUESTION TEXT</label>
-                            <textarea
-                              value={editText}
-                              onChange={e => setEditText(e.target.value)}
-                              rows={3}
-                              style={{
-                                width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, lineHeight: 1.5,
-                                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)',
-                                color: '#fff', resize: 'vertical',
-                              }}
-                            />
+                            <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3}
+                              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, lineHeight: 1.5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)', color: '#fff', resize: 'vertical' }} />
                           </div>
+                          {/* Options (MCQ, matching, ordering) */}
+                          {(editType === 'mcq' || editType === 'matching' || editType === 'ordering') && (
+                            <div>
+                              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>
+                                {editType === 'matching' ? 'LEFT-SIDE ITEMS' : editType === 'ordering' ? 'ITEMS (in any order)' : 'OPTIONS'}
+                              </label>
+                              <div style={{ display: 'grid', gap: 6 }}>
+                                {editOptions.map((opt, oi) => (
+                                  <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    {editType === 'mcq' && (
+                                      <button type="button"
+                                        onClick={() => setEditAnswer(String(oi))}
+                                        title="Mark as correct"
+                                        style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', border: `2px solid ${editAnswer === String(oi) ? '#6ee7b7' : 'rgba(255,255,255,0.2)'}`, background: editAnswer === String(oi) ? 'rgba(16,185,129,0.25)' : 'transparent', cursor: 'pointer' }}>
+                                        {editAnswer === String(oi) && <span style={{ display: 'block', width: 10, height: 10, borderRadius: '50%', background: '#6ee7b7', margin: '4px auto' }} />}
+                                      </button>
+                                    )}
+                                    <input value={opt} onChange={e => { const o = [...editOptions]; o[oi] = e.target.value; setEditOptions(o); }}
+                                      placeholder={`${editType === 'matching' ? 'Left' : 'Option'} ${String.fromCharCode(65 + oi)}`}
+                                      style={{ flex: 1, padding: '8px 11px', borderRadius: 8, border: `1px solid ${editType === 'mcq' && editAnswer === String(oi) ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.1)'}`, background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                                  </div>
+                                ))}
+                              </div>
+                              {editType === 'mcq' && (
+                                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>Click the circle next to the correct option</p>
+                              )}
+                            </div>
+                          )}
+                          {/* True/False answer */}
+                          {editType === 'truefalse' && (
+                            <div>
+                              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 6 }}>CORRECT ANSWER</label>
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                {[['0', 'True'], ['1', 'False']].map(([val, lbl]) => (
+                                  <button key={val} type="button" onClick={() => setEditAnswer(val)}
+                                    style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${editAnswer === val ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.12)'}`, background: editAnswer === val ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.05)', color: editAnswer === val ? '#6ee7b7' : 'rgba(255,255,255,0.5)' }}>
+                                    {lbl}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Answer field for other types */}
+                          {(editType === 'shortanswer' || editType === 'fillinblank' || editType === 'matching' || editType === 'ordering') && (
+                            <div>
+                              <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>
+                                {editType === 'matching' ? 'RIGHT-SIDE VALUES (pipe-separated)' : editType === 'ordering' ? 'CORRECT ORDER (pipe-separated 0-based, e.g. 2|0|3|1)' : 'CORRECT ANSWER'}
+                              </label>
+                              <input value={editAnswer} onChange={e => setEditAnswer(e.target.value)}
+                                style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                            </div>
+                          )}
+                          {/* Explanation */}
                           <div>
                             <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>
-                            <textarea
-                              value={editExplanation}
-                              onChange={e => setEditExplanation(e.target.value)}
-                              rows={2}
-                              style={{
-                                width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5,
-                                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)',
-                                color: 'rgba(255,255,255,0.7)', resize: 'vertical',
-                              }}
-                            />
+                            <textarea value={editExplanation} onChange={e => setEditExplanation(e.target.value)} rows={2}
+                              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)', color: 'rgba(255,255,255,0.7)', resize: 'vertical' }} />
                           </div>
                           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                             <button onClick={() => setEditingId(null)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)' }}>
@@ -614,33 +700,71 @@ export default function QuestionBankPage() {
                     }}
                   >
                     {editingId === q.id ? (
-                      /* Inline edit form */
+                      /* Inline edit form — same as browse tab */
                       <div style={{ display: 'grid', gap: 10 }}>
-                        <div>
-                          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>QUESTION TEXT</label>
-                          <textarea
-                            value={editText}
-                            onChange={e => setEditText(e.target.value)}
-                            rows={3}
-                            style={{
-                              width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, lineHeight: 1.5,
-                              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)',
-                              color: '#fff', resize: 'vertical',
-                            }}
-                          />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>TYPE</label>
+                            <select value={editType} onChange={e => { setEditType(e.target.value); setEditAnswer(''); }}
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.25)', background: 'rgba(255,255,255,0.07)', color: '#f5f3ee', fontSize: 13 }}>
+                              <option value="mcq">Multiple Choice (MCQ)</option>
+                              <option value="truefalse">True / False</option>
+                              <option value="shortanswer">Short Answer</option>
+                              <option value="fillinblank">Fill in the Blank</option>
+                              <option value="matching">Matching</option>
+                              <option value="ordering">Ordering</option>
+                            </select>
+                          </div>
                         </div>
                         <div>
+                          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>QUESTION TEXT</label>
+                          <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={3}
+                            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 14, lineHeight: 1.5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)', color: '#fff', resize: 'vertical' }} />
+                        </div>
+                        {(editType === 'mcq' || editType === 'matching' || editType === 'ordering') && (
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>OPTIONS</label>
+                            <div style={{ display: 'grid', gap: 6 }}>
+                              {editOptions.map((opt, oi) => (
+                                <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {editType === 'mcq' && (
+                                    <button type="button" onClick={() => setEditAnswer(String(oi))}
+                                      style={{ flexShrink: 0, width: 22, height: 22, borderRadius: '50%', border: `2px solid ${editAnswer === String(oi) ? '#6ee7b7' : 'rgba(255,255,255,0.2)'}`, background: editAnswer === String(oi) ? 'rgba(16,185,129,0.25)' : 'transparent', cursor: 'pointer' }}>
+                                      {editAnswer === String(oi) && <span style={{ display: 'block', width: 10, height: 10, borderRadius: '50%', background: '#6ee7b7', margin: '4px auto' }} />}
+                                    </button>
+                                  )}
+                                  <input value={opt} onChange={e => { const o = [...editOptions]; o[oi] = e.target.value; setEditOptions(o); }}
+                                    placeholder={`Option ${String.fromCharCode(65 + oi)}`}
+                                    style={{ flex: 1, padding: '8px 11px', borderRadius: 8, border: `1px solid ${editType === 'mcq' && editAnswer === String(oi) ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.1)'}`, background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {editType === 'truefalse' && (
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 6 }}>CORRECT ANSWER</label>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {[['0', 'True'], ['1', 'False']].map(([val, lbl]) => (
+                                <button key={val} type="button" onClick={() => setEditAnswer(val)}
+                                  style={{ flex: 1, padding: '10px', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${editAnswer === val ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.12)'}`, background: editAnswer === val ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.05)', color: editAnswer === val ? '#6ee7b7' : 'rgba(255,255,255,0.5)' }}>
+                                  {lbl}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {(editType === 'shortanswer' || editType === 'fillinblank' || editType === 'matching' || editType === 'ordering') && (
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>CORRECT ANSWER</label>
+                            <input value={editAnswer} onChange={e => setEditAnswer(e.target.value)}
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(196,181,253,0.2)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 13 }} />
+                          </div>
+                        )}
+                        <div>
                           <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>
-                          <textarea
-                            value={editExplanation}
-                            onChange={e => setEditExplanation(e.target.value)}
-                            rows={2}
-                            style={{
-                              width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5,
-                              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)',
-                              color: 'rgba(255,255,255,0.7)', resize: 'vertical',
-                            }}
-                          />
+                          <textarea value={editExplanation} onChange={e => setEditExplanation(e.target.value)} rows={2}
+                            style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: 13, lineHeight: 1.5, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)', color: 'rgba(255,255,255,0.7)', resize: 'vertical' }} />
                         </div>
                         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                           <button onClick={() => setEditingId(null)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)' }}>

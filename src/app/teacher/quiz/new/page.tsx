@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
-import { getQuestionsByTopic, getRandomQuestions } from '@/lib/firebase/questions';
+import { getQuestionsByTopic, getRandomQuestions, getQuestionsByIds } from '@/lib/firebase/questions';
 import { saveQuiz, getQuiz } from '@/lib/firebase/quizzes';
 import { TOPIC_LABELS, getGroupedTopics } from '@/types/question';
 import type { Question } from '@/types/question';
@@ -206,11 +206,14 @@ ${qHtml}
         topicKey: activeTopicKeys[0] || '',
         topicKeys: activeTopicKeys,
         questionIds: Array.from(selectedIds),
-        questions: questions.filter(q => selectedIds.has(q.id)),
+        questions: [], // placeholder; fresh copies fetched below
         status,
         createdAt: editId && originalCreatedAt ? originalCreatedAt : Date.now(),
         settings: { timeLimit, pointsPerQ, shuffleQuestions: shuffleQ, shuffleOptions: shuffleOpts, antiCheat, showLeaderboard: showLB },
       };
+      // Always fetch fresh question data from Firestore so edits are reflected
+      const freshQuestions = await getQuestionsByIds(Array.from(selectedIds));
+      quiz.questions = freshQuestions;
       await saveQuiz(quiz);
       toast(editId
         ? (status === 'published' ? 'Quiz updated!' : 'Draft updated')
