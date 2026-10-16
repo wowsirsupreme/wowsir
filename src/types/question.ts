@@ -120,18 +120,18 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 8 — Computing
   // ════════════════════════════════════════════════════════════════
-  'gr8-ch1-ai':          { title: 'Ch 1 – Artificial Intelligence',       subject: 'Grade 8 Computing', emoji: '🤖' },
-  'gr8-ch2-tech':        { title: 'Ch 2 – Latest Technologies & Trends',  subject: 'Grade 8 Computing', emoji: '🚀' },
-  'gr8-ch3-access1':     { title: 'Ch 3 – Database Management (Access)',  subject: 'Grade 8 Computing', emoji: '🗄️' },
-  'gr8-ch4-access2':     { title: 'Ch 4 – Table Relationships',           subject: 'Grade 8 Computing', emoji: '🔗' },
-  'gr8-ch5-access3':     { title: 'Ch 5 – Forms & Reports',               subject: 'Grade 8 Computing', emoji: '📋' },
-  'gr8-ch6-networks':    { title: 'Ch 6 – Communication Technology',      subject: 'Grade 8 Computing', emoji: '📡' },
-  'gr8-ch7-google':      { title: 'Ch 7 – Google Apps',                   subject: 'Grade 8 Computing', emoji: '🔍' },
-  'gr8-ch8-malware':     { title: 'Ch 8 – Computer Malware',              subject: 'Grade 8 Computing', emoji: '🦠' },
-  'gr8-ch9-html-tables': { title: 'Ch 9 – HTML Tables',                   subject: 'Grade 8 Computing', emoji: '📄' },
-  'gr8-ch10-social':     { title: 'Ch 10 – Social Networking & Cyber Safety', subject: 'Grade 8 Computing', emoji: '🛡️' },
-  'gr8-ch11-troubleshoot':{ title: 'Ch 11 – Troubleshooting',             subject: 'Grade 8 Computing', emoji: '🔧' },
-  'gr8-ch12-python':     { title: 'Ch 12 – Python Next Steps',            subject: 'Grade 8 Computing', emoji: '🐍' },
+  'gr8-ch1-ai':           { title: 'Ch 1 – Artificial Intelligence',           subject: 'Grade 8 Computing', emoji: '🤖' },
+  'gr8-ch2-tech':         { title: 'Ch 2 – Latest Technologies & Trends',     subject: 'Grade 8 Computing', emoji: '🚀' },
+  'gr8-ch3-access1':      { title: 'Ch 3 – Database Management (Access)',      subject: 'Grade 8 Computing', emoji: '🗄️' },
+  'gr8-ch4-access2':      { title: 'Ch 4 – Table Relationships & Queries',     subject: 'Grade 8 Computing', emoji: '🔗' },
+  'gr8-ch5-access3':      { title: 'Ch 5 – Forms & Reports',                   subject: 'Grade 8 Computing', emoji: '📋' },
+  'gr8-ch6-networks':     { title: 'Ch 6 – Communication Technology',          subject: 'Grade 8 Computing', emoji: '📡' },
+  'gr8-ch7-google':       { title: 'Ch 7 – Play with Google Apps',             subject: 'Grade 8 Computing', emoji: '🔍' },
+  'gr8-ch8-malware':      { title: 'Ch 8 – Computer Malware',                  subject: 'Grade 8 Computing', emoji: '🦠' },
+  'gr8-ch9-html-tables':  { title: 'Ch 9 – Website Designing: Tables',         subject: 'Grade 8 Computing', emoji: '📄' },
+  'gr8-ch10-social':      { title: 'Ch 10 – Social Networking & Cyber Safety', subject: 'Grade 8 Computing', emoji: '🛡️' },
+  'gr8-ch11-troubleshoot':{ title: 'Ch 11 – Troubleshooting',                  subject: 'Grade 8 Computing', emoji: '🔧' },
+  'gr8-ch12-python':      { title: 'Ch 12 – Python Next Steps',                subject: 'Grade 8 Computing', emoji: '🐍' },
 
   // ════════════════════════════════════════════════════════════════
   // GRADE 9 — CS IGCSE 0478 (Year 1)
