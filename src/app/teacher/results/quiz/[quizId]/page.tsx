@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Users, Trophy, Target, TrendingUp, AlertTriangle, CheckCircle2, Clock, Zap, StopCircle, Download } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
+import { useSession } from '@/hooks/useSession';
 import { getResultsByQuiz, findActiveSessionForQuiz, endSession, clearTeacherSession } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
 import type { SessionResult } from '@/types/session';
@@ -37,6 +38,9 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
   const [tab, setTab] = useState<'overview' | 'questions' | 'sessions' | 'students'>('overview');
   const [liveSession, setLiveSession] = useState<{ sessionId: string; code: string } | null>(null);
   const [endingSession, setEndingSession] = useState(false);
+
+  // Real-time live session data (leaderboard updates as students answer)
+  const { leaderboard: liveLeaderboard, players: livePlayers } = useSession(liveSession?.sessionId ?? null);
 
   useEffect(() => {
     if (!ready || !user || !configured) return;
@@ -149,6 +153,70 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
   }
   const allStudents = Array.from(bestByStudent.values()).sort((a, b) => b.score - a.score);
 
+  /** Download leaderboard as PNG with scores hidden — names & ranks only */
+  function downloadLeaderboardNoScores(lb: typeof liveLeaderboard, code?: string) {
+    const top = lb.slice(0, 15);
+    if (top.length === 0) return;
+    const scale = 2;
+    const W = 480;
+    const rowH = 50;
+    const headerH = 100;
+    const H = headerH + top.length * rowH + 40;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = H * scale;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
+
+    // Background
+    ctx.fillStyle = '#050e08';
+    ctx.fillRect(0, 0, W, H);
+
+    // Border
+    ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+    // Title
+    ctx.fillStyle = '#fcd34d';
+    ctx.font = `bold 26px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(quiz?.title || 'Leaderboard', W / 2, 44);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `13px system-ui, sans-serif`;
+    ctx.fillText(`${top.length} players · ${new Date().toLocaleDateString()}`, W / 2, 68);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(201,168,76,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(24, 84); ctx.lineTo(W - 24, 84); ctx.stroke();
+
+    const medals = ['🥇', '🥈', '🥉'];
+    top.forEach((p, i) => {
+      const y = headerH + i * rowH;
+      if (i === 0) {
+        ctx.fillStyle = 'rgba(201,168,76,0.1)';
+        ctx.fillRect(16, y + 3, W - 32, rowH - 6);
+      }
+      ctx.textAlign = 'left';
+      ctx.font = `18px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(i < 3 ? medals[i] : `${i + 1}`, 30, y + rowH / 2 + 7);
+
+      ctx.font = `${i === 0 ? 'bold ' : ''}15px system-ui, sans-serif`;
+      ctx.fillStyle = i === 0 ? '#fff' : 'rgba(255,255,255,0.8)';
+      const name = p.name.length > 30 ? p.name.slice(0, 29) + '…' : p.name;
+      ctx.fillText(name, 72, y + rowH / 2 + 6);
+    });
+
+    const link = document.createElement('a');
+    link.download = `leaderboard-names-${code || 'quiz'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
   function exportCSV() {
     const rows = [
       ['Student', 'Best Score', 'Best Accuracy', 'Sessions Played'],
@@ -256,44 +324,142 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
           ))}
         </div>
 
-        {totalSessions === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', border: `2px dashed ${liveSession ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 20 }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>{liveSession ? '🟢' : '📊'}</div>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>
-              {liveSession ? 'Session in progress' : 'No sessions yet'}
-            </p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>
-              {liveSession
-                ? `Room ${liveSession.code} is live — results will appear here when the session ends.`
-                : 'Host a live session to start collecting results.'}
-            </p>
-            {liveSession ? (
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+        {totalSessions === 0 && !liveSession ? (
+          /* ── No sessions, no live session ── */
+          <div style={{ textAlign: 'center', padding: '60px 24px', border: '2px dashed rgba(255,255,255,0.08)', borderRadius: 20 }}>
+            <div style={{ fontSize: 52, marginBottom: 16 }}>📊</div>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: '#fff', marginBottom: 8 }}>No sessions yet</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>Host a live session to start collecting results.</p>
+            <button
+              onClick={() => router.push(`/teacher/host/${quizId}`)}
+              style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
+            >
+              Host a Session →
+            </button>
+          </div>
+        ) : totalSessions === 0 && liveSession ? (
+          /* ── Live session, no completed sessions yet — show real-time leaderboard ── */
+          <div>
+            {/* Live leaderboard header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'pulseDot 1.5s ease-in-out infinite' }} />
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: '#fff', fontWeight: 700 }}>Live Leaderboard</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>Room {liveSession.code}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
-                  onClick={() => router.push(`/teacher/host/${quizId}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 28px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', color: '#34d399', fontWeight: 700, fontSize: 15, border: '1px solid rgba(16,185,129,0.4)', cursor: 'pointer' }}
+                  onClick={() => downloadLeaderboardNoScores(liveLeaderboard, liveSession.code)}
+                  title="Screenshot without scores"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, background: 'rgba(139,92,246,0.12)', color: '#c4b5fd', fontWeight: 600, fontSize: 13, border: '1px solid rgba(139,92,246,0.3)', cursor: 'pointer' }}
                 >
-                  <Zap size={15} /> Manage Session
+                  📷 Names Only
                 </button>
                 <button
-                  onClick={handleEndSession}
-                  disabled={endingSession}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 24px', borderRadius: 12, background: 'rgba(239,68,68,0.1)', color: '#fca5a5', fontWeight: 600, fontSize: 15, border: '1px solid rgba(239,68,68,0.3)', cursor: endingSession ? 'default' : 'pointer', opacity: endingSession ? 0.5 : 1 }}
+                  onClick={() => router.push(`/teacher/host/${liveSession.sessionId}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 10, background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 700, fontSize: 13, border: '1px solid rgba(16,185,129,0.35)', cursor: 'pointer' }}
                 >
-                  <StopCircle size={15} /> {endingSession ? 'Ending…' : 'End Session'}
+                  <Zap size={13} /> Manage
                 </button>
               </div>
+            </div>
+
+            {/* Live player count */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
+              {[
+                { label: 'Players', value: livePlayers.length, color: '#6ee7b7' },
+                { label: 'Answered', value: livePlayers.filter(p => p.score > 0).length, color: '#c4b5fd' },
+                { label: 'Top Score', value: liveLeaderboard[0]?.score?.toLocaleString() ?? '—', color: '#fcd34d' },
+              ].map(s => (
+                <div key={s.label} style={{ borderRadius: 14, padding: '14px 12px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <p style={{ fontSize: 24, fontWeight: 800, color: s.color, margin: '0 0 4px', fontFamily: 'var(--font-mono)' }}>{s.value}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Live leaderboard rows */}
+            {liveLeaderboard.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.25)', fontSize: 14 }}>
+                Waiting for players to join…
+              </div>
             ) : (
-              <button
-                onClick={() => router.push(`/teacher/host/${quizId}`)}
-                style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#c9a84c,#e8d08a)', color: '#0d0d14', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer' }}
-              >
-                Host a Session →
-              </button>
+              <div style={{ borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                {liveLeaderboard.slice(0, 20).map((p, i) => {
+                  const medals = ['🥇','🥈','🥉'];
+                  const acc = p.total > 0 ? p.correct / p.total : null;
+                  const accColor = acc == null ? '#fcd34d' : acc >= 0.7 ? '#34d399' : acc >= 0.4 ? '#fcd34d' : '#f87171';
+                  return (
+                    <div
+                      key={p.id || i}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '11px 16px',
+                        background: i === 0 ? 'rgba(201,168,76,0.08)' : i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                        borderBottom: i < liveLeaderboard.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                      }}
+                    >
+                      <span style={{ fontSize: i < 3 ? 18 : 13, width: 28, textAlign: 'center', color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>
+                        {i < 3 ? medals[i] : i + 1}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 14, fontWeight: i === 0 ? 700 : 500, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.85)' }}>
+                        {p.name}
+                      </span>
+                      {acc != null && (
+                        <span style={{ fontSize: 12, color: accColor, fontFamily: 'var(--font-mono)', width: 36, textAlign: 'right' }}>
+                          {Math.round(acc * 100)}%
+                        </span>
+                      )}
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fcd34d', fontFamily: 'var(--font-mono)', width: 72, textAlign: 'right' }}>
+                        {p.score.toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         ) : (
           <>
+            {/* ── Live session leaderboard panel (shown above tabs when a session is active) ── */}
+            {liveSession && (
+              <div style={{ borderRadius: 18, padding: '16px 18px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', display: 'inline-block', animation: 'pulseDot 1.5s ease-in-out infinite' }} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#34d399' }}>Live — Room {liveSession.code}</span>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{livePlayers.length} player{livePlayers.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <button
+                    onClick={() => downloadLeaderboardNoScores(liveLeaderboard, liveSession.code)}
+                    title="Screenshot without scores"
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.12)', color: '#c4b5fd', fontWeight: 600, fontSize: 12, border: '1px solid rgba(139,92,246,0.3)', cursor: 'pointer' }}
+                  >
+                    📷 Names Only
+                  </button>
+                </div>
+                {liveLeaderboard.length === 0 ? (
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center', padding: '12px 0', margin: 0 }}>Waiting for players to join…</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {liveLeaderboard.slice(0, 5).map((p, i) => {
+                      const medals = ['🥇','🥈','🥉'];
+                      return (
+                        <div key={p.id || i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < Math.min(liveLeaderboard.length, 5) - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                          <span style={{ fontSize: i < 3 ? 16 : 12, width: 24, textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>{i < 3 ? medals[i] : i + 1}</span>
+                          <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.8)' }}>{p.name}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#fcd34d', fontFamily: 'var(--font-mono)' }}>{p.score.toLocaleString()}</span>
+                        </div>
+                      );
+                    })}
+                    {liveLeaderboard.length > 5 && (
+                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: '8px 0 0', textAlign: 'center' }}>+ {liveLeaderboard.length - 5} more players</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ── Tab bar ── */}
             <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', marginBottom: 20 }}>
               {([

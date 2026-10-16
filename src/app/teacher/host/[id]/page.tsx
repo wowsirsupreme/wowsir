@@ -356,6 +356,66 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     link.click();
   }
 
+  /** Download leaderboard PNG with scores hidden — names & ranks only */
+  function downloadLeaderboardNoScores() {
+    const top = leaderboard.slice(0, 15);
+    if (top.length === 0) return;
+    const scale = 2;
+    const W = 480;
+    const rowH = 50;
+    const headerH = 100;
+    const H = headerH + top.length * rowH + 40;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W * scale;
+    canvas.height = H * scale;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
+
+    ctx.fillStyle = '#050e08';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+    ctx.fillStyle = '#fcd34d';
+    ctx.font = `bold 26px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(quiz?.title || 'Leaderboard', W / 2, 44);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = `13px system-ui, sans-serif`;
+    ctx.fillText(`${players.length} players · ${new Date().toLocaleDateString()}`, W / 2, 68);
+
+    ctx.strokeStyle = 'rgba(201,168,76,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(24, 84); ctx.lineTo(W - 24, 84); ctx.stroke();
+
+    const medals = ['🥇', '🥈', '🥉'];
+    top.forEach((p, i) => {
+      const y = headerH + i * rowH;
+      if (i === 0) {
+        ctx.fillStyle = 'rgba(201,168,76,0.1)';
+        ctx.fillRect(16, y + 3, W - 32, rowH - 6);
+      }
+      ctx.textAlign = 'left';
+      ctx.font = `18px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(i < 3 ? medals[i] : `${i + 1}`, 30, y + rowH / 2 + 7);
+
+      ctx.font = `${i === 0 ? 'bold ' : ''}15px system-ui, sans-serif`;
+      ctx.fillStyle = i === 0 ? '#fff' : 'rgba(255,255,255,0.8)';
+      const name = p.name.length > 30 ? p.name.slice(0, 29) + '…' : p.name;
+      ctx.fillText(name, 72, y + rowH / 2 + 6);
+    });
+
+    const link = document.createElement('a');
+    link.download = `leaderboard-names-${session?.code || 'quiz'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
   // ── LOADING ──
   if (!ready || !quiz || phase === 'loading') {
     return (
@@ -526,6 +586,13 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             onClick={downloadLeaderboard}
           >
             📥 Save Scores
+          </button>
+          <button
+            className="btn-glass"
+            style={{ flex: 1, fontSize: 14, minWidth: 120 }}
+            onClick={downloadLeaderboardNoScores}
+          >
+            📷 Names Only
           </button>
           <button
             className="btn-glass btn-glass-gold"
@@ -827,18 +894,24 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 🏆 Leaderboard
               </p>
               {leaderboard.length > 0 && (
-                <button
-                  title="Download leaderboard as image"
-                  onClick={downloadLeaderboard}
-                  className="text-xs px-2 py-1 rounded-lg transition-colors"
-                  style={{
-                    background: 'rgba(201,168,76,0.08)',
-                    border: '1px solid rgba(201,168,76,0.2)',
-                    color: 'rgba(201,168,76,0.7)',
-                  }}
-                >
-                  📥
-                </button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button
+                    title="Download with scores"
+                    onClick={downloadLeaderboard}
+                    className="text-xs px-2 py-1 rounded-lg transition-colors"
+                    style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.7)' }}
+                  >
+                    📥
+                  </button>
+                  <button
+                    title="Screenshot names only (no scores)"
+                    onClick={downloadLeaderboardNoScores}
+                    className="text-xs px-2 py-1 rounded-lg transition-colors"
+                    style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(167,139,250,0.8)' }}
+                  >
+                    📷
+                  </button>
+                </div>
               )}
             </div>
             {leaderboard.slice(0, 10).map((p, i) => (
