@@ -2,6 +2,100 @@ import Papa from 'papaparse';
 import type { Question, QuestionType } from '@/types/question';
 import { uid } from '@/lib/utils';
 
+/* ── Wayground format detection & import ── */
+
+const WAYGROUND_HEADERS = ['Question Text', 'Question Type', 'Option 1', 'Option 2', 'Correct Answer'];
+
+export function isWaygroundFormat(headers: string[]): boolean {
+  return WAYGROUND_HEADERS.every(h => headers.includes(h));
+}
+
+/** Supported Wayground types — all others are skipped with a warning */
+const WAYGROUND_SUPPORTED: Record<string, QuestionType> = {
+  'multiple choice': 'mcq',
+  'fill-in-the-blank': 'fillinblank',
+  'open-ended': 'shortanswer',
+};
+
+export interface WaygroundParseResult {
+  parsed: ParsedRow[];
+  skipped: Array<{ rowIndex: number; type: string; text: string }>;
+}
+
+export function mapWayground(
+  rows: RawRow[],
+  defaultTopic: string,
+  quizId: string | null
+): WaygroundParseResult {
+  const parsed: ParsedRow[] = [];
+  const skipped: Array<{ rowIndex: number; type: string; text: string }> = [];
+
+  rows.forEach((row, i) => {
+    const rowIndex = i + 2;
+    const typeRaw = (row['Question Type'] || 'Multiple Choice').trim().toLowerCase();
+    const type = WAYGROUND_SUPPORTED[typeRaw];
+
+    if (!type) {
+      skipped.push({ rowIndex, type: row['Question Type'] || '?', text: (row['Question Text'] || '').slice(0, 60) });
+      return;
+    }
+
+    const errors: string[] = [];
+    const text = (row['Question Text'] || '').trim();
+    if (!text) errors.push('Question text is empty');
+
+    // Options 1–4 only (we cap at 4; Option 5 is dropped)
+    const options = [
+      (row['Option 1'] || '').trim(),
+      (row['Option 2'] || '').trim(),
+      (row['Option 3'] || '').trim(),
+      (row['Option 4'] || '').trim(),
+    ].filter(Boolean);
+
+    if (type === 'mcq' && options.length < 2) {
+      errors.push('Multiple Choice requires at least 2 options');
+    }
+
+    // Answer: Wayground is 1-based integer → convert to 0-based string
+    let answer = '0';
+    if (type === 'mcq') {
+      const raw = (row['Correct Answer'] || '').trim();
+      const n = parseInt(raw, 10);
+      if (!isNaN(n) && n >= 1) {
+        answer = String(n - 1);
+      } else if (!raw) {
+        errors.push('Correct Answer is missing');
+      }
+    } else if (type === 'fillinblank') {
+      // For fill-in-the-blank, Wayground puts accepted answers in Option slots
+      // Store all non-empty options joined with | as the answer (flexible matching)
+      answer = options.join('|');
+      if (!answer) errors.push('Fill-in-the-Blank requires at least one accepted answer in Option 1');
+    }
+    // shortanswer: no answer needed
+
+    const question: Partial<Question> = {
+      id: uid(),
+      quizId,
+      topicKey: defaultTopic,
+      type,
+      text,
+      options: type === 'fillinblank' ? [] : options,
+      answer,
+      explanation: (row['Answer explanation'] || '').trim(),
+      imageUrl: (row['Image Link'] || '').trim() || null,
+      approvalStatus: errors.length === 0 ? 'pending' : 'rejected',
+      source: 'imported',
+      points: 10,
+      createdAt: Date.now(),
+    };
+
+    parsed.push({ raw: row, question, errors, rowIndex });
+  });
+
+  return { parsed, skipped };
+}
+
 export interface RawRow {
   [key: string]: string;
 }
