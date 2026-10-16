@@ -33,7 +33,7 @@ export default function StudyIndexPage() {
 
         {/* Back */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/student')}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
             marginBottom: 36, background: 'none', border: 'none', cursor: 'pointer',

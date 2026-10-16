@@ -114,7 +114,7 @@ export default function PracticePage() {
         {/* Header */}
         <div style={{ marginBottom: 36 }}>
           <button
-            onClick={() => selectedGrade !== null ? setSelectedGrade(null) : router.push('/')}
+            onClick={() => selectedGrade !== null ? setSelectedGrade(null) : router.push('/student')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'none', border: 'none', cursor: 'pointer',

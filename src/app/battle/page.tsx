@@ -87,6 +87,14 @@ export default function BattlePage() {
     phaseRef.current = 'countdown';
   }
 
+  /* ── pre-fill player name from localStorage ── */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('playerName');
+      if (saved) setP1Name(saved);
+    } catch {}
+  }, []);
+
   /* ── music lifecycle ── */
   useEffect(() => {
     if (phase === 'playing') {
@@ -227,7 +235,7 @@ export default function BattlePage() {
         }}
       >
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/student')}
           style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 6 }}
           onMouseEnter={e => (e.currentTarget.style.color = 'rgba(139,92,246,0.9)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
@@ -572,7 +580,7 @@ export default function BattlePage() {
               </button>
               <button
                 className="btn-battle"
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/student')}
                 style={{ width: 'auto', fontSize: 14, padding: '12px 24px' }}
               >
                 🏠 Home

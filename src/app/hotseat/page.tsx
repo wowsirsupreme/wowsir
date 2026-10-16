@@ -171,6 +171,14 @@ export default function HotSeatPage() {
     setQuestionStart(Date.now());
   }
 
+  // Pre-fill name from localStorage (shared with join/student pages)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('playerName');
+      if (saved) setName(saved);
+    } catch {}
+  }, []);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (phase === 'playing') audioEngine.startMusic('chill');
@@ -220,7 +228,7 @@ export default function HotSeatPage() {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(8,4,0,0.4)' }}
       >
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/student')}
           className="text-sm transition-colors"
           style={{ color: 'rgba(255,255,255,0.4)' }}
           onMouseEnter={e => (e.currentTarget.style.color = 'rgba(249,115,22,0.9)')}
@@ -434,7 +442,7 @@ export default function HotSeatPage() {
               ↩ Try Again
             </button>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/student')}
               className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
               style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
@@ -512,7 +520,7 @@ export default function HotSeatPage() {
               ↩ Play Again
             </button>
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push('/student')}
               className="flex-1 py-4 rounded-2xl text-sm font-semibold transition-all duration-200"
               style={{ background: 'linear-gradient(135deg, #f97316, #ef4444)', color: '#fff', border: 'none', boxShadow: '0 0 20px rgba(249,115,22,0.4)' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 32px rgba(249,115,22,0.7)'; }}
