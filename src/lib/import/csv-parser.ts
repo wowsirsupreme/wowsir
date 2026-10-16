@@ -114,8 +114,8 @@ export function mapAndValidate(
       const lower = answerRaw.toLowerCase();
       answer = (lower.startsWith('t') || lower === '1' || lower === 'yes') ? '0' : '1';
     } else {
-      // shortanswer / fillinblank — answer is the expected text
-      answer = answerRaw;
+      // shortanswer / fillinblank — answer is the expected text; lowercase to match grading
+      answer = answerRaw.toLowerCase();
     }
 
     if (!answerRaw && type !== 'shortanswer') errors.push('Answer is empty');
