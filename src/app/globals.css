@@ -556,3 +556,11 @@ body::before {
     border-radius: 16px !important;
   }
 }
+
+/* ── UNO card pop-in animation ── */
+@keyframes unoCardPop {
+  0%   { opacity: 0; transform: translateY(28px) scale(0.72) rotate(-4deg); }
+  65%  { opacity: 1; transform: translateY(-6px) scale(1.06) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0)   scale(1)    rotate(0deg); }
+}
+.uno-card-pop { animation: unoCardPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; }

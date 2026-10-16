@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Gamepad2, User, Wifi, Zap, Lock, AlertTriangle, ChevronLeft } from 'lucide-react';
-import { AvatarGrid } from '@/components/ui/Avatar';
+import { AvatarCustomizer } from '@/components/ui/Avatar';
 import { useFirebase } from '@/hooks/useFirebase';
 import { findSessionByCode } from '@/lib/firebase/sessions';
 import QuizNav from '@/components/QuizNav';
@@ -218,12 +218,16 @@ function JoinInner() {
               autoFocus
             />
 
-            <label className="section-label-light mt-2">Pick Your Avatar</label>
+            <label className="section-label-light mt-2">Build Your Card</label>
             <div
               className="rounded-2xl p-4 mb-4"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-              <AvatarGrid selected={avatarId} onSelect={setAvatarId} />
+              <AvatarCustomizer
+                value={avatarId}
+                onChange={setAvatarId}
+                previewName={name.trim() || 'You'}
+              />
             </div>
 
             {error && (

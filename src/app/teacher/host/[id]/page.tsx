@@ -3,7 +3,7 @@ import { resolveAnswerIndex } from '@/lib/utils';
 
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar, UnoCard, decodeAvatar } from '@/components/ui/Avatar';
 import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useSession } from '@/hooks/useSession';
@@ -25,6 +25,26 @@ import type { Quiz } from '@/types/quiz';
 import type { Question } from '@/types/question';
 
 type HostPhase = 'loading' | 'setup' | 'lobby' | 'question' | 'reveal' | 'ended';
+
+/** Track which player card was most recently added for spotlight effect */
+function useSpotlight(playerIds: string[]) {
+  const [spotlightId, setSpotlightId] = useState<string | null>(null);
+  const prevIds = useRef<Set<string>>(new Set());
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const newId = playerIds.find(id => !prevIds.current.has(id));
+    if (newId) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setSpotlightId(newId);
+      timerRef.current = setTimeout(() => setSpotlightId(null), 3000);
+    }
+    prevIds.current = new Set(playerIds);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [playerIds]);
+
+  return spotlightId;
+}
 
 /** localStorage key for persisting active session per quiz */
 function sessionStorageKey(quizId: string) { return `wq_session_${quizId}`; }
@@ -72,6 +92,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
   const leaderboardRef = useRef<HTMLDivElement>(null);
 
   const { session, players, leaderboard } = useSession(sessionId);
+  const spotlightId = useSpotlight(players.map(p => p.id));
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -733,44 +754,53 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 </span>
               </div>
 
-              {/* ── Players joined ── */}
+              {/* ── Players joined ── UNO card grid ── */}
               <div style={{
                 borderRadius: 20, padding: '18px 20px',
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.08)',
                 marginBottom: 14,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: players.length > 0 ? 14 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: players.length > 0 ? 18 : 0 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
-                    Players joined
+                    Players in lobby
                   </p>
                   <span style={{
                     fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700,
                     color: players.length > 0 ? '#fcd34d' : 'rgba(255,255,255,0.25)',
+                    background: players.length > 0 ? 'rgba(201,168,76,0.12)' : 'transparent',
+                    padding: players.length > 0 ? '2px 10px' : 0,
+                    borderRadius: 8,
                   }}>
                     {players.length}
                   </span>
                 </div>
                 {players.length === 0 ? (
-                  <p style={{ margin: '10px 0 2px', fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
-                    Waiting for students to join…
-                  </p>
+                  <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                    <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.3 }}>🃏</div>
+                    <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>
+                      Waiting for students to join…
+                    </p>
+                  </div>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    maxHeight: 340,
+                    overflowY: 'auto',
+                    padding: '4px 2px',
+                  }}>
                     {players.map(p => (
-                      <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} className="animate-fadeIn">
-                        <div style={{
-                          width: 44, height: 44, borderRadius: 12,
-                          background: 'rgba(201,168,76,0.08)',
-                          border: '1px solid rgba(201,168,76,0.2)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <Avatar id={p.avatarId} size={30} />
-                        </div>
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', maxWidth: 56, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {p.name}
-                        </span>
-                      </div>
+                      <UnoCard
+                        key={p.id}
+                        config={p.avatarId ?? 0}
+                        name={p.name}
+                        size={82}
+                        spotlight={spotlightId === p.id}
+                        animate
+                        className="uno-card-pop"
+                      />
                     ))}
                   </div>
                 )}
