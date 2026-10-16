@@ -6,8 +6,31 @@ export const metadata: Metadata = {
   title: 'WOW Sir — DPS International Ghana',
   description: 'Grades 4–11 Computer Science Assessment Platform',
   icons: {
-    icon: '/wowsir-logo.png',
-    apple: '/wowsir-logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/wowsir-logo.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/wowsir-logo-512.png',
+  },
+  openGraph: {
+    title: 'WOW Sir',
+    description: 'Grades 4–11 Computer Science Assessment Platform',
+    siteName: 'WOW Sir',
+    images: [
+      {
+        url: '/wowsir-logo-512.png',
+        width: 512,
+        height: 512,
+        alt: 'WOW Sir',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'WOW Sir',
+    description: 'Grades 4–11 Computer Science Assessment Platform',
+    images: ['/wowsir-logo-512.png'],
   },
 };
 
