@@ -15,9 +15,10 @@ import {
 import { useFirebase } from '@/hooks/useFirebase';
 import type { UserProfile } from '@/types/user';
 import { TOPIC_LABELS } from '@/types/question';
+import { allGradeQuestions } from '@/data/grades';
 
 const ADMIN_PASSWORD = 'wowadmin2024';
-const TABS = ['Approvals', 'Teachers', 'Usage', 'Geography', 'Question Quality', 'Database'] as const;
+const TABS = ['Approvals', 'Teachers', 'Usage', 'Geography', 'Question Bank', 'Question Quality', 'Database'] as const;
 type Tab = typeof TABS[number];
 
 const MAX_ATTEMPTS   = 5;
@@ -324,6 +325,9 @@ export default function AdminPage() {
         {!loading && tab === 'Geography' && (
           <GeoTab points={geo} />
         )}
+        {!loading && tab === 'Question Bank' && (
+          <QuestionBankTab />
+        )}
         {!loading && tab === 'Question Quality' && (
           <QualityTab questions={questions} />
         )}
@@ -542,6 +546,108 @@ function GeoTab({ points }: { points: GeoPoint[] }) {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Question Bank Tab ─────────────── */
+function QuestionBankTab() {
+  // Group built-in questions by subject → chapter
+  const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
+
+  for (const q of allGradeQuestions) {
+    const topic = TOPIC_LABELS[q.topicKey];
+    if (!topic) continue;
+    const subj = topic.subject;
+    if (!bySubject[subj]) bySubject[subj] = [];
+    const existing = bySubject[subj].find(c => c.topicKey === q.topicKey);
+    if (existing) { existing.count++; }
+    else bySubject[subj].push({ topicKey: q.topicKey, title: topic.title, emoji: topic.emoji, count: 1 });
+  }
+
+  // Sort subjects by grade number
+  const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
+  const subjects = subjectOrder.filter(s => bySubject[s]);
+
+  const total = allGradeQuestions.length;
+
+  return (
+    <div>
+      <SectionHeader title="Question Bank" count={total} accent="#34d399" />
+      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>
+        Built-in questions per class and chapter. These are hardcoded in the app and always available.
+      </p>
+      <div style={{ display: 'grid', gap: 16 }}>
+        {subjects.map(subj => {
+          const chapters = bySubject[subj];
+          const classTotal = chapters.reduce((s, c) => s + c.count, 0);
+          return (
+            <div
+              key={subj}
+              style={{
+                borderRadius: 16,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.025)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Class header */}
+              <div style={{
+                padding: '14px 20px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'rgba(52,211,153,0.06)',
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{subj}</span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                  padding: '3px 10px', borderRadius: 999,
+                  background: 'rgba(52,211,153,0.15)', color: '#34d399',
+                  border: '1px solid rgba(52,211,153,0.3)',
+                }}>
+                  {classTotal} Q
+                </span>
+              </div>
+              {/* Chapters */}
+              <div style={{ padding: '10px 0' }}>
+                {chapters.map((ch, i) => (
+                  <div
+                    key={ch.topicKey}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '8px 20px',
+                      borderBottom: i < chapters.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 16 }}>{ch.emoji}</span>
+                      <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{ch.title}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      {/* Mini progress bar */}
+                      <div style={{ width: 60, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: 2,
+                          width: `${Math.min(100, (ch.count / 100) * 100)}%`,
+                          background: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
+                          transition: 'width 0.4s',
+                        }} />
+                      </div>
+                      <span style={{
+                        fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600,
+                        color: ch.count >= 50 ? '#34d399' : ch.count >= 20 ? '#60a5fa' : '#fbbf24',
+                        minWidth: 32, textAlign: 'right',
+                      }}>
+                        {ch.count}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

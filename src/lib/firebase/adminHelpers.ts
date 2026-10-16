@@ -223,15 +223,39 @@ export async function wipePracticeLeaderboard(): Promise<ResetResult> {
 
 /** Wipe all RTDB sessions (active/ended) */
 export async function wipeRTDBSessions(): Promise<ResetResult> {
-  const { db } = getFirebaseInstances();
+  const { db, auth } = getFirebaseInstances();
   if (!db) return { deleted: 0, errors: 0 };
+
+  // Sign in anonymously so RTDB security rules based on auth != null pass
+  try {
+    if (auth && !auth.currentUser) {
+      const { signInAnonymously } = await import('firebase/auth');
+      await signInAnonymously(auth);
+    }
+  } catch { /* continue even if anonymous sign-in fails */ }
+
   const { ref, get, remove } = await import('firebase/database');
   let deleted = 0, errors = 0;
   const paths = ['sessions', 'sessions_questions', 'session_pub_questions', 'session_codes', 'teacher_sessions'];
   for (const path of paths) {
     try {
       const snap = await get(ref(db, path));
-      if (snap.exists()) { await remove(ref(db, path)); deleted++; }
+      if (snap.exists()) {
+        // Try removing the whole node first
+        try {
+          await remove(ref(db, path));
+          deleted++;
+        } catch {
+          // RTDB rules may only allow per-child writes; iterate and delete individually
+          const childKeys = Object.keys(snap.val() || {});
+          let anyDeleted = false;
+          for (const key of childKeys) {
+            try { await remove(ref(db, `${path}/${key}`)); deleted++; anyDeleted = true; }
+            catch { errors++; }
+          }
+          if (!anyDeleted && childKeys.length > 0) errors++;
+        }
+      }
     } catch { errors++; }
   }
   return { deleted, errors };
