@@ -15,6 +15,7 @@ import { audioEngine } from '@/lib/audioEngine';
 import MuteButton from '@/components/MuteButton';
 import MusicThemePicker from '@/components/MusicThemePicker';
 import { submitScore } from '@/lib/firebase/leaderboard';
+import QuizNav from '@/components/QuizNav';
 
 // Only show topics that have at least one local question
 const LOCAL_TOPIC_KEYS = new Set((allGradeQuestions as Question[]).map(q => q.topicKey));
@@ -522,6 +523,7 @@ export default function HotSeatPage() {
           </div>
         </div>
       )}
+      <QuizNav />
     </div>
   );
 }

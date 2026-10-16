@@ -6,6 +6,7 @@ import { Gamepad2, User, Wifi, Zap, Lock, AlertTriangle, ChevronLeft } from 'luc
 import { AvatarGrid } from '@/components/ui/Avatar';
 import { useFirebase } from '@/hooks/useFirebase';
 import { findSessionByCode } from '@/lib/firebase/sessions';
+import QuizNav from '@/components/QuizNav';
 
 export default function JoinPage() {
   return (
@@ -245,6 +246,7 @@ function JoinInner() {
           </div>
         )}
       </div>
+      <QuizNav />
     </div>
   );
 }

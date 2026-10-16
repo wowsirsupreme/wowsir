@@ -12,6 +12,7 @@ import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import MuteButton from '@/components/MuteButton';
 import MusicThemePicker from '@/components/MusicThemePicker';
+import QuizNav from '@/components/QuizNav';
 
 const BATTLE_COUNT = 10;
 const TIME_LIMIT   = 12;
@@ -580,6 +581,7 @@ export default function BattlePage() {
           </div>
         );
       })()}
+      <QuizNav />
     </div>
   );
 }

@@ -19,7 +19,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Home',     href: '/',         icon: <Home size={18} /> },
+  { label: 'Join',     href: '/join',     icon: <Home size={18} /> },
   { label: 'Practice', href: '/practice', icon: <BookOpen size={18} /> },
   { label: 'Study',    href: '/study',    icon: <GraduationCap size={18} /> },
   { label: 'Battle',   href: '/battle',   icon: <Swords size={18} /> },
@@ -41,7 +41,8 @@ export default function QuizNav({ showEndGame, onEndGame, endGameLabel = 'End Ga
   const [showConfirm, setShowConfirm] = useState(false);
 
   function activeSection() {
-    if (pathname === '/') return '/';
+    // play/[code] is part of the join flow — keep Join tab active
+    if (pathname.startsWith('/join') || pathname.startsWith('/play')) return '/join';
     for (const item of NAV_ITEMS.slice(1)) {
       if (pathname.startsWith(item.href)) return item.href;
     }
