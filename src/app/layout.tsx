@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/Toast';
+import { MusicProvider } from '@/contexts/MusicContext';
 
 export const metadata: Metadata = {
   title: 'WOW Sir — DPS International Ghana',
@@ -44,9 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <MusicProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </MusicProvider>
       </body>
     </html>
   );

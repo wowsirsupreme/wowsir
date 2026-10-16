@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, use, useRef } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
+import { useMusicContext } from '@/contexts/MusicContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
@@ -497,11 +498,6 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
 // ── Lobby View Component ──────────────────────────────────────────────────────
 
-const DEFAULT_TRACKS = [
-  { id: 'big-guy',   label: 'Big Guy',   artist: 'Ice Spice',    src: '/music/big-guy.mp3',   emoji: '🎤' },
-  { id: 'lush-life', label: 'Lush Life', artist: 'Zara Larsson', src: '/music/lush-life.mp3', emoji: '🌸' },
-];
-
 function LobbyView({
   code, avatarId, playerName, playerId, players, ready, questionsLoading,
   localQuestions, onStart, onBattle,
@@ -510,47 +506,25 @@ function LobbyView({
   players: unknown[]; ready: boolean; questionsLoading: boolean;
   localQuestions: unknown[]; onStart: () => void; onBattle: () => void;
 }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
-  const [volume, setVolume] = useState(0.5);
+  const { tracks, nowPlaying, volume, toggleTrack, setVolume, addCustomTrack: ctxAddCustomTrack } = useMusicContext();
   const [musicOpen, setMusicOpen] = useState(false);
-  const [tracks, setTracks] = useState(DEFAULT_TRACKS);
   const [customUrl, setCustomUrl] = useState('');
   const [customLabel, setCustomLabel] = useState('');
   const [showAddCustom, setShowAddCustom] = useState(false);
 
-  function toggleTrack(id: string, src: string) {
-    if (nowPlaying === id) {
-      audioRef.current?.pause();
-      setNowPlaying(null);
-    } else {
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; }
-      const a = new Audio(src);
-      a.loop = true;
-      a.volume = volume;
-      a.play().catch(() => {});
-      audioRef.current = a;
-      setNowPlaying(id);
-    }
-  }
-
   function handleVolume(v: number) {
     setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v;
   }
 
   function addCustomTrack() {
     if (!customUrl.trim()) return;
-    const id = `custom-${Date.now()}`;
-    setTracks(prev => [...prev, { id, label: customLabel || 'Custom', artist: 'Custom', src: customUrl.trim(), emoji: '🎵' }]);
+    ctxAddCustomTrack(customLabel, customUrl.trim());
     setCustomUrl('');
     setCustomLabel('');
     setShowAddCustom(false);
-    toggleTrack(id, customUrl.trim());
   }
 
-  // Stop music when component unmounts (quiz starts)
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  // Music is now managed by MusicContext — no cleanup needed here
 
   const nowTrack = tracks.find(t => t.id === nowPlaying);
 
