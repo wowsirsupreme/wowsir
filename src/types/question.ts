@@ -153,7 +153,7 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr9-data-sound':       { title: '§1.3 – Sound Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🎵' },
   'gr9-data-images':      { title: '§1.3 – Image Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
   'gr9-data-compression': { title: '§1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
-  // Imported topic keys (CSV imports use these aliases)
+  // Imported/alias topic keys — kept for Firestore backwards-compat, hidden from picker (see LEGACY_TOPIC_KEYS)
   'gr9-number-systems':   { title: '§1.1 – Number Systems',                        subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
   'gr9-text-sound-images':{ title: '§1.2/1.3 – Text, Sound & Images',              subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
   'gr9-compression':      { title: '§1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
@@ -194,12 +194,13 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr10-quantum':         { title: '§7.2 – Quantum Computing',                     subject: 'Grade 10 CS (IGCSE)', emoji: '⚛️' },
   'gr10-abstraction':     { title: '§9.1 – Abstraction & Decomposition',           subject: 'Grade 10 CS (IGCSE)', emoji: '🧩' },
   'gr10-algorithms':      { title: '§9.1–9.3 – Algorithm Design & Analysis',      subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
-  'gr10-algorithms-adv':  { title: '§9.1–9.3 – Algorithm Design',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
   'gr10-boolean':         { title: '§2.1 – Boolean Logic & Circuits',              subject: 'Grade 10 CS (IGCSE)', emoji: '⚙️' },
   'gr10-programming':     { title: '§10.1–10.3 – Further Programming & Testing',  subject: 'Grade 10 CS (IGCSE)', emoji: '💻' },
-  'gr10-python-adv':      { title: '§10.1–10.3 – Further Programming',            subject: 'Grade 10 CS (IGCSE)', emoji: '🐍' },
   'gr10-system-analysis': { title: '§9.1 – System Analysis & Design',             subject: 'Grade 10 CS (IGCSE)', emoji: '📊' },
   'gr10-sql':             { title: '§Topic 11 – Databases & SQL',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🗄️' },
+  // Alias keys — kept for Firestore backwards-compat, hidden from picker (see LEGACY_TOPIC_KEYS)
+  'gr10-algorithms-adv':  { title: '§9.1–9.3 – Algorithm Design',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
+  'gr10-python-adv':      { title: '§10.1–10.3 – Further Programming',            subject: 'Grade 10 CS (IGCSE)', emoji: '🐍' },
 
   // ════════════════════════════════════════════════════════════════
   // GRADE 11 — CS IGCSE 0478 (Year 3, 2028–29 — revision & exam prep)
@@ -225,12 +226,35 @@ const LEGACY_SUBJECTS = new Set([
   'Grade 7 CS',   // old duplicate legacy keys (gr7-ch1-intro etc.) superseded by Grade 7 Computing
 ]);
 
+/** Individual topic keys hidden from the picker but kept in TOPIC_LABELS for
+ *  Firestore backwards-compatibility (old quiz docs may reference these keys). */
+const LEGACY_TOPIC_KEYS = new Set([
+  // Grade 9 — old CSV-import aliases superseded by granular gr9-data-* / gr9-os etc.
+  'gr9-number-systems',
+  'gr9-text-sound-images',
+  'gr9-compression',
+  'gr9-networking',
+  'gr9-networks',
+  'gr9-programming',
+  'gr9-algorithms',
+  'gr9-cybersec',
+  // Grade 10 — duplicate/alias keys
+  'gr10-algorithms-adv',   // duplicate of gr10-algorithms
+  'gr10-python-adv',       // duplicate of gr10-programming
+  'gr10-encryption',       // duplicate of gr10-cybersecurity (both §4.2)
+  // Grade 11 — duplicate keys
+  'gr11-system-software',  // duplicate of gr11-os
+  'gr11-logic',            // duplicate of gr11-hardware (both §2.1)
+]);
+
 /** Returns topics grouped by their subject, preserving insertion order.
- *  Excludes old standalone/legacy subjects (Scratch, Word, HTML, etc.). */
+ *  Excludes old standalone/legacy subjects (Scratch, Word, HTML, etc.) and
+ *  individual alias/duplicate keys listed in LEGACY_TOPIC_KEYS. */
 export function getGroupedTopics(): Array<{ subject: string; topics: Array<{ key: string; title: string; emoji: string }> }> {
   const map = new Map<string, Array<{ key: string; title: string; emoji: string }>>();
   for (const [key, t] of Object.entries(TOPIC_LABELS)) {
     if (LEGACY_SUBJECTS.has(t.subject)) continue;   // skip old standalone legacy topics
+    if (LEGACY_TOPIC_KEYS.has(key)) continue;       // skip individual alias/duplicate keys
     const group = map.get(t.subject) ?? [];
     group.push({ key, title: t.title, emoji: t.emoji });
     map.set(t.subject, group);
