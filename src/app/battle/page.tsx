@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import TopicPicker from '@/components/TopicPicker';
@@ -49,10 +49,11 @@ const AI_DIFFICULTY = {
 
 export default function BattlePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { configured } = useFirebase();
 
   /* ── setup state ── */
-  const [p1Name,     setP1Name]     = useState('');
+  const [p1Name,     setP1Name]     = useState(() => searchParams.get('name') ?? '');
   const [p2Name,     setP2Name]     = useState('');
   const [vsAI,       setVsAI]       = useState(false);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
