@@ -13,7 +13,6 @@ import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import MuteButton from '@/components/MuteButton';
-import MusicThemePicker from '@/components/MusicThemePicker';
 import { submitScore } from '@/lib/firebase/leaderboard';
 import QuizNav from '@/components/QuizNav';
 
@@ -284,10 +283,6 @@ export default function HotSeatPage() {
                 ⚠️ Firebase not connected — using local questions only
               </p>
             )}
-
-            <div className="mb-5">
-              <MusicThemePicker />
-            </div>
 
             {error && (
               <p className="text-sm text-red-400 text-center -mt-2 mb-1">{error}</p>

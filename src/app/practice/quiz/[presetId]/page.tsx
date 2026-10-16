@@ -12,7 +12,6 @@ import type { PresetQuiz } from '@/lib/firebase/presetQuizzes';
 import type { Question } from '@/types/question';
 import { audioEngine } from '@/lib/audioEngine';
 import AudioControls from '@/components/MuteButton';
-import MusicThemePicker from '@/components/MusicThemePicker';
 import QuizNav from '@/components/QuizNav';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -628,11 +627,6 @@ export default function PracticeQuizPage() {
         <QuizNav />
         {starOverlay}
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 60px' }}>
-
-          {/* Music theme picker — top-right of results */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
-            <MusicThemePicker onChange={() => audioEngine.startMusic()} />
-          </div>
 
           {/* Score card */}
           <div

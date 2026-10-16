@@ -11,7 +11,6 @@ import type { Question } from '@/types/question';
 import { calcTimeBonus } from '@/lib/utils';
 import { audioEngine } from '@/lib/audioEngine';
 import MuteButton from '@/components/MuteButton';
-import MusicThemePicker from '@/components/MusicThemePicker';
 import QuizNav from '@/components/QuizNav';
 
 const BATTLE_COUNT = 10;
@@ -367,11 +366,6 @@ export default function BattlePage() {
                 TOPIC
               </label>
               <TopicPicker value={topicKey} onChange={setTopicKey} />
-            </div>
-
-            {/* Music theme */}
-            <div style={{ marginBottom: 24 }}>
-              <MusicThemePicker />
             </div>
 
             <button
