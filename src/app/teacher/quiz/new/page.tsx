@@ -90,6 +90,7 @@ function QuizBuilderInner() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingQ, setLoadingQ]       = useState(false);
   const [saving, setSaving]           = useState(false);
+  const [originalCreatedAt, setOriginalCreatedAt] = useState<number | null>(null);
 
   const activeTopicKeys = topicKeys.filter(Boolean);
 
@@ -133,6 +134,7 @@ function QuizBuilderInner() {
       setAntiCheat(q.settings?.antiCheat ?? true);
       setShowLB(q.settings?.showLeaderboard ?? true);
       setSelectedIds(new Set(q.questionIds || []));
+      setOriginalCreatedAt(q.createdAt ?? null);
     });
   }, [editId]);
 
@@ -206,11 +208,14 @@ ${qHtml}
         questionIds: Array.from(selectedIds),
         questions: questions.filter(q => selectedIds.has(q.id)),
         status,
-        createdAt: Date.now(),
+        createdAt: editId && originalCreatedAt ? originalCreatedAt : Date.now(),
         settings: { timeLimit, pointsPerQ, shuffleQuestions: shuffleQ, shuffleOptions: shuffleOpts, antiCheat, showLeaderboard: showLB },
       };
       await saveQuiz(quiz);
-      toast(status === 'published' ? 'Quiz published!' : 'Saved as draft', 'success');
+      toast(editId
+        ? (status === 'published' ? 'Quiz updated!' : 'Draft updated')
+        : (status === 'published' ? 'Quiz published!' : 'Saved as draft'),
+        'success');
       router.push('/teacher');
     } catch (err: unknown) {
       console.error('saveQuiz error:', err);
@@ -261,11 +266,11 @@ ${qHtml}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 9 }}>
           <button onClick={() => handleSave('draft')} disabled={saving}
             style={{ padding: '7px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-            Save draft
+            {editId ? 'Save draft' : 'Save draft'}
           </button>
           <button onClick={() => handleSave('published')} disabled={saving}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, background: 'linear-gradient(135deg,#b8942a,#d4aa45,#c9a84c)', border: 'none', color: '#1a1200', cursor: saving ? 'default' : 'pointer', boxShadow: '0 2px 14px rgba(201,168,76,0.3)', opacity: saving ? 0.6 : 1 }}>
-            <Rocket size={13} /> {saving ? 'Publishing…' : 'Publish'}
+            <Rocket size={13} /> {saving ? (editId ? 'Updating…' : 'Publishing…') : (editId ? 'Update' : 'Publish')}
           </button>
         </div>
       </nav>
@@ -410,7 +415,7 @@ ${qHtml}
         <div style={{ display: 'flex', gap: 11 }}>
           <button onClick={() => handleSave('draft')} disabled={saving}
             style={{ flexShrink: 0, padding: '13px 22px', borderRadius: 13, fontSize: 14, fontWeight: 600, background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-            Save draft
+            {editId ? 'Keep as draft' : 'Save draft'}
           </button>
           <button onClick={handlePrint} disabled={selectedIds.size === 0}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '13px 18px', borderRadius: 13, fontSize: 14, fontWeight: 600, background: 'rgba(99,102,241,0.12)', border: '1.5px solid rgba(99,102,241,0.3)', color: selectedIds.size === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(160,163,255,0.9)', cursor: selectedIds.size === 0 ? 'default' : 'pointer', transition: 'all 0.2s' }}>
@@ -418,7 +423,7 @@ ${qHtml}
           </button>
           <button onClick={() => handleSave('published')} disabled={saving}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px 22px', borderRadius: 13, fontSize: 14, fontWeight: 700, background: saving ? 'rgba(201,168,76,0.4)' : 'linear-gradient(135deg,#b8942a,#d4aa45,#c9a84c)', border: 'none', color: '#1a1200', cursor: saving ? 'default' : 'pointer', boxShadow: saving ? 'none' : '0 4px 20px rgba(201,168,76,0.3)', transition: 'all 0.2s' }}>
-            <Rocket size={15} /> {saving ? 'Publishing…' : 'Publish quiz'}
+            <Rocket size={15} /> {saving ? (editId ? 'Updating…' : 'Publishing…') : (editId ? 'Update quiz' : 'Publish quiz')}
           </button>
         </div>
 
