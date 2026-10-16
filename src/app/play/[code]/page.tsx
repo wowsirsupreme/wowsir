@@ -574,12 +574,42 @@ function LobbyView({
                 <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Loading quiz…</span>
               </>
             ) : ready ? (
-              <span className="text-xs font-medium" style={{ color: '#34d399' }}>✓ Ready to play!</span>
+              <span className="text-xs font-medium" style={{ color: '#34d399' }}>✓ Ready — quiz is live!</span>
             ) : (
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Waiting for teacher to start…</span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Joining…</span>
             )}
           </div>
         </div>
+
+        {/* Friends in the room */}
+        {(players as SessionPlayer[]).length > 0 && (
+          <div
+            className="w-full animate-fadeUp"
+            style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <p style={{ margin: '0 0 12px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {(players as SessionPlayer[]).length} {(players as SessionPlayer[]).length === 1 ? 'player' : 'players'} in the room
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+              {(players as SessionPlayer[]).map(p => (
+                <div key={p.id} className="animate-fadeIn flex flex-col items-center gap-1.5">
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14,
+                    background: p.name === playerName ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)',
+                    border: `1.5px solid ${p.name === playerName ? 'rgba(52,211,153,0.45)' : 'rgba(255,255,255,0.1)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: p.name === playerName ? '0 0 14px rgba(16,185,129,0.2)' : 'none',
+                  }}>
+                    <Avatar id={p.avatarId} size={32} />
+                  </div>
+                  <span style={{ fontSize: 11, color: p.name === playerName ? '#6ee7b7' : 'rgba(255,255,255,0.55)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                    {p.name === playerName ? 'You' : p.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Music player */}
         <div
@@ -636,7 +666,7 @@ function LobbyView({
               style={{ width: '100%', fontSize: 17, padding: '16px 24px' }}
               onClick={onStart}
             >
-              🚀 Start ({localQuestions.length} questions)
+              🚀 Play now ({localQuestions.length} questions)
             </button>
             <button
               onClick={onBattle}

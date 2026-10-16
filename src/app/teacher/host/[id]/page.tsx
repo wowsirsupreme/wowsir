@@ -138,10 +138,14 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         },
         closeAt ?? undefined
       );
+      // Auto-start immediately — no separate "Start" button needed
+      await startSession(sid, questions);
       setSessionId(sid);
-      setPhase('lobby');
+      setCurrentQIdx(0);
+      setPhase('question');
+      scheduleReveal();
       saveActiveSession(quizId, sid, '');   // code filled once session loads
-      toast('Session created! Waiting for players…', 'success');
+      toast('Session live! Share the room code with students.', 'success');
     } catch (err) { console.error('createSession failed:', err); toast('Failed to create session', 'error'); }
   }
 
@@ -174,14 +178,6 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     } catch {
       toast('Could not resume session', 'error');
     }
-  }
-
-  async function handleStart() {
-    if (!sessionId) return;
-    await startSession(sessionId, questions);
-    setCurrentQIdx(0);
-    setPhase('question');
-    scheduleReveal();
   }
 
   async function persistResult() {
@@ -656,7 +652,20 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 )}
               </div>
 
-              {/* ── Players waiting ── */}
+              {/* ── Live status ── */}
+              <div style={{
+                borderRadius: 14, padding: '11px 16px', marginBottom: 14,
+                background: 'rgba(16,185,129,0.08)',
+                border: '1px solid rgba(16,185,129,0.25)',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0, animation: 'pulseDot 1.5s ease-in-out infinite' }} />
+                <span style={{ fontSize: 13, color: '#6ee7b7', fontWeight: 600 }}>
+                  Quiz is live — students can join and answer immediately
+                </span>
+              </div>
+
+              {/* ── Players joined ── */}
               <div style={{
                 borderRadius: 20, padding: '18px 20px',
                 background: 'rgba(255,255,255,0.03)',
@@ -665,7 +674,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: players.length > 0 ? 14 : 0 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>
-                    Players waiting
+                    Players joined
                   </p>
                   <span style={{
                     fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 700,
@@ -676,7 +685,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 </div>
                 {players.length === 0 ? (
                   <p style={{ margin: '10px 0 2px', fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>
-                    Students will appear here when they join…
+                    Waiting for students to join…
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
@@ -698,16 +707,6 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                   </div>
                 )}
               </div>
-
-              {/* ── Start button ── */}
-              <button
-                className="btn-gold-solid"
-                style={{ fontSize: 16, marginBottom: 14 }}
-                onClick={handleStart}
-                disabled={players.length === 0}
-              >
-                🚀 Start Quiz ({players.length} {players.length === 1 ? 'player' : 'players'})
-              </button>
 
               {/* ── Auto-close (secondary) ── */}
               <details style={{ borderRadius: 14, overflow: 'hidden' }}>
