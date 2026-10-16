@@ -100,7 +100,7 @@ function JoinInner() {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', background: 'rgba(2,12,18,0.5)' }}
       >
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/student')}
           className="text-sm font-medium transition-colors"
           style={{ color: 'rgba(255,255,255,0.4)', minHeight: 44, minWidth: 44, display: 'flex', alignItems: 'center', gap: 4 }}
           onMouseEnter={e => (e.currentTarget.style.color = 'rgba(6,182,212,0.9)')}
