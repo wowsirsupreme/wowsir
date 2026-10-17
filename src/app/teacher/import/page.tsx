@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, FileDown, Upload, CheckCircle, AlertCircle, Info, SkipForward } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
-import { batchSaveQuestions, getExistingQuestionTexts } from '@/lib/firebase/questions';
+import { batchSaveQuestions, getExistingQuestionTexts, getAllQuestionsForExport } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import type { Question } from '@/types/question';
 
@@ -82,7 +82,7 @@ const BG = [
 //   gr11-programming  gr11-oop  gr11-algorithms  gr11-databases
 // ---------------------------------------------------------------------------
 
-const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter,imageUrl';
+const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,correctAnswerText,explanation,difficulty,points,chapter,imageUrl';
 
 const TEMPLATE_ROWS = [
   // One row per topicKey — copy the exact topicKey from column B into your own CSV.
@@ -278,11 +278,20 @@ function _parseCSVRows(text: string): ParsedRow[] {
       continue;
     }
 
+    // Support both 14-col (legacy) and 15-col (with correctAnswerText at index 9)
+    const has15Cols = cols.length >= 15;
     const [
       id, topicKey, rawType, text,
       optA, optB, optC, optD,
-      answer, explanation, difficulty, pointsStr, chapterStr, imageUrlRaw,
+      answer,
+      // col index 9: correctAnswerText (15-col) or explanation (14-col legacy)
+      col9, col10, col11, col12, col13, col14,
     ] = cols;
+    const explanation  = has15Cols ? col10 : col9;
+    const difficulty   = has15Cols ? col11 : col10;
+    const pointsStr    = has15Cols ? col12 : col11;
+    const chapterStr   = has15Cols ? col13 : col12;
+    const imageUrlRaw  = has15Cols ? col14 : col13;
 
     const type = rawType?.trim().toLowerCase();
 
@@ -444,6 +453,7 @@ export default function ImportCSVPage() {
   const [parseMeta, setParseMeta] = useState<ParseMeta | null>(null);
   const [filename, setFilename] = useState('');
   const [importing, setImporting] = useState(false);
+  const [templateLoading, setTemplateLoading] = useState(false);
   const [done, setDone] = useState(false);
 const [importedCount, setImportedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
@@ -535,8 +545,63 @@ const [importedCount, setImportedCount] = useState(0);
     }
   }
 
-  function downloadTemplate() {
-    const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv' });
+  async function downloadTemplate() {
+    setTemplateLoading(true);
+    let csvContent: string;
+    try {
+      const allQuestions = await getAllQuestionsForExport();
+      if (allQuestions.length > 0) {
+        // Sort by topicKey, then by trailing question number
+        allQuestions.sort((a, b) => {
+          const tk = (a.topicKey ?? '').localeCompare(b.topicKey ?? '');
+          if (tk !== 0) return tk;
+          const na = parseInt((a.id ?? '').match(/(\d+)$/)?.[1] ?? '0', 10);
+          const nb = parseInt((b.id ?? '').match(/(\d+)$/)?.[1] ?? '0', 10);
+          return na - nb;
+        });
+        const esc = (s: string) => `"${String(s ?? '').replace(/"/g, '""')}"`;
+        const rows = allQuestions.map(q => {
+          const ansIdx = parseInt(String(q.answer ?? '0'), 10);
+          const correctText = q.options?.[ansIdx] ?? '';
+          return [
+            q.id ?? '',
+            q.topicKey,
+            q.type,
+            q.text,
+            q.options?.[0] ?? '',
+            q.options?.[1] ?? '',
+            q.options?.[2] ?? '',
+            q.options?.[3] ?? '',
+            q.answer ?? '',
+            correctText,
+            q.explanation ?? '',
+            q.difficulty ?? 'easy',
+            q.points ?? 1,
+            q.chapter ?? 1,
+            q.imageUrl ?? '',
+          ].map(v => esc(String(v ?? ''))).join(',');
+        });
+        csvContent = [TEMPLATE_HEADERS, ...rows].join('\n');
+      } else {
+        // No questions in DB yet — use static sample rows, inserting blank correctAnswerText col
+        const augmented = TEMPLATE_ROWS.map(row => {
+          const parts = row.split(',');
+          parts.splice(9, 0, ''); // insert after answer (index 8)
+          return parts.join(',');
+        });
+        csvContent = TEMPLATE_HEADERS + '\n' + augmented.join('\n');
+      }
+    } catch {
+      // Firestore unavailable — fall back to static
+      const augmented = TEMPLATE_ROWS.map(row => {
+        const parts = row.split(',');
+        parts.splice(9, 0, '');
+        return parts.join(',');
+      });
+      csvContent = TEMPLATE_HEADERS + '\n' + augmented.join('\n');
+    }
+    setTemplateLoading(false);
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'wow-questions-template.csv'; a.click();
@@ -592,9 +657,10 @@ const [importedCount, setImportedCount] = useState(0);
             </div>
             <button
               onClick={downloadTemplate}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'rgba(56,189,248,0.12)', color: '#7dd3fc', border: '1px solid rgba(56,189,248,0.25)', flexShrink: 0 }}
+              disabled={templateLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: templateLoading ? 'not-allowed' : 'pointer', background: 'rgba(56,189,248,0.12)', color: '#7dd3fc', border: '1px solid rgba(56,189,248,0.25)', flexShrink: 0, opacity: templateLoading ? 0.6 : 1 }}
             >
-              <FileDown size={14} /> Template
+              <FileDown size={14} /> {templateLoading ? 'Loading…' : 'Template'}
             </button>
           </div>
         </div>

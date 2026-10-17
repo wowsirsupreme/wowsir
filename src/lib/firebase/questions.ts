@@ -51,6 +51,12 @@ export async function getAllQuestionsByTopic(topicKey: string): Promise<Question
   return getQuestionsByTopic(topicKey, ['approved', 'pending']);
 }
 
+/** Returns every question in the database (all topics, approved + pending) */
+export async function getAllQuestionsForExport(): Promise<Question[]> {
+  const snap = await getDocs(collection(fs(), 'questions'));
+  return snap.docs.map(d => ({ ...d.data(), id: d.id } as Question));
+}
+
 export async function getRandomQuestions(topicKey: string, count: number): Promise<Question[]> {
   const all = await getQuestionsByTopic(topicKey);
   const shuffled = [...all].sort(() => Math.random() - 0.5);

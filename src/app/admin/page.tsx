@@ -627,23 +627,28 @@ function QuestionBankTab() {
       const questions = await getAllQuestionsByTopic(topicKey);
       if (!questions.length) { alert(`No questions found for "${topicTitle}".`); return; }
       const escape = (s: string) => `"${String(s ?? '').replace(/"/g, '""')}"`;
-      const header = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter,imageUrl';
-      const rows = questions.map(q => [
-        q.id ?? '',
-        q.topicKey,
-        q.type,
-        q.text,
-        q.options?.[0] ?? '',
-        q.options?.[1] ?? '',
-        q.options?.[2] ?? '',
-        q.options?.[3] ?? '',
-        q.answer ?? '',
-        q.explanation ?? '',
-        q.difficulty ?? 'easy',
-        q.points ?? 1,
-        q.chapter ?? 1,
-        q.imageUrl ?? '',
-      ].map(v => escape(String(v ?? ''))).join(','));
+      const header = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,correctAnswerText,explanation,difficulty,points,chapter,imageUrl';
+      const rows = questions.map(q => {
+        const ansIdx = parseInt(String(q.answer ?? '0'), 10);
+        const correctText = q.options?.[ansIdx] ?? '';
+        return [
+          q.id ?? '',
+          q.topicKey,
+          q.type,
+          q.text,
+          q.options?.[0] ?? '',
+          q.options?.[1] ?? '',
+          q.options?.[2] ?? '',
+          q.options?.[3] ?? '',
+          q.answer ?? '',
+          correctText,
+          q.explanation ?? '',
+          q.difficulty ?? 'easy',
+          q.points ?? 1,
+          q.chapter ?? 1,
+          q.imageUrl ?? '',
+        ].map(v => escape(String(v ?? ''))).join(',');
+      });
       const csv = [header, ...rows].join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
