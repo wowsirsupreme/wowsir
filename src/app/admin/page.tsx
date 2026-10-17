@@ -9,7 +9,7 @@ import {
 import {
   getAllUsers, getPendingTeachers, approveTeacher, suspendTeacher,
   getUsageStats, getGeoStats, getAllQuestions,
-  wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, backupDatabase,
+  wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, wipeAllQuestions, backupDatabase,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
 import { deleteQuestionsByTopic } from '@/lib/firebase/questions';
@@ -377,6 +377,7 @@ export default function AdminPage() {
                 if (key === 'results') result = await wipeResults();
                 else if (key === 'practice') result = await wipePracticeLeaderboard();
                 else if (key === 'all') result = await wipeAllData();
+                else if (key === 'questions') result = await wipeAllQuestions();
                 else result = await wipeRTDBSessions();
                 setResetMsg(m => ({ ...m, [key]: `Deleted ${result.deleted} record${result.deleted !== 1 ? 's' : ''}${result.errors ? ` (${result.errors} errors)` : ''}` }));
                 setResetStatus(s => ({ ...s, [key]: 'done' }));
@@ -1062,7 +1063,7 @@ function UserRow({ user, onApprove, onSuspend }: {
 }
 
 /* ─────────────── Database Tab ─────────────── */
-type ResetKey = 'results' | 'practice' | 'rtdb' | 'all';
+type ResetKey = 'results' | 'practice' | 'rtdb' | 'all' | 'questions';
 interface DatabaseTabProps {
   resetStatus: Record<string, 'idle' | 'confirm' | 'running' | 'done' | 'error'>;
   resetMsg: Record<string, string>;
@@ -1108,6 +1109,12 @@ function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, o
       label: 'Reset Everything',
       desc: 'Wipes session results, practice leaderboard, AND all RTDB sessions in one go. Use this for a full clean slate.',
       accent: '#e879f9',
+    },
+    {
+      key: 'questions',
+      label: 'Wipe All Questions',
+      desc: 'Permanently deletes every document in the Firestore "questions" collection. Use this before re-importing a clean question set.',
+      accent: '#f43f5e',
     },
   ];
 

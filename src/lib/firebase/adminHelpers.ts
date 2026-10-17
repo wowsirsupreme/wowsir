@@ -279,6 +279,11 @@ export async function wipeAllData(): Promise<{ deleted: number; errors: number }
   };
 }
 
+/** Wipe all questions from the Firestore "questions" collection */
+export async function wipeAllQuestions(): Promise<ResetResult> {
+  return deleteCollection('questions');
+}
+
 /** Export a full JSON backup of all Firestore collections + RTDB root */
 export async function backupDatabase(): Promise<void> {
   const { fs, db } = getFirebaseInstances();
