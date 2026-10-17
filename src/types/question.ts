@@ -80,8 +80,38 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 5 — Computing
   // ════════════════════════════════════════════════════════════════
-  'gr5-ch1-history':   { title: 'Ch 1 – Computer Evolution',         subject: 'Grade 5 Computing', emoji: '🏛️' },
-  'gr5-ch2-storage':   { title: 'Ch 2 – Data Storage Media',         subject: 'Grade 5 Computing', emoji: '💾' },
+  // Ch 1 — Computer Evolution: From Abacus to Smartphone
+  'gr5-ch1-early-counting':   { title: 'Ch 1 – Early Counting Techniques',      subject: 'Grade 5 Computing', emoji: '🏛️' },
+  'gr5-ch1-abacus':           { title: 'Ch 1 – The Abacus',                     subject: 'Grade 5 Computing', emoji: '🔢' },
+  'gr5-ch1-napier':           { title: "Ch 1 – Napier's Bones & Slide Rule",    subject: 'Grade 5 Computing', emoji: '📐' },
+  'gr5-ch1-pascaline':        { title: 'Ch 1 – The Pascaline',                  subject: 'Grade 5 Computing', emoji: '⚙️' },
+  'gr5-ch1-leibniz':          { title: "Ch 1 – Leibniz's Step Reckoner",        subject: 'Grade 5 Computing', emoji: '🔩' },
+  'gr5-ch1-jacquard':         { title: "Ch 1 – Jacquard's Loom",                subject: 'Grade 5 Computing', emoji: '🧵' },
+  'gr5-ch1-babbage-lovelace': { title: 'Ch 1 – Babbage & Lovelace',             subject: 'Grade 5 Computing', emoji: '🖥️' },
+  'gr5-ch1-hollerith':        { title: "Ch 1 – Hollerith's Tabulator",          subject: 'Grade 5 Computing', emoji: '📊' },
+  'gr5-ch1-mark1':            { title: 'Ch 1 – Harvard Mark I',                 subject: 'Grade 5 Computing', emoji: '🏗️' },
+  'gr5-ch1-gen1':             { title: 'Ch 1 – Generation 1 (Vacuum Tubes)',    subject: 'Grade 5 Computing', emoji: '💡' },
+  'gr5-ch1-gen2':             { title: 'Ch 1 – Generation 2 (Transistors)',     subject: 'Grade 5 Computing', emoji: '⚡' },
+  'gr5-ch1-gen3':             { title: 'Ch 1 – Generation 3 (Integrated Circuits)', subject: 'Grade 5 Computing', emoji: '🔲' },
+  'gr5-ch1-gen4':             { title: 'Ch 1 – Generation 4 (Microprocessors)', subject: 'Grade 5 Computing', emoji: '💻' },
+  'gr5-ch1-gen5':             { title: 'Ch 1 – Generation 5 (AI & Future)',     subject: 'Grade 5 Computing', emoji: '🤖' },
+  'gr5-ch1-mainframe-super':  { title: 'Ch 1 – Mainframes & Supercomputers',    subject: 'Grade 5 Computing', emoji: '🏢' },
+  'gr5-ch1-smartphone':       { title: 'Ch 1 – Smartphones',                    subject: 'Grade 5 Computing', emoji: '📱' },
+  'gr5-ch1-ai-nlp-ar-vr':    { title: 'Ch 1 – AI, NLP, AR & VR',              subject: 'Grade 5 Computing', emoji: '🥽' },
+  // Ch 2 — Data Storage Media
+  'gr5-ch2-binary':           { title: 'Ch 2 – Binary & Measuring Memory',      subject: 'Grade 5 Computing', emoji: '🔢' },
+  'gr5-ch2-units':            { title: 'Ch 2 – Storage Units (KB/MB/GB/TB)',    subject: 'Grade 5 Computing', emoji: '📏' },
+  'gr5-ch2-ram-rom':          { title: 'Ch 2 – Primary Memory (RAM & ROM)',     subject: 'Grade 5 Computing', emoji: '💾' },
+  'gr5-ch2-secondary-overview':{ title: 'Ch 2 – Secondary Storage Overview',   subject: 'Grade 5 Computing', emoji: '📦' },
+  'gr5-ch2-harddisk':         { title: 'Ch 2 – Hard Disk Drive (HDD)',          subject: 'Grade 5 Computing', emoji: '💿' },
+  'gr5-ch2-cd':               { title: 'Ch 2 – CD-ROM',                         subject: 'Grade 5 Computing', emoji: '💿' },
+  'gr5-ch2-dvd':              { title: 'Ch 2 – DVD',                            subject: 'Grade 5 Computing', emoji: '📀' },
+  'gr5-ch2-bluray':           { title: 'Ch 2 – Blu-ray',                        subject: 'Grade 5 Computing', emoji: '🔵' },
+  'gr5-ch2-rw-vs-r':          { title: 'Ch 2 – R vs RW (Read-Only vs Rewritable)', subject: 'Grade 5 Computing', emoji: '🔁' },
+  'gr5-ch2-pendrive-memorycard':{ title: 'Ch 2 – Pen Drive & Memory Card',     subject: 'Grade 5 Computing', emoji: '🔌' },
+  'gr5-ch2-cloud':            { title: 'Ch 2 – Cloud Storage',                  subject: 'Grade 5 Computing', emoji: '☁️' },
+  'gr5-ch2-magnetictape':     { title: 'Ch 2 – Magnetic Tape',                  subject: 'Grade 5 Computing', emoji: '🎞️' },
+  'gr5-ch2-review':           { title: 'Ch 2 – Chapter Review (Mixed)',         subject: 'Grade 5 Computing', emoji: '📝' },
   'gr5-ch3-tables':    { title: 'Ch 3 – Organising in Word',         subject: 'Grade 5 Computing', emoji: '📊' },
   'gr5-ch4-pptanim':   { title: 'Ch 4 – Enliven a Presentation',     subject: 'Grade 5 Computing', emoji: '✨' },
   'gr5-ch5-slideshow': { title: 'Ch 5 – Slide Show Setup',           subject: 'Grade 5 Computing', emoji: '▶️' },
@@ -238,6 +268,9 @@ const LEGACY_SUBJECTS = new Set([
 /** Individual topic keys hidden from the picker but kept in TOPIC_LABELS for
  *  Firestore backwards-compatibility (old quiz docs may reference these keys). */
 const LEGACY_TOPIC_KEYS = new Set([
+  // Grade 5 — flat chapter-level keys superseded by granular sub-topic keys
+  'gr5-ch1-history',   // superseded by gr5-ch1-early-counting … gr5-ch1-ai-nlp-ar-vr
+  'gr5-ch2-storage',   // superseded by gr5-ch2-binary … gr5-ch2-review
   // Grade 9 — old CSV-import aliases superseded by granular gr9-data-* / gr9-os etc.
   'gr9-number-systems',
   'gr9-text-sound-images',

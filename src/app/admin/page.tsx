@@ -12,7 +12,7 @@ import {
   wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, wipeAllQuestions, backupDatabase,
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
-import { deleteQuestionsByTopic } from '@/lib/firebase/questions';
+import { deleteQuestionsByTopic, getAllQuestionsByTopic } from '@/lib/firebase/questions';
 import { loginTeacher, logoutTeacher, onAuthChange } from '@/lib/firebase/auth';
 import type { User } from 'firebase/auth';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -619,6 +619,45 @@ function QuestionBankTab() {
   const [deleteResult, setDeleteResult] = useState<{ topicKey: string; deleted: number; errors: number } | null>(null);
   const [repairing, setRepairing] = useState(false);
   const [repairResult, setRepairResult] = useState<{ migrated: number; skipped: number; errors: number } | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);    // topicKey being exported
+
+  const handleDownloadCSV = async (topicKey: string, topicTitle: string) => {
+    setDownloading(topicKey);
+    try {
+      const questions = await getAllQuestionsByTopic(topicKey);
+      if (!questions.length) { alert(`No questions found for "${topicTitle}".`); return; }
+      const escape = (s: string) => `"${String(s ?? '').replace(/"/g, '""')}"`;
+      const header = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter,imageUrl';
+      const rows = questions.map(q => [
+        q.id ?? '',
+        q.topicKey,
+        q.type,
+        q.text,
+        q.options?.[0] ?? '',
+        q.options?.[1] ?? '',
+        q.options?.[2] ?? '',
+        q.options?.[3] ?? '',
+        q.answer ?? '',
+        q.explanation ?? '',
+        q.difficulty ?? 'easy',
+        q.points ?? 1,
+        q.chapter ?? 1,
+        q.imageUrl ?? '',
+      ].map(v => escape(String(v ?? ''))).join(','));
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${topicKey}_questions.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Export failed: ' + String(err));
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   // Firestore-backed question counts per topicKey
   const [fsTopicCounts, setFsTopicCounts] = useState<Record<string, number> | null>(null);
@@ -922,6 +961,23 @@ function QuestionBankTab() {
                         }}>
                           {ch.count} question{ch.count !== 1 ? 's' : ''}
                         </span>
+
+                        {/* Download CSV button */}
+                        <button
+                          onClick={() => handleDownloadCSV(ch.topicKey, ch.title)}
+                          disabled={downloading === ch.topicKey || ch.count === 0}
+                          title={ch.count > 0 ? `Download all ${ch.count} questions as CSV` : 'No questions to download'}
+                          style={{
+                            padding: '3px 8px', borderRadius: 6, fontSize: 11,
+                            background: 'rgba(96,165,250,0.08)', color: downloading === ch.topicKey ? 'rgba(255,255,255,0.3)' : ch.count > 0 ? 'rgba(96,165,250,0.7)' : 'rgba(255,255,255,0.2)',
+                            border: '1px solid rgba(96,165,250,0.15)', cursor: ch.count > 0 ? 'pointer' : 'default',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { if (ch.count > 0) { (e.currentTarget as HTMLElement).style.background = 'rgba(96,165,250,0.18)'; (e.currentTarget as HTMLElement).style.color = '#60a5fa'; } }}
+                          onMouseLeave={e => { if (ch.count > 0) { (e.currentTarget as HTMLElement).style.background = 'rgba(96,165,250,0.08)'; (e.currentTarget as HTMLElement).style.color = 'rgba(96,165,250,0.7)'; } }}
+                        >
+                          {downloading === ch.topicKey ? '…' : '⬇'}
+                        </button>
 
                         {/* Delete controls */}
                         {isDeleting ? (

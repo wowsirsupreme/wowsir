@@ -35,9 +35,18 @@ const BG = [
 //   gr4-ch5-formatting   gr4-ch6-word  gr4-ch7-internet  gr4-ch8-ppt1  gr4-ch9-ppt2
 //
 // Grade 5 Computing:
-//   gr5-ch1-history   gr5-ch2-storage   gr5-ch3-tables   gr5-ch4-pptanim
-//   gr5-ch5-slideshow gr5-ch6-internet  gr5-ch7-multimedia
-//   gr5-ch8-scratch1  gr5-ch9-scratch2
+//   Ch 1 sub-topics (Computer Evolution):
+//     gr5-ch1-early-counting  gr5-ch1-abacus  gr5-ch1-napier  gr5-ch1-pascaline
+//     gr5-ch1-leibniz  gr5-ch1-jacquard  gr5-ch1-babbage-lovelace  gr5-ch1-hollerith
+//     gr5-ch1-mark1  gr5-ch1-gen1  gr5-ch1-gen2  gr5-ch1-gen3  gr5-ch1-gen4
+//     gr5-ch1-gen5  gr5-ch1-mainframe-super  gr5-ch1-smartphone  gr5-ch1-ai-nlp-ar-vr
+//   Ch 2 sub-topics (Data Storage):
+//     gr5-ch2-binary  gr5-ch2-units  gr5-ch2-ram-rom  gr5-ch2-secondary-overview
+//     gr5-ch2-harddisk  gr5-ch2-cd  gr5-ch2-dvd  gr5-ch2-bluray  gr5-ch2-rw-vs-r
+//     gr5-ch2-pendrive-memorycard  gr5-ch2-cloud  gr5-ch2-magnetictape  gr5-ch2-review
+//   Remaining chapters (chapter-level keys):
+//     gr5-ch3-tables  gr5-ch4-pptanim  gr5-ch5-slideshow  gr5-ch6-internet
+//     gr5-ch7-multimedia  gr5-ch8-scratch1  gr5-ch9-scratch2
 //
 // Grade 6 Computing:
 //   gr6-ch1-robotics  gr6-ch2-mailmerge  gr6-ch3-email
@@ -87,20 +96,6 @@ const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,
 const TEMPLATE_ROWS = [
   // One row per topicKey — copy the exact topicKey from column B into your own CSV.
   // answer = 0-based index of the correct option. Leave imageUrl (col 14) blank or add a full https:// URL.
-  `scratch-basics-q001,scratch-basics,mcq,In Scratch; what is the term for the characters or objects that appear on the stage?,Sprites,Backdrops,Scripts,Blocks,0,Sprites are the characters or objects in a Scratch project. They can have costumes; sounds; and scripts attached to them.,easy,1,1,`,
-  `scratch-control-q001,scratch-control,mcq,Which Scratch block will repeat a set of instructions exactly 10 times?,repeat 10,forever,if <> then,wait 10 seconds,0,The ’repeat 10’ block is a loop that runs the blocks inside it exactly 10 times before continuing.,easy,1,1,`,
-  `word-layout-q001,word-layout,mcq,Which Microsoft Word feature lets you change the margin size on a page?,Page Layout → Margins,Insert → Header,Home → Font,View → Ruler,0,In Word; margins are adjusted through the Page Layout (or Layout) tab using the Margins option.,easy,1,1,`,
-  `word-tables-q001,word-tables,mcq,To add a new row at the bottom of a Word table; you can press which key while the cursor is in the last cell?,Tab,Enter,Shift+Enter,Ctrl+Enter,0,Pressing Tab in the last cell of a Word table automatically adds a new row at the bottom.,easy,1,1,`,
-  `html-basics-q001,html-basics,mcq,Which HTML tag is used to create the largest heading on a webpage?,<h1>,<head>,<header>,<big>,0,<h1> defines the most important (largest) heading. Headings go from <h1> (largest) to <h6> (smallest).,easy,1,1,`,
-  `css-styling-q001,css-styling,mcq,Which CSS property changes the text colour of an element?,color,font-color,text-color,foreground,0,The ’color’ property sets the foreground (text) colour of an element in CSS.,easy,1,1,`,
-  `small-basic-q001,small-basic,mcq,In Small Basic; which object is used to display text on the screen?,TextWindow,GraphicsWindow,Program,Clock,0,TextWindow is the Small Basic object for text-based output (and input). Use TextWindow.WriteLine() to print text.,easy,1,1,`,
-  `presentations-q001,presentations,mcq,Which view in PowerPoint shows all slides as small thumbnails in sequence?,Slide Sorter,Normal,Reading,Presenter,0,Slide Sorter view displays all slides as thumbnails; making it easy to reorder or delete slides.,easy,1,1,`,
-  `excel-basics-q001,excel-basics,mcq,In Excel; which function adds up all values in the range A1 to A10?,=SUM(A1:A10),=ADD(A1:A10),=TOTAL(A1:A10),=PLUS(A1:A10),0,=SUM(A1:A10) is the correct Excel formula to add all values from cell A1 through A10.,easy,1,1,`,
-  `gr7-ch1-intro-q001,gr7-ch1-intro,mcq,Which of the following best describes a computer?,An electronic device that processes data according to instructions,A machine that only stores information,A device that only outputs information,A tool used only for communication,0,A computer is an electronic device that accepts input; processes it according to stored instructions; and produces output.,easy,1,1,`,
-  `gr7-ch2-ipo-q001,gr7-ch2-ipo,mcq,In the IPO model; what does the letter ’P’ stand for?,Processing,Printing,Programming,Presenting,0,IPO stands for Input – Processing – Output; the three fundamental stages of how a computer handles data.,easy,1,1,`,
-  `gr7-ch3-data-q001,gr7-ch3-data,mcq,Which of the following is an example of information rather than raw data?,A calculated class average of 72%,A list of unprocessed test scores,Temperature readings from a sensor,A set of survey responses before analysis,0,Information is data that has been processed and given meaning. A calculated average is processed data; making it information.,easy,1,1,`,
-  `gr7-ch4-networks-q001,gr7-ch4-networks,mcq,What is the primary purpose of the internet?,To connect computers and devices globally for communication and data sharing,To store all the world’s data in one place,To control all computers from a central server,To run programs faster on local machines,0,The internet is a global network of interconnected computers and devices that enables communication and data sharing worldwide.,easy,1,1,`,
-  `gr7-ch5-safety-q001,gr7-ch5-safety,mcq,Which practice best protects your online accounts from being hacked?,Using strong; unique passwords for each account,Using the same simple password everywhere,Sharing your password with trusted friends,Never logging out of accounts,0,Strong; unique passwords for each account reduce the risk that a breach on one site compromises other accounts.,easy,1,1,`,
   `gr4-ch1-peripherals-q001,gr4-ch1-peripherals,mcq,Which of the following is an OUTPUT device?,Monitor,Keyboard,Mouse,Scanner,0,A monitor displays information from the computer; making it an output device. Keyboards; mice; and scanners are input devices.,easy,1,1,`,
   `gr4-ch2-logo-q001,gr4-ch2-logo,mcq,In Logo programming; which command moves the turtle forward by 50 steps?,FORWARD 50,MOVE 50,GO 50,STEP 50,0,FORWARD (or FD) 50 moves the Logo turtle forward by 50 units in the direction it is currently facing.,easy,1,1,`,
   `gr4-ch3-files-q001,gr4-ch3-files,mcq,What is a folder (directory) used for on a computer?,To organise and group related files together,To run programs faster,To connect to the internet,To increase storage space,0,Folders (directories) are used to organise files into groups; making it easier to find and manage them.,easy,1,1,`,
@@ -110,8 +105,14 @@ const TEMPLATE_ROWS = [
   `gr4-ch7-internet-q001,gr4-ch7-internet,mcq,What does URL stand for?,Uniform Resource Locator,Universal Reference Link,Unified Resource Language,Unique Routing Label,0,URL stands for Uniform Resource Locator — the web address used to locate a specific resource on the internet.,easy,1,1,`,
   `gr4-ch8-ppt1-q001,gr4-ch8-ppt1,mcq,In PowerPoint; what is each individual page of a presentation called?,Slide,Frame,Sheet,Page,0,Each page in a PowerPoint presentation is called a slide. A presentation is made up of one or more slides.,easy,1,1,`,
   `gr4-ch9-ppt2-q001,gr4-ch9-ppt2,mcq,Which PowerPoint feature controls how one slide transitions to the next during a slideshow?,Transitions,Animations,Timings,Themes,0,Transitions are visual effects that appear between slides. Animations apply to objects within a slide.,easy,1,1,`,
-  `gr5-ch1-history-q001,gr5-ch1-history,mcq,What generation of computers first used transistors instead of vacuum tubes?,Second generation,First generation,Third generation,Fourth generation,0,Second-generation computers (late 1950s–early 1960s) replaced vacuum tubes with transistors; making them smaller and more reliable.,easy,1,1,`,
-  `gr5-ch2-storage-q001,gr5-ch2-storage,mcq,Which storage medium uses laser light to read and write data?,Optical disc (CD/DVD),Hard disk drive,USB flash drive,RAM,0,Optical discs (CDs; DVDs; Blu-rays) use a laser beam to read and write data stored as tiny pits on the disc surface.,easy,1,1,`,
+  `gr5-ch1-early-counting-q001,gr5-ch1-early-counting,mcq,What was the Salamis Tablet primarily used for?,Performing arithmetic calculations,Writing ancient text,Storing religious records,Drawing maps,0,The Salamis Tablet (circa 300 BC) was a counting board used by the Babylonians for arithmetic calculations.,easy,1,1,`,
+  `gr5-ch1-abacus-q001,gr5-ch1-abacus,mcq,In which direction do you move beads on an abacus to represent a value?,Towards the centre beam,Away from the centre beam,In a circular motion,Left to right only,0,On an abacus; beads moved towards the centre counting beam represent the value. Beads pushed away are not counted.,easy,1,1,`,
+  `gr5-ch1-gen1-q001,gr5-ch1-gen1,mcq,What electronic component characterised first-generation computers?,Vacuum tubes,Transistors,Integrated circuits,Microprocessors,0,First-generation computers (1940s–1950s) used vacuum tubes for processing. They were large; expensive; and generated a lot of heat.,easy,1,1,`,
+  `gr5-ch1-gen2-q001,gr5-ch1-gen2,mcq,What replaced vacuum tubes in second-generation computers?,Transistors,Integrated circuits,Microprocessors,Vacuum diodes,0,Second-generation computers (late 1950s–early 1960s) used transistors; which were smaller; cheaper; faster; and more reliable than vacuum tubes.,easy,1,1,`,
+  `gr5-ch2-binary-q001,gr5-ch2-binary,mcq,What is the binary number system also called?,Base-2,Base-8,Base-10,Base-16,0,The binary system is base-2; using only two digits — 0 and 1 — to represent all values. Computers use binary because transistors have two states (on/off).,easy,1,1,`,
+  `gr5-ch2-units-q001,gr5-ch2-units,mcq,How many megabytes (MB) are in one gigabyte (GB)?,1024 MB,100 MB,512 MB,2048 MB,0,1 GB = 1024 MB. This is because computers use binary; so each unit is 2¹⁰ = 1024 times the previous one.,easy,1,1,`,
+  `gr5-ch2-ram-rom-q001,gr5-ch2-ram-rom,mcq,Which type of primary memory is volatile (loses data when power is off)?,RAM,ROM,Cache,Flash ROM,0,RAM (Random Access Memory) is volatile — its contents are lost when the computer is switched off. ROM retains its contents without power.,easy,1,1,`,
+  `gr5-ch2-cloud-q001,gr5-ch2-cloud,mcq,What is the main advantage of cloud storage over a USB pen drive?,Files can be accessed from any device with an internet connection,Cloud storage is always faster,Cloud storage never requires an internet connection,Cloud storage cannot be hacked,0,Cloud storage (e.g. Google Drive; OneDrive) lets you access your files from any internet-connected device; unlike a pen drive which must be physically with you.,easy,1,1,`,
   `gr5-ch3-tables-q001,gr5-ch3-tables,mcq,In Microsoft Word; which menu option do you use to insert a table into your document?,Insert → Table,Home → Table,Layout → Table,View → Table,0,Tables are inserted via the Insert tab in Microsoft Word. You can choose the number of rows and columns.,easy,1,1,`,
   `gr5-ch4-pptanim-q001,gr5-ch4-pptanim,mcq,In PowerPoint; what is the difference between an animation and a transition?,Animations apply to objects on a slide; transitions apply between slides,Transitions apply to objects on a slide; animations apply between slides,They are the same thing,Animations only work on text; transitions only work on images,0,Animations control how objects (text; images) appear or move on a slide. Transitions control how the whole slide changes to the next.,easy,1,1,`,
   `gr5-ch5-slideshow-q001,gr5-ch5-slideshow,mcq,Which key starts a PowerPoint slideshow from the beginning?,F5,F1,Esc,Enter,0,Pressing F5 starts the slideshow from the first slide. Shift+F5 starts from the current slide.,easy,1,1,`,
