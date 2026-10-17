@@ -2,7 +2,7 @@
 
 import {
   collection, doc, getDocs, getDoc, setDoc, deleteDoc,
-  query, where, orderBy, writeBatch, type Firestore,
+  query, where, orderBy, writeBatch, onSnapshot, type Firestore,
 } from 'firebase/firestore';
 import { getFirebaseInstances } from './config';
 import type { Question } from '@/types/question';
@@ -79,6 +79,38 @@ export async function getQuestionsByIds(ids: string[]): Promise<Question[]> {
   // Re-order to match input order
   const map = new Map(results.map(q => [q.id!, q]));
   return ids.map(id => map.get(id)).filter(Boolean) as Question[];
+}
+
+/** Subscribe to live updates for a set of question documents by ID.
+ *  Calls `callback` immediately with current data and again on every change.
+ *  Returns an unsubscribe function.
+ *  Handles quizzes with > 30 questions by chunking into multiple listeners. */
+export function subscribeToQuestionsByIds(
+  ids: string[],
+  callback: (questions: Question[]) => void,
+): () => void {
+  if (ids.length === 0) { callback([]); return () => {}; }
+
+  const CHUNK = 30;
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+
+  // Accumulate results from all chunks; merge and re-order on every update
+  const chunkResults: Map<number, Question[]> = new Map();
+
+  const unsubs = chunks.map((chunk, idx) => {
+    const q = query(collection(fs(), 'questions'), where('__name__', 'in', chunk));
+    return onSnapshot(q, snap => {
+      chunkResults.set(idx, snap.docs.map(d => ({ ...d.data(), id: d.id } as Question)));
+      // Merge all chunks, re-order to match original ids
+      const merged: Question[] = [];
+      for (let i = 0; i < chunks.length; i++) merged.push(...(chunkResults.get(i) ?? []));
+      const map = new Map(merged.map(q => [q.id!, q]));
+      callback(ids.map(id => map.get(id)).filter(Boolean) as Question[]);
+    });
+  });
+
+  return () => unsubs.forEach(u => u());
 }
 
 export async function saveQuestion(question: Omit<Question, 'id'> & { id?: string }): Promise<string> {

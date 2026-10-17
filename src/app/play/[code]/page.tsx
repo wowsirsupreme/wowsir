@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback, useRef, use } from 'react';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { QuestionCard } from '@/components/quiz/QuestionCard';
@@ -19,6 +19,7 @@ import {
   getSessionPublicQuestions,
 } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
+import { subscribeToQuestionsByIds } from '@/lib/firebase/questions';
 import { calcTimeBonus, resolveAnswerIndex } from '@/lib/utils';
 import QuizNav from '@/components/QuizNav';
 import type { Question } from '@/types/question';
@@ -76,6 +77,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [questionsLoading, setQuestionsLoading] = useState(false);
 
   const { session, players, leaderboard } = useSession(sessionId);
+  const unsubFullBankRef = useRef<(() => void) | null>(null);
 
   // ── Join on mount ──
   useEffect(() => {
@@ -103,11 +105,17 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       const qs = await getSessionPublicQuestions(sid);
       if (qs && qs.length > 0) setLocalQuestions(qs);
 
-      // Fetch full question bank for round-based play
+      // Fetch full question bank for round-based play (live subscription so edits propagate)
       if (qid) {
         const quiz = await getQuiz(qid).catch(() => null);
-        if (quiz?.questions && quiz.questions.length > 0) setFullBank(quiz.questions);
-        else if (qs && qs.length > 0) setFullBank(qs); // fallback to session questions
+        const ids = quiz?.questionIds ?? quiz?.questions?.map((x: Question) => x.id!).filter(Boolean) ?? [];
+        if (ids.length > 0) {
+          // Live subscription — updates fullBank whenever admin edits a question
+          unsubFullBankRef.current?.(); // clean up any prior subscription
+          unsubFullBankRef.current = subscribeToQuestionsByIds(ids, liveQs => setFullBank(liveQs));
+        } else if (qs && qs.length > 0) {
+          setFullBank(qs); // fallback to session questions
+        }
       } else if (qs && qs.length > 0) {
         setFullBank(qs);
       }
@@ -118,6 +126,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
       setError('Connection error');
       setPhase('ended');
     });
+    return () => { unsubFullBankRef.current?.(); unsubFullBankRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [configured, checking, code]);
 

@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useSession } from '@/hooks/useSession';
 import { getQuiz } from '@/lib/firebase/quizzes';
+import { subscribeToQuestionsByIds } from '@/lib/firebase/questions';
 import {
   createSession,
   startSession,
@@ -97,10 +98,17 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
   useEffect(() => {
     if (!ready || !user) return;
+    let unsubQuestions: (() => void) | null = null;
     getQuiz(quizId).then(q => {
       if (!q) { toast('Quiz not found', 'error'); router.push('/teacher'); return; }
       setQuiz(q);
-      setQuestions(q.questions || []);
+      // Subscribe to live question updates so admin edits propagate immediately
+      const ids = q.questionIds ?? q.questions?.map(x => x.id!).filter(Boolean) ?? [];
+      if (ids.length > 0) {
+        unsubQuestions = subscribeToQuestionsByIds(ids, setQuestions);
+      } else {
+        setQuestions(q.questions || []);
+      }
     });
     // Check for a previously saved session and auto-resume if found
     const saved = loadActiveSession(quizId);
@@ -123,6 +131,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         toast('Session resumed automatically', 'success');
       }).catch(() => { setPhase('setup'); });
     }
+    return () => { unsubQuestions?.(); };
   }, [ready, user, quizId]);
 
   function scheduleReveal() {
