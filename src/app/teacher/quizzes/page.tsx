@@ -303,7 +303,7 @@ export default function MyQuizzesPage() {
                         <BarChart2 size={13} strokeWidth={2} /> Results
                       </button>
                       <button
-                        onClick={() => router.push(`/teacher/host/${q.id}`)}
+                        onClick={() => router.push(isLive ? `/teacher/host/${q.id}` : `/teacher/results/quiz/${q.id}`)}
                         style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
                           padding: '9px 14px', borderRadius: 10,
