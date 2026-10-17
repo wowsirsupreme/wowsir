@@ -3,10 +3,33 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Gamepad2, User, Wifi, Zap, Lock, AlertTriangle, ChevronLeft } from 'lucide-react';
-import { AvatarCustomizer } from '@/components/ui/Avatar';
+import { AvatarCustomizer, UnoCard, decodeAvatar, CARD_COLORS } from '@/components/ui/Avatar';
 import { useFirebase } from '@/hooks/useFirebase';
 import { findSessionByCode } from '@/lib/firebase/sessions';
 import QuizNav from '@/components/QuizNav';
+
+/** Standalone card preview with pulsing colour-matched glow */
+function CardPreview({ avatarId, name }: { avatarId: number; name: string }) {
+  const col = CARD_COLORS[decodeAvatar(avatarId).color % CARD_COLORS.length];
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      {/* Outer bloom */}
+      <div style={{
+        position: 'absolute', inset: 0, borderRadius: 32,
+        background: `radial-gradient(ellipse at 50% 55%, ${col.bg}66, transparent 68%)`,
+        animation: 'pulseDot 2.4s ease-in-out infinite',
+        pointerEvents: 'none',
+      }} />
+      {/* Inner halo ring */}
+      <div style={{
+        position: 'absolute', inset: 8, borderRadius: 26,
+        boxShadow: `0 0 48px 10px ${col.bg}44`,
+        pointerEvents: 'none',
+      }} />
+      <UnoCard config={avatarId} name={name} size={160} spotlight animate />
+    </div>
+  );
+}
 
 export default function JoinPage() {
   return (
@@ -197,56 +220,66 @@ function JoinInner() {
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-sm animate-slideUp">
-            <h1 className="text-center font-display text-[42px] leading-tight mb-2" style={{ color: '#fff', textShadow: '0 0 30px rgba(6,182,212,0.5)' }}>
+          <div className="w-full animate-slideUp" style={{ maxWidth: 720 }}>
+            <h1 className="text-center font-display text-[42px] leading-tight mb-1" style={{ color: '#fff', textShadow: '0 0 30px rgba(6,182,212,0.5)' }}>
               Who are you?
             </h1>
-            <p className="text-center text-[15px] mb-8" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <p className="text-center text-[15px] mb-6" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Room code:{' '}
               <span className="font-mono font-bold" style={{ color: '#22d3ee', textShadow: '0 0 12px rgba(34,211,238,0.5)' }}>{code}</span>
             </p>
 
-            <label className="section-label-light">Your Name</label>
-            <input
-              className="dark-input teal"
-              style={{ textAlign: 'center', fontSize: 18 }}
-              placeholder="Enter your name"
-              value={name}
-              onChange={e => { setName(e.target.value); setError(''); }}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-              maxLength={30}
-              autoFocus
-            />
+            {/* Two-column on md+, single column on mobile */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24, alignItems: 'start' }}>
 
-            <label className="section-label-light mt-2">Build Your Card</label>
-            <div
-              className="rounded-2xl p-4 mb-4"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <AvatarCustomizer
-                value={avatarId}
-                onChange={setAvatarId}
-                previewName={name.trim() || 'You'}
-              />
+              {/* Left col — customiser pickers */}
+              <div
+                className="rounded-2xl p-5"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <label className="section-label-light" style={{ marginBottom: 10, display: 'block' }}>Your Name</label>
+                <input
+                  className="dark-input teal"
+                  style={{ textAlign: 'center', fontSize: 18, marginBottom: 18 }}
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={e => { setName(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleJoin()}
+                  maxLength={30}
+                  autoFocus
+                />
+                <AvatarCustomizer
+                  value={avatarId}
+                  onChange={setAvatarId}
+                  previewName={name.trim() || 'You'}
+                  hidePreviw
+                />
+              </div>
+
+              {/* Right col — live card preview + join button */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+                {/* Card preview with strong glow */}
+                <CardPreview avatarId={avatarId} name={name.trim() || 'You'} />
+
+                {error && (
+                  <p className="text-sm text-center animate-fadeIn" style={{ color: '#f87171', margin: 0 }}>
+                    {error}
+                  </p>
+                )}
+
+                <button className="btn-teal" style={{ width: '100%' }} onClick={handleJoin} disabled={!name.trim()}>
+                  <Gamepad2 size={16} className="inline mr-1.5" /> Join the Game
+                </button>
+
+                <button
+                  onClick={() => { setStep('code'); setError(''); }}
+                  className="w-full text-sm py-3 text-center"
+                  style={{ color: 'rgba(255,255,255,0.35)', minHeight: 44 }}
+                >
+                  ← Change code
+                </button>
+              </div>
             </div>
-
-            {error && (
-              <p className="text-sm text-center mb-4 animate-fadeIn" style={{ color: '#f87171' }}>
-                {error}
-              </p>
-            )}
-
-            <button className="btn-teal" onClick={handleJoin} disabled={!name.trim()}>
-              <Gamepad2 size={16} className="inline mr-1.5" /> Join the Game
-            </button>
-
-            <button
-              onClick={() => { setStep('code'); setError(''); }}
-              className="w-full mt-3 text-sm py-3 text-center"
-              style={{ color: 'rgba(255,255,255,0.35)', minHeight: 44 }}
-            >
-              ← Change code
-            </button>
           </div>
         )}
       </div>

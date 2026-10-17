@@ -263,10 +263,13 @@ export function AvatarCustomizer({
   value,
   onChange,
   previewName,
+  hidePreviw,
 }: {
   value: number;
   onChange: (id: number) => void;
   previewName?: string;
+  /** Set to true when an external CardPreview already shows the card */
+  hidePreviw?: boolean;
 }) {
   const cfg = decodeAvatar(value);
 
@@ -296,10 +299,12 @@ export function AvatarCustomizer({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-      {/* Live card preview */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <UnoCard config={cfg} name={previewName} size={110} spotlight />
-      </div>
+      {/* Live card preview — hidden when parent shows its own CardPreview */}
+      {!hidePreviw && (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <UnoCard config={cfg} name={previewName} size={110} spotlight />
+        </div>
+      )}
 
       {/* ── Card colour ── */}
       <div>

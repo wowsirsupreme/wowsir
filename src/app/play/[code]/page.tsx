@@ -7,7 +7,7 @@ import { QuestionCard } from '@/components/quiz/QuestionCard';
 import { TimerRing } from '@/components/quiz/TimerRing';
 import { ScoreBar } from '@/components/quiz/ScoreBar';
 import { Leaderboard } from '@/components/quiz/Leaderboard';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar, UnoCard, decodeAvatar, CARD_COLORS } from '@/components/ui/Avatar';
 import { ChevronRight, RotateCcw, Flag, CheckCircle, XCircle, BarChart2 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -538,6 +538,9 @@ function LobbyView({
 
   const nowTrack = tracks.find(t => t.id === nowPlaying);
 
+  // Derive card colour for glow
+  const myCardColor = CARD_COLORS[decodeAvatar(avatarId).color % CARD_COLORS.length];
+
   return (
     <div className="play-screen flex flex-col min-h-screen">
       <QuizNav />
@@ -559,21 +562,24 @@ function LobbyView({
           </span>
         </div>
 
-        {/* Avatar + name + status */}
-        <div className="flex flex-col items-center gap-3 animate-fadeUp">
-          <div style={{
-            width: 80, height: 80, borderRadius: 22,
-            background: 'rgba(16,185,129,0.12)',
-            border: '2px solid rgba(16,185,129,0.3)',
-            boxShadow: '0 0 28px rgba(16,185,129,0.18)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Avatar id={avatarId} size={52} />
+        {/* My card + name + status */}
+        <div className="flex flex-col items-center gap-4 animate-fadeUp">
+          {/* UnoCard with pulsing colour-matched halo */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Outer glow ring — pulses */}
+            <div style={{
+              position: 'absolute', inset: -10, borderRadius: 24,
+              background: `radial-gradient(ellipse at 50% 50%, ${myCardColor.bg}55, transparent 70%)`,
+              animation: 'pulseDot 2.2s ease-in-out infinite',
+              pointerEvents: 'none',
+            }} />
+            <UnoCard config={avatarId} name={playerName} size={130} spotlight animate />
           </div>
-          <p className="font-display text-2xl" style={{ color: '#fff' }}>{playerName}</p>
+
+          {/* Status pill */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 14px', borderRadius: 999,
+            padding: '6px 16px', borderRadius: 999,
             background: questionsLoading ? 'rgba(255,255,255,0.05)' : ready ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
             border: `1px solid ${ready && !questionsLoading ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.08)'}`,
           }}>
@@ -592,29 +598,30 @@ function LobbyView({
           </div>
         </div>
 
-        {/* Friends in the room */}
+        {/* Friends in the room — card grid */}
         {(players as SessionPlayer[]).length > 0 && (
-          <div className="w-full animate-fadeUp" style={{ maxWidth: 400, borderRadius: 20, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ margin: '0 0 12px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div className="w-full animate-fadeUp" style={{ maxWidth: 520, borderRadius: 20, padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p style={{ margin: '0 0 14px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {(players as SessionPlayer[]).length} {(players as SessionPlayer[]).length === 1 ? 'player' : 'players'} in the room
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'flex-start' }}>
               {(players as SessionPlayer[]).map(p => {
                 const isMe = p.id === playerId;
+                const pColor = CARD_COLORS[decodeAvatar(p.avatarId).color % CARD_COLORS.length];
                 return (
-                  <div key={p.id} className="animate-fadeIn flex flex-col items-center gap-1.5">
+                  <div key={p.id} className="animate-fadeIn flex flex-col items-center gap-0" style={{ position: 'relative' }}>
+                    {/* Mini glow behind card */}
                     <div style={{
-                      width: 48, height: 48, borderRadius: 14,
-                      background: isMe ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)',
-                      border: `1.5px solid ${isMe ? 'rgba(52,211,153,0.45)' : 'rgba(255,255,255,0.1)'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: isMe ? '0 0 14px rgba(16,185,129,0.2)' : 'none',
-                    }}>
-                      <Avatar id={p.avatarId} size={32} />
-                    </div>
-                    <span style={{ fontSize: 11, color: isMe ? '#6ee7b7' : 'rgba(255,255,255,0.55)', maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                      {isMe ? 'You' : p.name}
-                    </span>
+                      position: 'absolute', inset: -6, borderRadius: 14,
+                      background: `radial-gradient(ellipse at 50% 50%, ${pColor.bg}${isMe ? '55' : '30'}, transparent 75%)`,
+                      pointerEvents: 'none',
+                    }} />
+                    <UnoCard
+                      config={p.avatarId}
+                      name={isMe ? 'You' : p.name}
+                      size={68}
+                      spotlight={isMe}
+                    />
                   </div>
                 );
               })}
@@ -623,7 +630,7 @@ function LobbyView({
         )}
 
         {/* Music — compact dropdown */}
-        <div className="w-full animate-fadeUp" style={{ maxWidth: 400 }}>
+        <div className="w-full animate-fadeUp" style={{ maxWidth: 520 }}>
           <button
             onClick={() => setMusicOpen(o => !o)}
             style={{
@@ -713,7 +720,7 @@ function LobbyView({
         </div>
 
         {/* Action buttons — always visible, no cutoff */}
-        <div className="w-full animate-fadeUp" style={{ maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="w-full animate-fadeUp" style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {ready ? (
             <>
               <button
