@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BookOpen, Search, CheckCircle, Clock, Edit2, X, Save, Plus, ChevronDown, Trash2 } from 'lucide-react';
+import { getDocs, collection } from 'firebase/firestore';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
+import { getFirebaseInstances } from '@/lib/firebase/config';
 import { getQuestionsByTopic, getPendingQuestions, updateApprovalStatus, updateQuestion, saveQuestionDeduped, deleteQuestion } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import { TOPIC_LABELS } from '@/types/question';
@@ -82,6 +84,7 @@ export default function QuestionBankPage() {
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [firestoreTotal, setFirestoreTotal] = useState<number | null>(null);
 
   // Built-in question counts per subject/chapter
   const builtInStats = (() => {
@@ -103,6 +106,15 @@ export default function QuestionBankPage() {
   useEffect(() => {
     if (!ready || !user) return;
     getPendingQuestions().then(setPendingQuestions);
+    // Fetch total Firestore question count for the header badge
+    try {
+      const { fs: fsDb } = getFirebaseInstances();
+      if (fsDb) {
+        getDocs(collection(fsDb, 'questions'))
+          .then(snap => setFirestoreTotal(snap.size))
+          .catch(() => setFirestoreTotal(0));
+      }
+    } catch { /* Firebase not configured */ }
   }, [ready, user]);
 
   useEffect(() => {
@@ -338,13 +350,13 @@ export default function QuestionBankPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Built-in questions</span>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Questions</span>
               <span style={{
                 fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-mono)',
                 color: '#c4b5fd', padding: '2px 10px', borderRadius: 999,
                 background: 'rgba(196,181,253,0.12)', border: '1px solid rgba(196,181,253,0.25)',
               }}>
-                {builtInStats.total.toLocaleString()} total
+                {firestoreTotal !== null ? firestoreTotal.toLocaleString() : '…'} total
               </span>
               <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>
                 across {builtInStats.subjects.length} classes
@@ -642,7 +654,7 @@ export default function QuestionBankPage() {
                 <BookOpen size={48} strokeWidth={1} style={{ margin: '0 auto 16px' }} />
                 <p style={{ fontSize: 15 }}>Select a topic to view questions</p>
                 <p style={{ fontSize: 13, marginTop: 6, color: 'rgba(255,255,255,0.18)' }}>
-                  {builtInStats.total.toLocaleString()} built-in questions available
+                  {firestoreTotal !== null ? firestoreTotal.toLocaleString() : '…'} questions available
                 </p>
               </div>
             )}
