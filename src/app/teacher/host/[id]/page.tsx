@@ -93,6 +93,7 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
 
   const { session, players, leaderboard } = useSession(sessionId);
   const spotlightId = useSpotlight(players.map(p => p.id));
+  const [sidebarTab, setSidebarTab] = useState<'leaderboard' | 'questions' | 'anticheat'>('leaderboard');
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -663,6 +664,19 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
             {players.length} online
           </span>
+          {session?.code && (
+            <button
+              title="Copy join link for students"
+              onClick={() => {
+                const url = `${window.location.origin}/join?code=${session.code}`;
+                navigator.clipboard.writeText(url).then(() => toast('Join link copied!', 'success'));
+              }}
+              className="btn-glass"
+              style={{ fontSize: 12, padding: '5px 11px', minHeight: 0, gap: 4 }}
+            >
+              🔗 Share
+            </button>
+          )}
         </div>
         <div className="flex gap-2">
           <button
@@ -918,80 +932,231 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
           className="w-72 flex flex-col overflow-hidden"
           style={{ borderLeft: '1px solid rgba(255,255,255,0.07)' }}
         >
-          {/* Leaderboard */}
-          <div className="flex-1 overflow-y-auto p-4" ref={leaderboardRef}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                🏆 Leaderboard
-              </p>
-              {leaderboard.length > 0 && (
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button
-                    title="Download with scores"
-                    onClick={downloadLeaderboard}
-                    className="text-xs px-2 py-1 rounded-lg transition-colors"
-                    style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.7)' }}
-                  >
-                    📥
-                  </button>
-                  <button
-                    title="Screenshot names only (no scores)"
-                    onClick={downloadLeaderboardNoScores}
-                    className="text-xs px-2 py-1 rounded-lg transition-colors"
-                    style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(167,139,250,0.8)' }}
-                  >
-                    📷
-                  </button>
-                </div>
-              )}
-            </div>
-            {leaderboard.slice(0, 10).map((p, i) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 py-2.5 px-2 rounded-xl mb-1 transition-colors"
-                style={{ background: i === 0 ? 'rgba(201,168,76,0.08)' : 'transparent' }}
+          {/* Tab bar */}
+          <div
+            className="flex shrink-0"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
+          >
+            {([
+              { key: 'leaderboard' as const, label: '🏆', title: 'Leaderboard', badge: undefined as number | undefined },
+              { key: 'questions'   as const, label: '📋', title: 'Questions',   badge: undefined as number | undefined },
+              { key: 'anticheat'   as const, label: '🛡️', title: 'Anti-cheat',  badge: tabSwitchers.length > 0 ? tabSwitchers.length : undefined },
+            ]).map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setSidebarTab(tab.key)}
+                style={{
+                  flex: 1, padding: '10px 4px', fontSize: 11, fontWeight: 600,
+                  fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
+                  borderBottom: sidebarTab === tab.key ? '2px solid #fcd34d' : '2px solid transparent',
+                  color: sidebarTab === tab.key ? '#fcd34d' : 'rgba(255,255,255,0.35)',
+                  background: 'transparent', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  position: 'relative',
+                }}
               >
-                <span className="text-base w-5 text-center flex-shrink-0">
-                  {['🥇','🥈','🥉'][i] || <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{i + 1}</span>}
-                </span>
-                <Avatar id={p.avatarId} size={28} />
-                <span className="flex-1 text-sm truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
-                <span className="font-mono text-xs font-semibold" style={{ color: '#fcd34d' }}>
-                  {p.score.toLocaleString()}
-                </span>
-              </div>
+                <span>{tab.label}</span>
+                {tab.badge !== undefined && (
+                  <span style={{
+                    position: 'absolute', top: 6, right: 8,
+                    fontSize: 9, fontWeight: 700, lineHeight: 1,
+                    background: 'rgba(239,68,68,0.8)', color: '#fff',
+                    borderRadius: 99, padding: '1px 4px', minWidth: 14, textAlign: 'center',
+                  }}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
             ))}
-            {leaderboard.length === 0 && (
-              <p className="text-xs text-center py-4" style={{ color: 'rgba(255,255,255,0.25)' }}>No scores yet</p>
-            )}
           </div>
 
-          {/* Tab-switch tracker — live counts from player data */}
-          {tabSwitchers.length > 0 && (
-            <div className="p-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-xs font-mono uppercase tracking-widest mb-3" style={{ color: '#f87171' }}>
-                ⚠️ Tab Switches
-              </p>
-              <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto">
-                {tabSwitchers.map(p => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between text-xs px-3 py-2 rounded-lg"
-                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
-                  >
-                    <span style={{ color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
-                    <span
-                      className="font-mono font-bold ml-2 px-1.5 py-0.5 rounded"
+          {/* ── Leaderboard tab ── */}
+          {sidebarTab === 'leaderboard' && (
+            <div className="flex-1 overflow-y-auto p-4" ref={leaderboardRef}>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-xs font-mono uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  🏆 Live Scores
+                </p>
+                {leaderboard.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button
+                      title="Download with scores"
+                      onClick={downloadLeaderboard}
+                      className="text-xs px-2 py-1 rounded-lg transition-colors"
+                      style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.7)' }}
+                    >
+                      📥
+                    </button>
+                    <button
+                      title="Screenshot names only (no scores)"
+                      onClick={downloadLeaderboardNoScores}
+                      className="text-xs px-2 py-1 rounded-lg transition-colors"
+                      style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(167,139,250,0.8)' }}
+                    >
+                      📷
+                    </button>
+                  </div>
+                )}
+              </div>
+              {leaderboard.slice(0, 10).map((p, i) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 py-2.5 px-2 rounded-xl mb-1 transition-colors"
+                  style={{ background: i === 0 ? 'rgba(201,168,76,0.08)' : 'transparent' }}
+                >
+                  <span className="text-base w-5 text-center flex-shrink-0">
+                    {['🥇','🥈','🥉'][i] || <span className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{i + 1}</span>}
+                  </span>
+                  <Avatar id={p.avatarId} size={28} />
+                  <span className="flex-1 text-sm truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
+                  <span className="font-mono text-xs font-semibold" style={{ color: '#fcd34d' }}>
+                    {p.score.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              {leaderboard.length === 0 && (
+                <p className="text-xs text-center py-4" style={{ color: 'rgba(255,255,255,0.25)' }}>No scores yet</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Questions tab ── */}
+          {sidebarTab === 'questions' && (
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Progress summary */}
+              <div style={{
+                borderRadius: 12, padding: '12px 14px', marginBottom: 12,
+                background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Progress
+                  </span>
+                  <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#fcd34d' }}>
+                    {currentQIdx + 1} / {questions.length}
+                  </span>
+                </div>
+                {/* Circular-style progress bar */}
+                <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 99,
+                    width: `${((currentQIdx + 1) / Math.max(questions.length, 1)) * 100}%`,
+                    background: 'linear-gradient(90deg,#c9a84c,#e8d08a)',
+                    boxShadow: '0 0 6px rgba(201,168,76,0.5)',
+                    transition: 'width 0.4s ease',
+                  }} />
+                </div>
+                <div style={{ marginTop: 6, fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right' }}>
+                  {Math.round(((currentQIdx + 1) / Math.max(questions.length, 1)) * 100)}% complete
+                </div>
+              </div>
+
+              {/* Question list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {questions.map((q, i) => {
+                  const isCurrent = i === currentQIdx;
+                  const isPast = i < currentQIdx;
+                  return (
+                    <div
+                      key={q.id ?? i}
                       style={{
-                        background: p.tabSwitches >= 5 ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.15)',
-                        color: p.tabSwitches >= 5 ? '#fca5a5' : 'rgba(255,255,255,0.6)',
+                        borderRadius: 10, padding: '8px 10px',
+                        border: isCurrent ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.05)',
+                        background: isCurrent ? 'rgba(201,168,76,0.1)' : isPast ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                        display: 'flex', alignItems: 'flex-start', gap: 8,
                       }}
                     >
-                      ×{p.tabSwitches}
+                      <span style={{
+                        flexShrink: 0, width: 20, height: 20, borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                        background: isCurrent ? '#fcd34d' : isPast ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.07)',
+                        color: isCurrent ? '#1a1200' : isPast ? '#6ee7b7' : 'rgba(255,255,255,0.3)',
+                      }}>
+                        {isPast ? '✓' : i + 1}
+                      </span>
+                      <span style={{
+                        fontSize: 11, lineHeight: 1.4,
+                        color: isCurrent ? 'rgba(255,255,255,0.9)' : isPast ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.5)',
+                        overflow: 'hidden', display: '-webkit-box',
+                        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                      }}>
+                        {q.text}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Anti-cheat tab ── */}
+          {sidebarTab === 'anticheat' && (
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Settings summary */}
+              <div style={{
+                borderRadius: 12, padding: '12px 14px', marginBottom: 12,
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+              }}>
+                <p style={{ margin: '0 0 10px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  Protection Active
+                </p>
+                {[
+                  { label: 'Tab switch detection', on: quiz?.settings?.antiCheat ?? true },
+                  { label: 'Shuffle questions', on: quiz?.settings?.shuffleQuestions ?? false },
+                  { label: 'Shuffle options',   on: quiz?.settings?.shuffleOptions   ?? false },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{item.label}</span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                      padding: '2px 7px', borderRadius: 99,
+                      background: item.on ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.06)',
+                      color: item.on ? '#6ee7b7' : 'rgba(255,255,255,0.3)',
+                      border: item.on ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.07)',
+                    }}>
+                      {item.on ? 'ON' : 'OFF'}
                     </span>
                   </div>
                 ))}
               </div>
+
+              {/* Tab switchers */}
+              <p style={{ margin: '0 0 8px', fontSize: 11, fontFamily: 'var(--font-mono)', color: tabSwitchers.length > 0 ? '#f87171' : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                ⚠️ Tab switches ({tabSwitchers.length})
+              </p>
+              {tabSwitchers.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: 28, marginBottom: 6, opacity: 0.25 }}>🛡️</div>
+                  <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>No suspicious activity</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {tabSwitchers.map(p => (
+                    <div
+                      key={p.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '8px 10px', borderRadius: 10, fontSize: 12,
+                        background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        <Avatar id={p.avatarId} size={22} />
+                        <span style={{ color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
+                      </div>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 11,
+                        padding: '2px 7px', borderRadius: 99,
+                        background: p.tabSwitches >= 5 ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.15)',
+                        color: p.tabSwitches >= 5 ? '#fca5a5' : 'rgba(255,255,255,0.5)',
+                      }}>
+                        ×{p.tabSwitches}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
