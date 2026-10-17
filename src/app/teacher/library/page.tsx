@@ -85,34 +85,43 @@ export default function QuestionBankPage() {
   const [deleting, setDeleting] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [firestoreTotal, setFirestoreTotal] = useState<number | null>(null);
+  const [fsTopicCounts, setFsTopicCounts] = useState<Record<string, number> | null>(null);
 
-  // Built-in question counts per subject/chapter
+  // Compute builtInStats from Firestore topic counts (falls back to empty while loading)
   const builtInStats = (() => {
+    const topicCounts = fsTopicCounts ?? {};
     const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
-    for (const q of allGradeQuestions) {
-      const topic = TOPIC_LABELS[q.topicKey];
-      if (!topic) continue;
+    for (const [topicKey, topic] of Object.entries(TOPIC_LABELS)) {
+      const count = topicCounts[topicKey] ?? 0;
+      if (count === 0) continue;
       const subj = topic.subject;
       if (!bySubject[subj]) bySubject[subj] = [];
-      const existing = bySubject[subj].find(c => c.topicKey === q.topicKey);
-      if (existing) { existing.count++; }
-      else bySubject[subj].push({ topicKey: q.topicKey, title: topic.title, emoji: topic.emoji, count: 1 });
+      bySubject[subj].push({ topicKey, title: topic.title, emoji: topic.emoji, count });
     }
     const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
     const subjects = subjectOrder.filter(s => bySubject[s]);
-    return { bySubject, subjects, total: allGradeQuestions.length };
+    const total = Object.values(topicCounts).reduce((s, n) => s + n, 0);
+    return { bySubject, subjects, total };
   })();
 
   useEffect(() => {
     if (!ready || !user) return;
     getPendingQuestions().then(setPendingQuestions);
-    // Fetch total Firestore question count for the header badge
+    // Fetch Firestore question counts — both total badge and per-topic breakdown
     try {
       const { fs: fsDb } = getFirebaseInstances();
       if (fsDb) {
         getDocs(collection(fsDb, 'questions'))
-          .then(snap => setFirestoreTotal(snap.size))
-          .catch(() => setFirestoreTotal(0));
+          .then(snap => {
+            setFirestoreTotal(snap.size);
+            const counts: Record<string, number> = {};
+            snap.forEach(doc => {
+              const tk = (doc.data() as { topicKey?: string }).topicKey;
+              if (tk) counts[tk] = (counts[tk] ?? 0) + 1;
+            });
+            setFsTopicCounts(counts);
+          })
+          .catch(() => { setFirestoreTotal(0); setFsTopicCounts({}); });
       }
     } catch { /* Firebase not configured */ }
   }, [ready, user]);

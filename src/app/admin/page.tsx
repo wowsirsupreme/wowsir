@@ -595,24 +595,70 @@ function QuestionBankTab() {
   const [deleting, setDeleting] = useState<string | null>(null);           // topicKey being deleted
   const [deleteResult, setDeleteResult] = useState<{ topicKey: string; deleted: number; errors: number } | null>(null);
 
-  // Group built-in questions by subject → chapter
+  // Firestore-backed question counts per topicKey
+  const [fsTopicCounts, setFsTopicCounts] = useState<Record<string, number> | null>(null);
+  const [fsLoading, setFsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchCounts() {
+      try {
+        const { getFirebaseInstances } = await import('@/lib/firebase/config');
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { fs } = getFirebaseInstances();
+        if (!fs) { setFsTopicCounts({}); setFsLoading(false); return; }
+        const snap = await getDocs(collection(fs, 'questions'));
+        if (cancelled) return;
+        const counts: Record<string, number> = {};
+        snap.forEach(doc => {
+          const tk = (doc.data() as { topicKey?: string }).topicKey;
+          if (tk) counts[tk] = (counts[tk] ?? 0) + 1;
+        });
+        setFsTopicCounts(counts);
+      } catch {
+        setFsTopicCounts({});
+      } finally {
+        if (!cancelled) setFsLoading(false);
+      }
+    }
+    fetchCounts();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Re-fetch after a successful delete so counts stay accurate
+  const refreshCounts = useCallback(async () => {
+    try {
+      const { getFirebaseInstances } = await import('@/lib/firebase/config');
+      const { collection, getDocs } = await import('firebase/firestore');
+      const { fs } = getFirebaseInstances();
+      if (!fs) return;
+      const snap = await getDocs(collection(fs, 'questions'));
+      const counts: Record<string, number> = {};
+      snap.forEach(doc => {
+        const tk = (doc.data() as { topicKey?: string }).topicKey;
+        if (tk) counts[tk] = (counts[tk] ?? 0) + 1;
+      });
+      setFsTopicCounts(counts);
+    } catch { /* silently ignore refresh errors */ }
+  }, []);
+
+  // Build subject → chapter map from TOPIC_LABELS + Firestore counts
+  const topicCounts = fsTopicCounts ?? {};
   const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
 
-  for (const q of allGradeQuestions) {
-    const topic = TOPIC_LABELS[q.topicKey];
-    if (!topic) continue;
+  for (const [topicKey, topic] of Object.entries(TOPIC_LABELS)) {
+    const count = topicCounts[topicKey] ?? 0;
+    if (count === 0) continue; // only show topics that have questions
     const subj = topic.subject;
     if (!bySubject[subj]) bySubject[subj] = [];
-    const existing = bySubject[subj].find(c => c.topicKey === q.topicKey);
-    if (existing) { existing.count++; }
-    else bySubject[subj].push({ topicKey: q.topicKey, title: topic.title, emoji: topic.emoji, count: 1 });
+    bySubject[subj].push({ topicKey, title: topic.title, emoji: topic.emoji, count });
   }
 
   // Sort subjects by grade number
   const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
   const subjects = subjectOrder.filter(s => bySubject[s]);
 
-  const total = allGradeQuestions.length;
+  const total = Object.values(topicCounts).reduce((s, n) => s + n, 0);
 
   const handleDelete = async (topicKey: string) => {
     setDeleting(topicKey);
@@ -620,6 +666,7 @@ function QuestionBankTab() {
     try {
       const result = await deleteQuestionsByTopic(topicKey);
       setDeleteResult({ topicKey, ...result });
+      await refreshCounts();
     } catch {
       setDeleteResult({ topicKey, deleted: 0, errors: 1 });
     } finally {
@@ -629,7 +676,7 @@ function QuestionBankTab() {
 
   return (
     <div>
-      <SectionHeader title="Question Bank" count={total} accent="#34d399" />
+      <SectionHeader title="Question Bank" count={fsLoading ? undefined : total} accent="#34d399" />
 
       {/* Grand total summary */}
       <div style={{
@@ -638,12 +685,22 @@ function QuestionBankTab() {
         background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)',
       }}>
         <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-          Total questions across all classes ({subjects.length} classes)
+          {fsLoading ? 'Loading question counts…' : `Total questions across all classes (${subjects.length} class${subjects.length !== 1 ? 'es' : ''})`}
         </span>
-        <span style={{ fontSize: 22, fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
-          {total.toLocaleString()}
-        </span>
+        {fsLoading ? (
+          <span className="animate-spin inline-block w-5 h-5 border-2 rounded-full" style={{ borderColor: 'rgba(52,211,153,0.3)', borderTopColor: '#34d399' }} />
+        ) : (
+          <span style={{ fontSize: 22, fontWeight: 800, color: '#34d399', fontFamily: 'var(--font-mono)' }}>
+            {total.toLocaleString()}
+          </span>
+        )}
       </div>
+
+      {!fsLoading && subjects.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
+          No questions found in Firestore.
+        </div>
+      )}
 
       {/* Delete result banner */}
       {deleteResult && (
