@@ -136,32 +136,32 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 9 — CS IGCSE 0478 (Year 1, 2026–27)
   // ════════════════════════════════════════════════════════════════
-  'gr9-cpu':              { title: '§2.2/2.3 – Hardware & CPU',                    subject: 'Grade 9 CS (IGCSE)', emoji: '⚡' },
-  'gr9-memory':           { title: '§2.3 – Memory (RAM, ROM, Cache)',              subject: 'Grade 9 CS (IGCSE)', emoji: '💾' },
-  'gr9-io-devices':       { title: '§2.2 – Input & Output Devices',                subject: 'Grade 9 CS (IGCSE)', emoji: '🖨️' },
-  'gr9-fde':              { title: '§2.2 – Fetch-Decode-Execute Cycle',            subject: 'Grade 9 CS (IGCSE)', emoji: '🔁' },
-  'gr9-embedded':         { title: '§6.1.1–6.1.6 – Embedded Systems & Sensors',   subject: 'Grade 9 CS (IGCSE)', emoji: '🔌' },
-  'gr9-storage':          { title: '§2.3 – Secondary Storage',                     subject: 'Grade 9 CS (IGCSE)', emoji: '💿' },
-  'gr9-os':               { title: '§5.1 – Operating Systems',                     subject: 'Grade 9 CS (IGCSE)', emoji: '🖥️' },
-  'gr9-languages':        { title: '§5.2 – Programming Languages & Translators',   subject: 'Grade 9 CS (IGCSE)', emoji: '🔤' },
-  'gr9-internet':         { title: '§3.4 – The Internet & the WWW',                subject: 'Grade 9 CS (IGCSE)', emoji: '🌍' },
-  'gr9-logic':            { title: '§1.1.3/2.1 – Logic Gates & Circuits',          subject: 'Grade 9 CS (IGCSE)', emoji: '⚙️' },
-  'gr9-data-rep':         { title: '§1.1–1.3 – Data Representation',               subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
-  'gr9-data-binary':      { title: '§1.1 – Binary & Hexadecimal',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
-  'gr9-data-twos':        { title: "§1.1 – Two's Complement",                      subject: 'Grade 9 CS (IGCSE)', emoji: '±' },
-  'gr9-data-text':        { title: '§1.2 – ASCII & Unicode',                       subject: 'Grade 9 CS (IGCSE)', emoji: '🔤' },
-  'gr9-data-sound':       { title: '§1.3 – Sound Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🎵' },
-  'gr9-data-images':      { title: '§1.3 – Image Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
-  'gr9-data-compression': { title: '§1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
+  'gr9-cpu':              { title: 'Ch 2.2/2.3 – Hardware & CPU',                    subject: 'Grade 9 CS (IGCSE)', emoji: '⚡' },
+  'gr9-memory':           { title: 'Ch 2.3 – Memory (RAM, ROM, Cache)',              subject: 'Grade 9 CS (IGCSE)', emoji: '💾' },
+  'gr9-io-devices':       { title: 'Ch 2.2 – Input & Output Devices',                subject: 'Grade 9 CS (IGCSE)', emoji: '🖨️' },
+  'gr9-fde':              { title: 'Ch 2.2 – Fetch-Decode-Execute Cycle',            subject: 'Grade 9 CS (IGCSE)', emoji: '🔁' },
+  'gr9-embedded':         { title: 'Ch 6.1.1–6.1.6 – Embedded Systems & Sensors',   subject: 'Grade 9 CS (IGCSE)', emoji: '🔌' },
+  'gr9-storage':          { title: 'Ch 2.3 – Secondary Storage',                     subject: 'Grade 9 CS (IGCSE)', emoji: '💿' },
+  'gr9-os':               { title: 'Ch 5.1 – Operating Systems',                     subject: 'Grade 9 CS (IGCSE)', emoji: '🖥️' },
+  'gr9-languages':        { title: 'Ch 5.2 – Programming Languages & Translators',   subject: 'Grade 9 CS (IGCSE)', emoji: '🔤' },
+  'gr9-internet':         { title: 'Ch 3.4 – The Internet & the WWW',                subject: 'Grade 9 CS (IGCSE)', emoji: '🌍' },
+  'gr9-logic':            { title: 'Ch 1.1.3/2.1 – Logic Gates & Circuits',          subject: 'Grade 9 CS (IGCSE)', emoji: '⚙️' },
+  'gr9-data-rep':         { title: 'Ch 1.1–1.3 – Data Representation',               subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
+  'gr9-data-binary':      { title: 'Ch 1.1 – Binary & Hexadecimal',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
+  'gr9-data-twos':        { title: "Ch 1.1 – Two's Complement",                      subject: 'Grade 9 CS (IGCSE)', emoji: '±' },
+  'gr9-data-text':        { title: 'Ch 1.2 – ASCII & Unicode',                       subject: 'Grade 9 CS (IGCSE)', emoji: '🔤' },
+  'gr9-data-sound':       { title: 'Ch 1.3 – Sound Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🎵' },
+  'gr9-data-images':      { title: 'Ch 1.3 – Image Representation',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
+  'gr9-data-compression': { title: 'Ch 1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
   // Imported/alias topic keys — kept for Firestore backwards-compat, hidden from picker (see LEGACY_TOPIC_KEYS)
-  'gr9-number-systems':   { title: '§1.1 – Number Systems',                        subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
-  'gr9-text-sound-images':{ title: '§1.2/1.3 – Text, Sound & Images',              subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
-  'gr9-compression':      { title: '§1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
-  'gr9-networking':       { title: '§3.1–3.3 – Networking & Protocols',            subject: 'Grade 9 CS (IGCSE)', emoji: '📡' },
-  'gr9-networks':         { title: '§3.1–3.3 – Data Transmission & Networking',    subject: 'Grade 9 CS (IGCSE)', emoji: '📡' },
-  'gr9-programming':      { title: '§8.1/8.2 – Programming Fundamentals',          subject: 'Grade 9 CS (IGCSE)', emoji: '💻' },
-  'gr9-algorithms':       { title: '§9.1–9.3 – Algorithm Design',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🔀' },
-  'gr9-cybersec':         { title: '§4.2 – Cybersecurity',                         subject: 'Grade 9 CS (IGCSE)', emoji: '🔒' },
+  'gr9-number-systems':   { title: 'Ch 1.1 – Number Systems',                        subject: 'Grade 9 CS (IGCSE)', emoji: '🔢' },
+  'gr9-text-sound-images':{ title: 'Ch 1.2/1.3 – Text, Sound & Images',              subject: 'Grade 9 CS (IGCSE)', emoji: '🖼️' },
+  'gr9-compression':      { title: 'Ch 1.3 – Compression',                           subject: 'Grade 9 CS (IGCSE)', emoji: '📦' },
+  'gr9-networking':       { title: 'Ch 3.1–3.3 – Networking & Protocols',            subject: 'Grade 9 CS (IGCSE)', emoji: '📡' },
+  'gr9-networks':         { title: 'Ch 3.1–3.3 – Data Transmission & Networking',    subject: 'Grade 9 CS (IGCSE)', emoji: '📡' },
+  'gr9-programming':      { title: 'Ch 8.1/8.2 – Programming Fundamentals',          subject: 'Grade 9 CS (IGCSE)', emoji: '💻' },
+  'gr9-algorithms':       { title: 'Ch 9.1–9.3 – Algorithm Design',                  subject: 'Grade 9 CS (IGCSE)', emoji: '🔀' },
+  'gr9-cybersec':         { title: 'Ch 4.2 – Cybersecurity',                         subject: 'Grade 9 CS (IGCSE)', emoji: '🔒' },
 
   // ════════════════════════════════════════════════════════════════
   // GRADE 9 — DT IGCSE 0445 (Graphic Products)
@@ -185,40 +185,40 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 10 — CS IGCSE 0478 (Year 2, 2027–28)
   // ════════════════════════════════════════════════════════════════
-  'gr10-data-integrity':  { title: '§4.1 – Data Integrity',                        subject: 'Grade 10 CS (IGCSE)', emoji: '✅' },
-  'gr10-cybersecurity':   { title: '§4.2 – Cybersecurity',                         subject: 'Grade 10 CS (IGCSE)', emoji: '🔒' },
-  'gr10-encryption':      { title: '§4.2 – Encryption & Security',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔐' },
-  'gr10-sensors':         { title: '§6.1.1–6.1.6 – Sensors & Microcontrollers',   subject: 'Grade 10 CS (IGCSE)', emoji: '📡' },
-  'gr10-robotics':        { title: '§6.1.7–6.2 – Automated Systems & Robotics',   subject: 'Grade 10 CS (IGCSE)', emoji: '🤖' },
-  'gr10-ai':              { title: '§7.1 – Artificial Intelligence',               subject: 'Grade 10 CS (IGCSE)', emoji: '🧠' },
-  'gr10-quantum':         { title: '§7.2 – Quantum Computing',                     subject: 'Grade 10 CS (IGCSE)', emoji: '⚛️' },
-  'gr10-abstraction':     { title: '§9.1 – Abstraction & Decomposition',           subject: 'Grade 10 CS (IGCSE)', emoji: '🧩' },
-  'gr10-algorithms':      { title: '§9.1–9.3 – Algorithm Design & Analysis',      subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
-  'gr10-boolean':         { title: '§2.1 – Boolean Logic & Circuits',              subject: 'Grade 10 CS (IGCSE)', emoji: '⚙️' },
-  'gr10-programming':     { title: '§10.1–10.3 – Further Programming & Testing',  subject: 'Grade 10 CS (IGCSE)', emoji: '💻' },
-  'gr10-system-analysis': { title: '§9.1 – System Analysis & Design',             subject: 'Grade 10 CS (IGCSE)', emoji: '📊' },
-  'gr10-sql':             { title: '§Topic 11 – Databases & SQL',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🗄️' },
+  'gr10-data-integrity':  { title: 'Ch 4.1 – Data Integrity',                        subject: 'Grade 10 CS (IGCSE)', emoji: '✅' },
+  'gr10-cybersecurity':   { title: 'Ch 4.2 – Cybersecurity',                         subject: 'Grade 10 CS (IGCSE)', emoji: '🔒' },
+  'gr10-encryption':      { title: 'Ch 4.2 – Encryption & Security',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔐' },
+  'gr10-sensors':         { title: 'Ch 6.1.1–6.1.6 – Sensors & Microcontrollers',   subject: 'Grade 10 CS (IGCSE)', emoji: '📡' },
+  'gr10-robotics':        { title: 'Ch 6.1.7–6.2 – Automated Systems & Robotics',   subject: 'Grade 10 CS (IGCSE)', emoji: '🤖' },
+  'gr10-ai':              { title: 'Ch 7.1 – Artificial Intelligence',               subject: 'Grade 10 CS (IGCSE)', emoji: '🧠' },
+  'gr10-quantum':         { title: 'Ch 7.2 – Quantum Computing',                     subject: 'Grade 10 CS (IGCSE)', emoji: '⚛️' },
+  'gr10-abstraction':     { title: 'Ch 9.1 – Abstraction & Decomposition',           subject: 'Grade 10 CS (IGCSE)', emoji: '🧩' },
+  'gr10-algorithms':      { title: 'Ch 9.1–9.3 – Algorithm Design & Analysis',      subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
+  'gr10-boolean':         { title: 'Ch 2.1 – Boolean Logic & Circuits',              subject: 'Grade 10 CS (IGCSE)', emoji: '⚙️' },
+  'gr10-programming':     { title: 'Ch 10.1–10.3 – Further Programming & Testing',  subject: 'Grade 10 CS (IGCSE)', emoji: '💻' },
+  'gr10-system-analysis': { title: 'Ch 9.1 – System Analysis & Design',             subject: 'Grade 10 CS (IGCSE)', emoji: '📊' },
+  'gr10-sql':             { title: 'Ch Topic 11 – Databases & SQL',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🗄️' },
   // Alias keys — kept for Firestore backwards-compat, hidden from picker (see LEGACY_TOPIC_KEYS)
-  'gr10-algorithms-adv':  { title: '§9.1–9.3 – Algorithm Design',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
-  'gr10-python-adv':      { title: '§10.1–10.3 – Further Programming',            subject: 'Grade 10 CS (IGCSE)', emoji: '🐍' },
+  'gr10-algorithms-adv':  { title: 'Ch 9.1–9.3 – Algorithm Design',                 subject: 'Grade 10 CS (IGCSE)', emoji: '🔀' },
+  'gr10-python-adv':      { title: 'Ch 10.1–10.3 – Further Programming',            subject: 'Grade 10 CS (IGCSE)', emoji: '🐍' },
 
   // ════════════════════════════════════════════════════════════════
   // GRADE 11 — CS IGCSE 0478 (Year 3, 2028–29 — revision & exam prep)
   // ════════════════════════════════════════════════════════════════
-  'gr11-information':     { title: '§1.1–1.3 – Information Representation',       subject: 'Grade 11 CS (IGCSE)', emoji: '🔢' },
-  'gr11-communication':   { title: '§3.1–3.4 – Communication & Networking',       subject: 'Grade 11 CS (IGCSE)', emoji: '📡' },
-  'gr11-hardware':        { title: '§2.1 – Logic Circuits & Boolean Algebra',     subject: 'Grade 11 CS (IGCSE)', emoji: '⚙️' },
-  'gr11-logic':           { title: '§2.1 – Logic Gates & Simplification',         subject: 'Grade 11 CS (IGCSE)', emoji: '⚙️' },
-  'gr11-processor':       { title: '§2.2/2.3 – Processor & Memory',               subject: 'Grade 11 CS (IGCSE)', emoji: '⚡' },
-  'gr11-os':              { title: '§5.1/5.2 – OS & System Software',             subject: 'Grade 11 CS (IGCSE)', emoji: '🖥️' },
-  'gr11-system-software': { title: '§5.1/5.2 – System Software',                  subject: 'Grade 11 CS (IGCSE)', emoji: '🖥️' },
-  'gr11-security':        { title: '§4.1/4.2 – Security & Ethics',                subject: 'Grade 11 CS (IGCSE)', emoji: '🔒' },
-  'gr11-ai-advanced':     { title: '§7.1/7.2 – AI & Quantum (Revision)',          subject: 'Grade 11 CS (IGCSE)', emoji: '🧠' },
-  'gr11-programming':     { title: '§10.4/10.5 – File Handling & Testing',        subject: 'Grade 11 CS (IGCSE)', emoji: '📚' },
-  'gr11-oop':             { title: '§10.1–10.3 – Object-Oriented Programming',   subject: 'Grade 11 CS (IGCSE)', emoji: '🏗️' },
-  'gr11-data-structures': { title: '§Topic 11 – Abstract Data Types',             subject: 'Grade 11 CS (IGCSE)', emoji: '📦' },
-  'gr11-algorithms':      { title: '§9.1–9.3 – Algorithms (Revision)',            subject: 'Grade 11 CS (IGCSE)', emoji: '🔀' },
-  'gr11-databases':       { title: '§Topic 11 – Databases & SQL',                 subject: 'Grade 11 CS (IGCSE)', emoji: '🗄️' },
+  'gr11-information':     { title: 'Ch 1.1–1.3 – Information Representation',       subject: 'Grade 11 CS (IGCSE)', emoji: '🔢' },
+  'gr11-communication':   { title: 'Ch 3.1–3.4 – Communication & Networking',       subject: 'Grade 11 CS (IGCSE)', emoji: '📡' },
+  'gr11-hardware':        { title: 'Ch 2.1 – Logic Circuits & Boolean Algebra',     subject: 'Grade 11 CS (IGCSE)', emoji: '⚙️' },
+  'gr11-logic':           { title: 'Ch 2.1 – Logic Gates & Simplification',         subject: 'Grade 11 CS (IGCSE)', emoji: '⚙️' },
+  'gr11-processor':       { title: 'Ch 2.2/2.3 – Processor & Memory',               subject: 'Grade 11 CS (IGCSE)', emoji: '⚡' },
+  'gr11-os':              { title: 'Ch 5.1/5.2 – OS & System Software',             subject: 'Grade 11 CS (IGCSE)', emoji: '🖥️' },
+  'gr11-system-software': { title: 'Ch 5.1/5.2 – System Software',                  subject: 'Grade 11 CS (IGCSE)', emoji: '🖥️' },
+  'gr11-security':        { title: 'Ch 4.1/4.2 – Security & Ethics',                subject: 'Grade 11 CS (IGCSE)', emoji: '🔒' },
+  'gr11-ai-advanced':     { title: 'Ch 7.1/7.2 – AI & Quantum (Revision)',          subject: 'Grade 11 CS (IGCSE)', emoji: '🧠' },
+  'gr11-programming':     { title: 'Ch 10.4/10.5 – File Handling & Testing',        subject: 'Grade 11 CS (IGCSE)', emoji: '📚' },
+  'gr11-oop':             { title: 'Ch 10.1–10.3 – Object-Oriented Programming',   subject: 'Grade 11 CS (IGCSE)', emoji: '🏗️' },
+  'gr11-data-structures': { title: 'Ch Topic 11 – Abstract Data Types',             subject: 'Grade 11 CS (IGCSE)', emoji: '📦' },
+  'gr11-algorithms':      { title: 'Ch 9.1–9.3 – Algorithms (Revision)',            subject: 'Grade 11 CS (IGCSE)', emoji: '🔀' },
+  'gr11-databases':       { title: 'Ch Topic 11 – Databases & SQL',                 subject: 'Grade 11 CS (IGCSE)', emoji: '🗄️' },
 };
 
 const LEGACY_SUBJECTS = new Set([
@@ -241,10 +241,10 @@ const LEGACY_TOPIC_KEYS = new Set([
   // Grade 10 — duplicate/alias keys
   'gr10-algorithms-adv',   // duplicate of gr10-algorithms
   'gr10-python-adv',       // duplicate of gr10-programming
-  'gr10-encryption',       // duplicate of gr10-cybersecurity (both §4.2)
+  'gr10-encryption',       // duplicate of gr10-cybersecurity (both Ch 4.2)
   // Grade 11 — duplicate keys
   'gr11-system-software',  // duplicate of gr11-os
-  'gr11-logic',            // duplicate of gr11-hardware (both §2.1)
+  'gr11-logic',            // duplicate of gr11-hardware (both Ch 2.1)
 ]);
 
 /** Returns topics grouped by their subject, preserving insertion order.
