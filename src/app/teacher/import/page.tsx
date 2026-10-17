@@ -83,29 +83,21 @@ const BG = [
 const TEMPLATE_HEADERS = 'id,topicKey,type,text,optionA,optionB,optionC,optionD,answer,explanation,difficulty,points,chapter,imageUrl';
 
 const TEMPLATE_ROWS = [
+  // answer = 0-based index of the correct option (0=optionA, 1=optionB, 2=optionC, 3=optionD)
+  // Leave imageUrl (col 14) blank for text-only questions, or paste a full https:// URL.
   // ── Grade 4 ──────────────────────────────────────────────────────────────
   'gr4-ch1-q001,gr4-ch1-peripherals,mcq,Which of these is an OUTPUT device?,Keyboard,Mouse,Monitor,Scanner,2,A monitor displays output from the computer.,easy,1,1,',
   // ── Grade 5 ──────────────────────────────────────────────────────────────
   'gr5-ch2-q001,gr5-ch2-storage,mcq,Which storage medium uses laser light to read data?,Hard disk,USB drive,CD-ROM,RAM,2,CDs use a laser to read the pits and lands on the disc surface.,easy,1,2,',
   // ── Grade 6 ──────────────────────────────────────────────────────────────
   'gr6-ch4-q001,gr6-ch4-excel1,mcq,Which Excel function adds all numbers in a range?,COUNT,SUM,AVERAGE,MAX,1,SUM adds up all the values in the selected range.,easy,1,4,',
-  // ── Grade 7 — MCQ ────────────────────────────────────────────────────────
+  // ── Grade 7 ──────────────────────────────────────────────────────────────
   'gr7-ch1-q001,gr7-ch1-numbers,mcq,What is the denary value of binary 1010?,8,10,12,14,1,1×8 + 0×4 + 1×2 + 0×1 = 10.,easy,1,1,',
-  // ── Grade 7 — True/False (leave optionA-D blank) ─────────────────────────
-  'gr7-ch4-q001,gr7-ch4-excel-charts,truefalse,A pie chart is best for showing changes over time.,,,,,false,Pie charts show proportions of a whole — use a line chart for trends.,easy,1,4,',
-  // ── Grade 7 — Short Answer ───────────────────────────────────────────────
-  'gr7-ch6-q001,gr7-ch6-html1,shortanswer,What HTML tag creates the largest heading?,,,,, h1,The <h1> tag defines the most important heading on a page.,easy,1,6,',
-  // ── Grade 7 — Fill-in-the-blank (use ___ for the missing word) ───────────
-  'gr7-ch10-q001,gr7-ch10-python,fillinblank,In Python the ___ keyword starts a conditional statement.,,,,,if,if is the keyword used to begin a conditional statement in Python.,easy,1,10,',
-  // ── Grade 8 — Matching ───────────────────────────────────────────────────
-  // optionA-D are LEFT-side items; answer gives the matching RIGHT-side labels pipe-separated
-  'gr8-ch8-q001,gr8-ch8-malware,matching,Match each malware type to its behaviour.,Self-replicates via email attachments,Disguises itself as useful software,Silently records keystrokes,Locks files and demands payment,Virus|Trojan horse|Spyware|Ransomware,Each malware type has a distinct attack method.,medium,2,8,',
-  // ── Grade 8 — Ordering ───────────────────────────────────────────────────
-  // answer gives the correct sequence as pipe-separated 0-based indices of optionA-D
-  'gr8-ch3-q001,gr8-ch3-access1,ordering,Place the database design steps in the correct order.,Define the fields,Create the table,Set the primary key,Enter records,0|2|1|3,You define fields first then choose a primary key before creating the table and finally entering data.,medium,2,3,',
-  // ── Grade 9 CS IGCSE — with image example ────────────────────────────────
-  // imageUrl column (col 14): paste a full https:// URL to attach an image to the question
+  // ── Grade 8 ──────────────────────────────────────────────────────────────
+  'gr8-ch8-q001,gr8-ch8-malware,mcq,Which malware disguises itself as legitimate software?,Virus,Trojan horse,Worm,Spyware,1,A Trojan horse appears useful but carries hidden malicious code.,easy,1,8,',
+  // ── Grade 9 CS IGCSE ─────────────────────────────────────────────────────
   'gr9-cpu-q001,gr9-cpu,mcq,Which component temporarily holds data the CPU is using?,Hard disk,ROM,RAM,SSD,2,RAM is volatile memory that holds data the CPU is actively processing.,medium,1,0,',
+  // imageUrl example — paste a real https:// URL in col 14 to attach a diagram:
   'gr9-cpu-q002,gr9-cpu,mcq,Identify the component highlighted in the diagram.,CPU,RAM,GPU,HDD,0,The highlighted chip is the CPU — the central processing unit.,medium,1,0,https://res.cloudinary.com/example/image/upload/cpu-diagram.jpg',
   // ── Grade 9 DT IGCSE ─────────────────────────────────────────────────────
   'gr9dt-materials-q001,gr9dt-materials,mcq,Which material property describes resistance to scratching?,Toughness,Hardness,Elasticity,Conductivity,1,Hardness means resistance to indentation or scratching.,easy,1,0,',
@@ -155,7 +147,7 @@ type ParsedRow = { ok: boolean; row: number; data?: Omit<Question, 'id'>; error?
 // ---------------------------------------------------------------------------
 // Parser
 // ---------------------------------------------------------------------------
-const VALID_TYPES = new Set<string>(['mcq', 'truefalse', 'shortanswer', 'fillinblank', 'matching', 'ordering']);
+const VALID_TYPES = new Set<string>(['mcq']);
 
 export interface ParseMeta { remapped: number; }
 
@@ -204,7 +196,7 @@ function _parseCSVRows(text: string): ParsedRow[] {
     if (!VALID_TYPES.has(type)) {
       results.push({
         ok: false, row: i + 1,
-        error: `Unknown type "${type}" — use: mcq, truefalse, shortanswer, fillinblank, matching, ordering`,
+        error: `Type "${type}" is not supported — only "mcq" is accepted at this time`,
       });
       continue;
     }
@@ -482,25 +474,16 @@ const [importedCount, setImportedCount] = useState(0);
               <Info size={16} color="#7dd3fc" style={{ marginTop: 2, flexShrink: 0 }} />
               <div>
                 <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: 8 }}>
-                  Download the template to see answer formats for all 6 question types. New questions start as{' '}
+                  Download the template for a ready-to-use MCQ example for every topic. New questions start as{' '}
                   <strong style={{ color: 'rgba(255,255,255,0.7)' }}>pending</strong> unless you enable auto-approve below.
                   Exact duplicates are skipped automatically. Legacy topicKeys (e.g. <code style={{ fontSize: 11 }}>gr5-computer-evolution</code>) are remapped automatically.
-                  Add an <code style={{ fontSize: 11 }}>imageUrl</code> column (col 14) with a full <code style={{ fontSize: 11 }}>https://</code> URL to attach an image to a question — leave it blank for text-only questions.
+                  Add an <code style={{ fontSize: 11 }}>imageUrl</code> column (col 14) with a full <code style={{ fontSize: 11 }}>https://</code> URL to attach an image — leave it blank for text-only questions.
                 </p>
-                {/* Type legend */}
+                {/* Type legend — MCQ only */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
-                  {[
-                    { type: 'mcq', label: 'MCQ', hint: 'answer = option index (0-based)' },
-                    { type: 'truefalse', label: 'True/False', hint: 'answer = true or false' },
-                    { type: 'shortanswer', label: 'Short Answer', hint: 'answer = expected keyword' },
-                    { type: 'fillinblank', label: 'Fill in Blank', hint: 'use ___ in question text' },
-                    { type: 'matching', label: 'Matching', hint: 'answer = right-side values joined by |' },
-                    { type: 'ordering', label: 'Ordering', hint: 'answer = correct index order joined by |' },
-                  ].map(({ type, label, hint }) => (
-                    <span key={type} style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
-                      <span style={{ color: '#6ee7b7' }}>{label}</span>: {hint}
-                    </span>
-                  ))}
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ color: '#6ee7b7' }}>MCQ</span>: answer = option index (0-based) &nbsp;·&nbsp; set <code>type</code> column to <code>mcq</code>
+                  </span>
                 </div>
               </div>
             </div>
