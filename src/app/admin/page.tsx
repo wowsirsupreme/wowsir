@@ -658,7 +658,14 @@ function QuestionBankTab() {
   const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
   const subjects = subjectOrder.filter(s => bySubject[s]);
 
-  const total = Object.values(topicCounts).reduce((s, n) => s + n, 0);
+  // Only count questions that belong to a recognised topicKey (what's actually displayed)
+  const knownTopicKeys = new Set(Object.keys(TOPIC_LABELS));
+  const total = Object.entries(topicCounts)
+    .filter(([tk]) => knownTopicKeys.has(tk))
+    .reduce((s, [, n]) => s + n, 0);
+  const orphanTotal = Object.entries(topicCounts)
+    .filter(([tk]) => !knownTopicKeys.has(tk))
+    .reduce((s, [, n]) => s + n, 0);
 
   const handleDelete = async (topicKey: string) => {
     setDeleting(topicKey);
@@ -699,6 +706,19 @@ function QuestionBankTab() {
       {!fsLoading && subjects.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>
           No questions found in Firestore.
+        </div>
+      )}
+
+      {/* Orphan warning — questions with unrecognised topicKeys */}
+      {!fsLoading && orphanTotal > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderRadius: 10, marginBottom: 16,
+          background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)',
+        }}>
+          <span style={{ fontSize: 13, color: '#fbbf24' }}>
+            ⚠️ {orphanTotal.toLocaleString()} question{orphanTotal !== 1 ? 's' : ''} in Firestore have an unrecognised topic key and are not shown below. These may be leftover pre-built questions or imports with mismatched keys.
+          </span>
         </div>
       )}
 
