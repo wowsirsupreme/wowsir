@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "questions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "topicKey",       "order": "ASCENDING" },
+        { "fieldPath": "approvalStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "practiceLeaderboard",
       "queryScope": "COLLECTION",
       "fields": [
@@ -27,3 +35,4 @@
   ],
   "fieldOverrides": []
 }
+

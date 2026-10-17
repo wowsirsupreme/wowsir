@@ -17,20 +17,33 @@ export async function getQuestionsByTopic(
   topicKey: string,
   includeStatuses: Array<'approved' | 'pending'> = ['approved'],
 ): Promise<Question[]> {
-  // Query only on topicKey — no composite index needed.
-  // Filter by approvalStatus client-side (fine for typical question-bank sizes).
-  const snap = await getDocs(
-    query(collection(fs(), 'questions'), where('topicKey', '==', topicKey))
+  // Uses composite index: questions(topicKey ASC, approvalStatus ASC)
+  const results = await Promise.all(
+    includeStatuses.map(status =>
+      getDocs(
+        query(
+          collection(fs(), 'questions'),
+          where('topicKey', '==', topicKey),
+          where('approvalStatus', '==', status),
+        )
+      )
+    )
   );
-  const statusSet = new Set<string>(includeStatuses);
-  return snap.docs
-    .map(d => ({ ...d.data(), id: d.id } as Question))
-    .filter(q => statusSet.has(q.approvalStatus))
-    .sort((a, b) => {
-      const ta = (a as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
-      const tb = (b as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
-      return ta - tb;
-    });
+  const seen = new Set<string>();
+  const docs: Question[] = [];
+  for (const snap of results) {
+    for (const d of snap.docs) {
+      if (!seen.has(d.id)) {
+        seen.add(d.id);
+        docs.push({ ...d.data(), id: d.id } as Question);
+      }
+    }
+  }
+  return docs.sort((a, b) => {
+    const ta = (a as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
+    const tb = (b as { createdAt?: { seconds?: number } }).createdAt?.seconds ?? 0;
+    return ta - tb;
+  });
 }
 
 /** Returns all questions for a topic regardless of approval status */
