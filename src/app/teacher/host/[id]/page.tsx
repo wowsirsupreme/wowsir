@@ -642,28 +642,32 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
     .filter(p => p.tabSwitches > 0)
     .sort((a, b) => b.tabSwitches - a.tabSwitches);
 
+  // Class accuracy for the progress bar
+  const totalAnswers = players.reduce((sum, p) => sum + (p.total || 0), 0);
+  const correctAnswers = players.reduce((sum, p) => sum + (p.correct || 0), 0);
+  const classAccuracy = totalAnswers > 0 ? Math.round((correctAnswers / totalAnswers) * 100) : 0;
+
+  const isActivePhase = phase === 'question' || phase === 'reveal';
+
   // ── LIVE SESSION ──
   return (
     <div className="host-screen flex flex-col min-h-screen">
 
       {/* Top bar */}
       <div
-        className="flex items-center justify-between px-5 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', background: 'rgba(8,6,0,0.6)', position: 'sticky', top: 0, zIndex: 10 }}
+        className="flex items-center justify-between px-5 py-2.5"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', background: 'rgba(8,6,0,0.75)', position: 'sticky', top: 0, zIndex: 10 }}
       >
-        <div className="flex items-center gap-4">
+        {/* Left: code + link + player count */}
+        <div className="flex items-center gap-3">
           <div
             className="px-3 py-1.5 rounded-lg"
-            style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)' }}
+            style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)' }}
           >
-            <span className="font-mono font-bold text-[15px]" style={{ color: '#fcd34d', letterSpacing: 4 }}>
+            <span className="font-mono font-bold text-[17px]" style={{ color: '#fcd34d', letterSpacing: 5 }}>
               {session?.code || '…'}
             </span>
           </div>
-          <span className="text-sm flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
-            {players.length} online
-          </span>
           {session?.code && (
             <button
               title="Copy join link for students"
@@ -672,30 +676,42 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
                 navigator.clipboard.writeText(url).then(() => toast('Join link copied!', 'success'));
               }}
               className="btn-glass"
-              style={{ fontSize: 12, padding: '5px 11px', minHeight: 0, gap: 4 }}
+              style={{ fontSize: 12, padding: '6px 13px', minHeight: 0, display: 'flex', alignItems: 'center', gap: 5 }}
             >
-              🔗 Share
+              🔗 Link
             </button>
           )}
+          <span className="text-xs flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulseDot inline-block" />
+            {players.length} online
+          </span>
         </div>
+
+        {/* Right: controls */}
         <div className="flex gap-2">
           <button
             className="btn-glass"
-            style={{ fontSize: 13, padding: '8px 16px', minHeight: 40 }}
+            style={{ fontSize: 13, padding: '7px 14px', minHeight: 38 }}
             onClick={() => handlePause(session?.status !== 'paused')}
           >
             {session?.status === 'paused' ? '▶ Resume' : '⏸ Pause'}
           </button>
           <button
             className="btn-glass"
-            style={{ fontSize: 13, padding: '8px 16px', minHeight: 40, color: 'rgba(255,255,255,0.5)' }}
+            style={{ fontSize: 13, padding: '7px 14px', minHeight: 38 }}
+            onClick={() => router.push(`/teacher/results/quiz/${quizId}`)}
+          >
+            Go to report ↗
+          </button>
+          <button
+            className="btn-glass"
+            style={{ fontSize: 13, padding: '7px 14px', minHeight: 38, color: 'rgba(255,255,255,0.4)' }}
             onClick={handleLeaveRunning}
           >
             Leave
           </button>
           <button
-            className="btn-glass"
-            style={{ fontSize: 13, padding: '8px 16px', minHeight: 40, borderColor: 'rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.12)', color: '#fca5a5' }}
+            style={{ fontSize: 13, padding: '7px 18px', minHeight: 38, borderRadius: 10, fontWeight: 600, background: '#dc2626', color: '#fff', border: 'none', cursor: 'pointer' }}
             onClick={handleEndSession}
           >
             End
@@ -703,11 +719,51 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
+      {/* Accuracy bar — shown only during question / reveal */}
+      {isActivePhase && (
+        <div style={{ position: 'relative', height: 40, background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+          {/* Left segment: correct (green) */}
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: `${classAccuracy}%`,
+            background: 'rgba(34,197,94,0.35)',
+            transition: 'width 0.5s ease',
+          }} />
+          {/* Right segment: incorrect (red) */}
+          <div style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0,
+            width: `${100 - classAccuracy}%`,
+            background: 'rgba(239,68,68,0.25)',
+            transition: 'width 0.5s ease',
+          }} />
+          {/* Circle badge in center */}
+          <div style={{
+            position: 'absolute', left: '50%', top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 56, height: 56,
+            borderRadius: '50%',
+            background: '#1a1200',
+            border: '3px solid rgba(255,255,255,0.12)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2,
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#fff', lineHeight: 1 }}>
+              {classAccuracy}%
+            </span>
+            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em', lineHeight: 1.3 }}>
+              accuracy
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className={`flex overflow-hidden ${isActivePhase ? 'flex-col flex-1' : 'flex-1'}`}>
 
         {/* Main column */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 overflow-y-auto">
+        <div className={`flex flex-col items-center px-6 overflow-y-auto ${isActivePhase ? 'justify-start pt-6 pb-2' : 'flex-1 justify-center py-8'}`}
+          style={isActivePhase ? { flexShrink: 0 } : {}}
+        >
 
           {/* LOBBY */}
           {phase === 'lobby' && (
@@ -927,7 +983,8 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — lobby only; during question/reveal we use the full-width panel below */}
+        {!isActivePhase && (
         <div
           className="w-72 flex flex-col overflow-hidden"
           style={{ borderLeft: '1px solid rgba(255,255,255,0.07)' }}
@@ -1160,6 +1217,216 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
             </div>
           )}
         </div>
+        )} {/* end !isActivePhase sidebar */}
+
+        {/* ── Full-width management panel — question / reveal phases only ── */}
+        {isActivePhase && (
+          <div className="flex flex-col flex-1 overflow-hidden" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+
+            {/* Tab bar */}
+            <div
+              className="flex shrink-0"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}
+            >
+              {([
+                { key: 'leaderboard' as const, label: 'Leaderboard', badge: undefined as number | undefined },
+                { key: 'questions'   as const, label: 'Questions',   badge: undefined as number | undefined },
+                { key: 'anticheat'   as const, label: 'Anti-cheating', badge: tabSwitchers.length > 0 ? tabSwitchers.length : undefined },
+              ]).map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setSidebarTab(tab.key)}
+                  style={{
+                    padding: '11px 24px', fontSize: 13, fontWeight: 600,
+                    borderBottom: sidebarTab === tab.key ? '2px solid #fcd34d' : '2px solid transparent',
+                    color: sidebarTab === tab.key ? '#fcd34d' : 'rgba(255,255,255,0.45)',
+                    background: 'transparent', cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    position: 'relative',
+                  }}
+                >
+                  {tab.label}
+                  {tab.badge !== undefined && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, lineHeight: 1,
+                      background: 'rgba(239,68,68,0.8)', color: '#fff',
+                      borderRadius: 99, padding: '1px 6px',
+                    }}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+              {/* participant count on the right */}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: 20, gap: 6 }}>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>👥</span>
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{players.length} participant{players.length !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+
+            {/* ── Leaderboard tab ── */}
+            {sidebarTab === 'leaderboard' && (
+              <div className="flex-1 overflow-y-auto" ref={leaderboardRef}>
+                {leaderboard.length === 0 ? (
+                  <p className="text-xs text-center py-8" style={{ color: 'rgba(255,255,255,0.25)' }}>No scores yet — answers will appear here</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                        {['Rank', 'Name', 'Score'].map(h => (
+                          <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
+                        ))}
+                        {/* download buttons */}
+                        <th style={{ padding: '10px 16px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                            <button title="Download with scores" onClick={downloadLeaderboard} className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', color: 'rgba(201,168,76,0.7)' }}>📥</button>
+                            <button title="Screenshot names only" onClick={downloadLeaderboardNoScores} className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: 'rgba(167,139,250,0.8)' }}>📷</button>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((p, i) => (
+                        <tr
+                          key={p.id}
+                          style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i === 0 ? 'rgba(201,168,76,0.06)' : 'transparent' }}
+                        >
+                          <td style={{ padding: '10px 16px', width: 56 }}>
+                            <span style={{ fontSize: 16 }}>
+                              {['🥇','🥈','🥉'][i] ?? <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>{i + 1}</span>}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <Avatar id={p.avatarId} size={26} />
+                              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.88)' }}>{p.name}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 16px' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: '#fcd34d' }}>
+                              {p.score.toLocaleString()}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 16px', width: 48 }} />
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {/* ── Questions tab ── */}
+            {sidebarTab === 'questions' && (
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                    Question {currentQIdx + 1} of {questions.length}
+                  </span>
+                  <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#fcd34d' }}>
+                    {Math.round(((currentQIdx + 1) / Math.max(questions.length, 1)) * 100)}% through quiz
+                  </span>
+                </div>
+                <div style={{ height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.07)', marginBottom: 16, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 99, width: `${((currentQIdx + 1) / Math.max(questions.length, 1)) * 100}%`, background: 'linear-gradient(90deg,#c9a84c,#e8d08a)', transition: 'width 0.4s ease' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
+                  {questions.map((q, i) => {
+                    const isCurrent = i === currentQIdx;
+                    const isPast = i < currentQIdx;
+                    return (
+                      <div key={q.id ?? i} style={{
+                        borderRadius: 10, padding: '9px 12px',
+                        border: isCurrent ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(255,255,255,0.05)',
+                        background: isCurrent ? 'rgba(201,168,76,0.1)' : isPast ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                        display: 'flex', alignItems: 'flex-start', gap: 8,
+                      }}>
+                        <span style={{
+                          flexShrink: 0, width: 22, height: 22, borderRadius: 6,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                          background: isCurrent ? '#fcd34d' : isPast ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.07)',
+                          color: isCurrent ? '#1a1200' : isPast ? '#6ee7b7' : 'rgba(255,255,255,0.3)',
+                        }}>
+                          {isPast ? '✓' : i + 1}
+                        </span>
+                        <span style={{
+                          fontSize: 12, lineHeight: 1.4,
+                          color: isCurrent ? 'rgba(255,255,255,0.9)' : isPast ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.5)',
+                          overflow: 'hidden', display: '-webkit-box',
+                          WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        }}>
+                          {q.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Anti-cheating tab ── */}
+            {sidebarTab === 'anticheat' && (
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  {/* Settings */}
+                  <div style={{ flex: '1 1 220px', borderRadius: 12, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <p style={{ margin: '0 0 12px', fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      Protection Active
+                    </p>
+                    {[
+                      { label: 'Tab switch detection', on: quiz?.settings?.antiCheat ?? true },
+                      { label: 'Shuffle questions', on: quiz?.settings?.shuffleQuestions ?? false },
+                      { label: 'Shuffle options',   on: quiz?.settings?.shuffleOptions   ?? false },
+                    ].map(item => (
+                      <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{item.label}</span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                          padding: '2px 8px', borderRadius: 99,
+                          background: item.on ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.06)',
+                          color: item.on ? '#6ee7b7' : 'rgba(255,255,255,0.3)',
+                          border: item.on ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(255,255,255,0.07)',
+                        }}>
+                          {item.on ? 'ON' : 'OFF'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tab switchers */}
+                  <div style={{ flex: '3 1 400px' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: 11, fontFamily: 'var(--font-mono)', color: tabSwitchers.length > 0 ? '#f87171' : 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      ⚠️ Tab switches ({tabSwitchers.length})
+                    </p>
+                    {tabSwitchers.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                        <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.2 }}>🛡️</div>
+                        <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.2)' }}>No suspicious activity detected</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 6 }}>
+                        {tabSwitchers.map(p => (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Avatar id={p.avatarId} size={24} />
+                              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{p.name}</span>
+                            </div>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 12, padding: '2px 8px', borderRadius: 99, background: p.tabSwitches >= 5 ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.15)', color: p.tabSwitches >= 5 ? '#fca5a5' : 'rgba(255,255,255,0.5)' }}>
+                              ×{p.tabSwitches}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )} {/* end isActivePhase full-width panel */}
+
       </div>
     </div>
   );
