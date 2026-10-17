@@ -25,7 +25,7 @@ import QuizNav from '@/components/QuizNav';
 import type { Question } from '@/types/question';
 import type { SessionPlayer } from '@/types/session';
 
-type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended' | 'round-review';
+type Phase = 'loading' | 'lobby' | 'question' | 'reveal' | 'redemption' | 'leaderboard' | 'ended' | 'round-review';
 
 /** Resolve correct option index from a question's answer field.
  *  Handles both numeric-string ('0','1','2','3') and legacy
@@ -69,6 +69,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
   const [roundNum, setRoundNum] = useState(1);
   const [roundScore, setRoundScore] = useState(0); // score at start of this round
   const [roundResultsStartIdx, setRoundResultsStartIdx] = useState(0); // index into questionResults where current round starts
+
+  // Redemption state — second-attempt for wrong answers in self-paced mode
+  const [isRedemption, setIsRedemption] = useState(false);
+  const [redemptionCorrect, setRedemptionCorrect] = useState<boolean | null>(null);
 
   // Self-paced mode state
   const [localQuestions, setLocalQuestions] = useState<Question[]>([]);
@@ -186,7 +190,10 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
 
   // ── Answer handler (both modes) ──
   const handleAnswer = useCallback(async (index: number) => {
-    if (!sessionId || !playerId || selected !== null) return;
+    if (!sessionId || !playerId) return;
+    // In redemption phase allow a new pick; otherwise block if already answered
+    if (!isRedemption && selected !== null) return;
+    if (isRedemption && redemptionCorrect !== null) return; // already resolved
 
     const q: Question | null = selfPaced
       ? (localQuestions[localQIdx] || null)
@@ -194,28 +201,56 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
     if (!q) return;
 
     const timeMs = Date.now() - questionStartTime;
-    setSelected(index);
-    setAnswerTime(timeMs);
-    setPhase('reveal');
-
     const correctIndex = getCorrectIndex(q.answer);
     const isCorrect = index === correctIndex;
     const timeLimit = session?.settings?.timeLimit || 20;
-    const timeBonus = isCorrect ? calcTimeBonus(timeMs, timeLimit * 1000) : 0;
     const basePoints = q.points || 100;
-    const scored = isCorrect ? basePoints + timeBonus : 0;
 
+    if (isRedemption) {
+      // ── Second attempt (redemption) ──
+      const scored = isCorrect ? Math.max(1, Math.floor(basePoints / 2)) : 0;
+      setRedemptionCorrect(isCorrect);
+      if (isCorrect) { setScore(s => s + scored); setNumCorrect(n => n + 1); }
+      setNumAnswered(n => n + 1);
+      setQuestionResults(prev => [...prev, { question: q, selected: index, correct: isCorrect }]);
+      const qIdx = selfPaced ? localQIdx : (session?.currentQ || 0);
+      await submitAnswer(sessionId, playerId, qIdx, index, isCorrect, scored, timeMs);
+      setPhase('reveal');
+      return;
+    }
+
+    // ── First attempt ──
+    setSelected(index);
+    setAnswerTime(timeMs);
+
+    if (!isCorrect && selfPaced) {
+      // Offer redemption — don't submit yet, don't update score/numAnswered
+      setPhase('redemption');
+      setIsRedemption(true);
+      return;
+    }
+
+    // Correct on first try (or host-paced where we reveal immediately)
+    setPhase('reveal');
+    const timeBonus = isCorrect ? calcTimeBonus(timeMs, timeLimit * 1000) : 0;
+    const scored = isCorrect ? basePoints + timeBonus : 0;
     if (isCorrect) { setScore(s => s + scored); setStreak(s => s + 1); setNumCorrect(n => n + 1); }
     else { setStreak(0); }
     setNumAnswered(n => n + 1);
     setQuestionResults(prev => [...prev, { question: q, selected: index, correct: isCorrect }]);
-
     const qIdx = selfPaced ? localQIdx : (session?.currentQ || 0);
     await submitAnswer(sessionId, playerId, qIdx, index, isCorrect, scored, timeMs);
-  }, [sessionId, playerId, session, selected, questionStartTime, selfPaced, localQuestions, localQIdx]);
+  }, [sessionId, playerId, session, selected, questionStartTime, selfPaced, localQuestions, localQIdx, isRedemption, redemptionCorrect]);
+
+  // ── Reset redemption state for each new question ──
+  function resetRedemption() {
+    setIsRedemption(false);
+    setRedemptionCorrect(null);
+  }
 
   // ── Self-paced: advance to next question ──
   function handleNextSelfPaced() {
+    resetRedemption();
     const next = localQIdx + 1;
     if (next >= localQuestions.length) {
       // Round done — mark these questions as used and show round review
@@ -471,7 +506,7 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
         {phase === 'question' && q && (
           <TimerRing seconds={timeLimit} onEnd={handleTimerEnd} paused={phase !== 'question'} size={48} />
         )}
-        {phase === 'reveal' && <div className="w-12" />}
+        {(phase === 'reveal' || phase === 'redemption') && <div className="w-12" />}
       </div>
 
       {/* Question area — full-width wrapper centres the constrained inner column */}
@@ -482,12 +517,47 @@ export default function PlayPage({ params }: { params: Promise<{ code: string }>
             <p className="text-xs font-mono tracking-widest uppercase mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
               Question {currentQNum + 1}{totalQ > 0 ? ` / ${totalQ}` : ''}
             </p>
+
+            {/* Redemption banner */}
+            {phase === 'redemption' && (
+              <div
+                className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-3"
+                style={{ background: 'rgba(251,191,36,0.08)', border: '1.5px solid rgba(251,191,36,0.3)' }}
+              >
+                <span style={{ fontSize: 22 }}>⚠️</span>
+                <div>
+                  <p style={{ color: '#fde68a', fontWeight: 700, fontSize: 14, margin: 0 }}>Wrong! Try once more</p>
+                  <p style={{ color: 'rgba(253,230,138,0.65)', fontSize: 12, margin: 0 }}>
+                    You can still earn {Math.max(1, Math.floor((q.points || 100) / 2))} point{Math.max(1, Math.floor((q.points || 100) / 2)) !== 1 ? 's' : ''} for a correct answer
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* After redemption attempt: show result banner */}
+            {phase === 'reveal' && isRedemption && redemptionCorrect !== null && (
+              <div
+                className="mb-4 rounded-2xl px-4 py-3 flex items-center gap-3"
+                style={{
+                  background: redemptionCorrect ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.07)',
+                  border: `1.5px solid ${redemptionCorrect ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'}`,
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{redemptionCorrect ? '✅' : '❌'}</span>
+                <p style={{ color: redemptionCorrect ? '#34d399' : '#f87171', fontWeight: 700, fontSize: 14, margin: 0 }}>
+                  {redemptionCorrect
+                    ? `+${Math.max(1, Math.floor((q.points || 100) / 2))} redemption point${Math.max(1, Math.floor((q.points || 100) / 2)) !== 1 ? 's' : ''}!`
+                    : 'Not this time — check the correct answer below'}
+                </p>
+              </div>
+            )}
+
             <QuestionCard
               question={q}
               selected={selected}
               revealed={phase === 'reveal'}
               onAnswer={handleAnswer}
-              disabled={phase === 'reveal'}
+              disabled={phase === 'reveal' || (phase === 'redemption' && redemptionCorrect !== null)}
             />
 
             {/* Self-paced: next button after reveal */}

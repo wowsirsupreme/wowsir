@@ -35,18 +35,9 @@ const BG = [
 //   gr4-ch5-formatting   gr4-ch6-word  gr4-ch7-internet  gr4-ch8-ppt1  gr4-ch9-ppt2
 //
 // Grade 5 Computing:
-//   Ch 1 sub-topics (Computer Evolution):
-//     gr5-ch1-early-counting  gr5-ch1-abacus  gr5-ch1-napier  gr5-ch1-pascaline
-//     gr5-ch1-leibniz  gr5-ch1-jacquard  gr5-ch1-babbage-lovelace  gr5-ch1-hollerith
-//     gr5-ch1-mark1  gr5-ch1-gen1  gr5-ch1-gen2  gr5-ch1-gen3  gr5-ch1-gen4
-//     gr5-ch1-gen5  gr5-ch1-mainframe-super  gr5-ch1-smartphone  gr5-ch1-ai-nlp-ar-vr
-//   Ch 2 sub-topics (Data Storage):
-//     gr5-ch2-binary  gr5-ch2-units  gr5-ch2-ram-rom  gr5-ch2-secondary-overview
-//     gr5-ch2-harddisk  gr5-ch2-cd  gr5-ch2-dvd  gr5-ch2-bluray  gr5-ch2-rw-vs-r
-//     gr5-ch2-pendrive-memorycard  gr5-ch2-cloud  gr5-ch2-magnetictape  gr5-ch2-review
-//   Remaining chapters (chapter-level keys):
-//     gr5-ch3-tables  gr5-ch4-pptanim  gr5-ch5-slideshow  gr5-ch6-internet
-//     gr5-ch7-multimedia  gr5-ch8-scratch1  gr5-ch9-scratch2
+//   gr5-ch1-evolution  gr5-ch2-storage  gr5-ch3-tables  gr5-ch4-pptanim
+//   gr5-ch5-slideshow  gr5-ch6-internet  gr5-ch7-multimedia
+//   gr5-ch8-scratch1   gr5-ch9-scratch2
 //
 // Grade 6 Computing:
 //   gr6-ch1-robotics  gr6-ch2-mailmerge  gr6-ch3-email
@@ -105,14 +96,10 @@ const TEMPLATE_ROWS = [
   `gr4-ch7-internet-q001,gr4-ch7-internet,mcq,What does URL stand for?,Uniform Resource Locator,Universal Reference Link,Unified Resource Language,Unique Routing Label,0,URL stands for Uniform Resource Locator — the web address used to locate a specific resource on the internet.,easy,1,1,`,
   `gr4-ch8-ppt1-q001,gr4-ch8-ppt1,mcq,In PowerPoint; what is each individual page of a presentation called?,Slide,Frame,Sheet,Page,0,Each page in a PowerPoint presentation is called a slide. A presentation is made up of one or more slides.,easy,1,1,`,
   `gr4-ch9-ppt2-q001,gr4-ch9-ppt2,mcq,Which PowerPoint feature controls how one slide transitions to the next during a slideshow?,Transitions,Animations,Timings,Themes,0,Transitions are visual effects that appear between slides. Animations apply to objects within a slide.,easy,1,1,`,
-  `gr5-ch1-early-counting-q001,gr5-ch1-early-counting,mcq,What was the Salamis Tablet primarily used for?,Performing arithmetic calculations,Writing ancient text,Storing religious records,Drawing maps,0,The Salamis Tablet (circa 300 BC) was a counting board used by the Babylonians for arithmetic calculations.,easy,1,1,`,
-  `gr5-ch1-abacus-q001,gr5-ch1-abacus,mcq,In which direction do you move beads on an abacus to represent a value?,Towards the centre beam,Away from the centre beam,In a circular motion,Left to right only,0,On an abacus; beads moved towards the centre counting beam represent the value. Beads pushed away are not counted.,easy,1,1,`,
-  `gr5-ch1-gen1-q001,gr5-ch1-gen1,mcq,What electronic component characterised first-generation computers?,Vacuum tubes,Transistors,Integrated circuits,Microprocessors,0,First-generation computers (1940s–1950s) used vacuum tubes for processing. They were large; expensive; and generated a lot of heat.,easy,1,1,`,
-  `gr5-ch1-gen2-q001,gr5-ch1-gen2,mcq,What replaced vacuum tubes in second-generation computers?,Transistors,Integrated circuits,Microprocessors,Vacuum diodes,0,Second-generation computers (late 1950s–early 1960s) used transistors; which were smaller; cheaper; faster; and more reliable than vacuum tubes.,easy,1,1,`,
-  `gr5-ch2-binary-q001,gr5-ch2-binary,mcq,What is the binary number system also called?,Base-2,Base-8,Base-10,Base-16,0,The binary system is base-2; using only two digits — 0 and 1 — to represent all values. Computers use binary because transistors have two states (on/off).,easy,1,1,`,
-  `gr5-ch2-units-q001,gr5-ch2-units,mcq,How many megabytes (MB) are in one gigabyte (GB)?,1024 MB,100 MB,512 MB,2048 MB,0,1 GB = 1024 MB. This is because computers use binary; so each unit is 2¹⁰ = 1024 times the previous one.,easy,1,1,`,
-  `gr5-ch2-ram-rom-q001,gr5-ch2-ram-rom,mcq,Which type of primary memory is volatile (loses data when power is off)?,RAM,ROM,Cache,Flash ROM,0,RAM (Random Access Memory) is volatile — its contents are lost when the computer is switched off. ROM retains its contents without power.,easy,1,1,`,
-  `gr5-ch2-cloud-q001,gr5-ch2-cloud,mcq,What is the main advantage of cloud storage over a USB pen drive?,Files can be accessed from any device with an internet connection,Cloud storage is always faster,Cloud storage never requires an internet connection,Cloud storage cannot be hacked,0,Cloud storage (e.g. Google Drive; OneDrive) lets you access your files from any internet-connected device; unlike a pen drive which must be physically with you.,easy,1,1,`,
+  `gr5-ch1-evolution-q001,gr5-ch1-evolution,mcq,What electronic component characterised first-generation computers?,Vacuum tubes,Transistors,Integrated circuits,Microprocessors,0,First-generation computers (1940s–1950s) used vacuum tubes for processing. They were large; expensive; and generated a lot of heat.,easy,1,1,`,
+  `gr5-ch1-evolution-q002,gr5-ch1-evolution,mcq,What replaced vacuum tubes in second-generation computers?,Transistors,Integrated circuits,Microprocessors,Vacuum diodes,0,Second-generation computers (late 1950s–early 1960s) used transistors; which were smaller; cheaper; faster; and more reliable than vacuum tubes.,easy,1,1,`,
+  `gr5-ch2-storage-q001,gr5-ch2-storage,mcq,Which type of primary memory is volatile and loses data when the computer is switched off?,RAM,ROM,Cache,Flash ROM,0,RAM (Random Access Memory) is volatile — its contents are lost when the computer is switched off. ROM retains its contents without power.,easy,1,2,`,
+  `gr5-ch2-storage-q002,gr5-ch2-storage,mcq,How many megabytes (MB) are in one gigabyte (GB)?,1024 MB,100 MB,512 MB,2048 MB,0,1 GB = 1024 MB. This is because computers use binary; so each unit is 2¹⁰ = 1024 times the previous one.,easy,1,2,`,
   `gr5-ch3-tables-q001,gr5-ch3-tables,mcq,In Microsoft Word; which menu option do you use to insert a table into your document?,Insert → Table,Home → Table,Layout → Table,View → Table,0,Tables are inserted via the Insert tab in Microsoft Word. You can choose the number of rows and columns.,easy,1,1,`,
   `gr5-ch4-pptanim-q001,gr5-ch4-pptanim,mcq,In PowerPoint; what is the difference between an animation and a transition?,Animations apply to objects on a slide; transitions apply between slides,Transitions apply to objects on a slide; animations apply between slides,They are the same thing,Animations only work on text; transitions only work on images,0,Animations control how objects (text; images) appear or move on a slide. Transitions control how the whole slide changes to the next.,easy,1,1,`,
   `gr5-ch5-slideshow-q001,gr5-ch5-slideshow,mcq,Which key starts a PowerPoint slideshow from the beginning?,F5,F1,Esc,Enter,0,Pressing F5 starts the slideshow from the first slide. Shift+F5 starts from the current slide.,easy,1,1,`,
@@ -232,7 +219,7 @@ const TEMPLATE_CSV = TEMPLATE_HEADERS + '\n' + TEMPLATE_ROWS.join('\n');
 // ---------------------------------------------------------------------------
 const TOPIC_REMAP: Record<string, string> = {
   // Grade 5
-  'gr5-computer-evolution': 'gr5-ch1-history',
+  'gr5-computer-evolution': 'gr5-ch1-evolution',
   'gr5-storage-media':      'gr5-ch2-storage',
   // Grade 8
   'gr8-artificial-intelligence': 'gr8-ch1-ai',
