@@ -1,17 +1,17 @@
 [
   {
-    "id": "scratch-basics-sample-q001",
+    "id": "scratch-basics-q001",
     "topicKey": "scratch-basics",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Scratch: Sprites & Backdrops (Scratch). Replace this with a real question about Scratch: Sprites & Backdrops.",
+    "text": "In Scratch, what is the term for the characters or objects that appear on the stage?",
     "options": [
-      "Sample correct answer about Scratch: Sprites & Backdrops",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Sprites",
+      "Backdrops",
+      "Scripts",
+      "Blocks"
     ],
     "answer": "0",
-    "explanation": "This template question covers Scratch: Sprites & Backdrops. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Sprites are the characters or objects in a Scratch project. They can have costumes, sounds, and scripts attached to them.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -21,18 +21,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "scratch-control-sample-q001",
+    "id": "scratch-control-q001",
     "topicKey": "scratch-control",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Scratch: Control & Logic (Scratch). Replace this with a real question about Scratch: Control & Logic.",
+    "text": "Which Scratch block will repeat a set of instructions exactly 10 times?",
     "options": [
-      "Sample correct answer about Scratch: Control & Logic",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "repeat 10",
+      "forever",
+      "if <> then",
+      "wait 10 seconds"
     ],
     "answer": "0",
-    "explanation": "This template question covers Scratch: Control & Logic. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The 'repeat 10' block is a loop that runs the blocks inside it exactly 10 times before continuing.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -42,18 +42,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "word-layout-sample-q001",
+    "id": "word-layout-q001",
     "topicKey": "word-layout",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: MS Word: Page Layout (Word). Replace this with a real question about MS Word: Page Layout.",
+    "text": "Which Microsoft Word feature lets you change the margin size on a page?",
     "options": [
-      "Sample correct answer about MS Word: Page Layout",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Page Layout → Margins",
+      "Insert → Header",
+      "Home → Font",
+      "View → Ruler"
     ],
     "answer": "0",
-    "explanation": "This template question covers MS Word: Page Layout. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "In Word, margins are adjusted through the Page Layout (or Layout) tab using the Margins option.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -63,18 +63,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "word-tables-sample-q001",
+    "id": "word-tables-q001",
     "topicKey": "word-tables",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: MS Word: Tables (Word). Replace this with a real question about MS Word: Tables.",
+    "text": "To add a new row at the bottom of a Word table, you can press which key while the cursor is in the last cell?",
     "options": [
-      "Sample correct answer about MS Word: Tables",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Tab",
+      "Enter",
+      "Shift+Enter",
+      "Ctrl+Enter"
     ],
     "answer": "0",
-    "explanation": "This template question covers MS Word: Tables. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Pressing Tab in the last cell of a Word table automatically adds a new row at the bottom.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -84,18 +84,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "html-basics-sample-q001",
+    "id": "html-basics-q001",
     "topicKey": "html-basics",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: HTML Fundamentals (HTML). Replace this with a real question about HTML Fundamentals.",
+    "text": "Which HTML tag is used to create the largest heading on a webpage?",
     "options": [
-      "Sample correct answer about HTML Fundamentals",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "<h1>",
+      "<head>",
+      "<header>",
+      "<big>"
     ],
     "answer": "0",
-    "explanation": "This template question covers HTML Fundamentals. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "<h1> defines the most important (largest) heading. Headings go from <h1> (largest) to <h6> (smallest).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -105,18 +105,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "css-styling-sample-q001",
+    "id": "css-styling-q001",
     "topicKey": "css-styling",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: CSS Styling (CSS). Replace this with a real question about CSS Styling.",
+    "text": "Which CSS property changes the text colour of an element?",
     "options": [
-      "Sample correct answer about CSS Styling",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "color",
+      "font-color",
+      "text-color",
+      "foreground"
     ],
     "answer": "0",
-    "explanation": "This template question covers CSS Styling. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The 'color' property sets the foreground (text) colour of an element in CSS.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -126,18 +126,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "small-basic-sample-q001",
+    "id": "small-basic-q001",
     "topicKey": "small-basic",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Small Basic Programming (Small Basic). Replace this with a real question about Small Basic Programming.",
+    "text": "In Small Basic, which object is used to display text on the screen?",
     "options": [
-      "Sample correct answer about Small Basic Programming",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "TextWindow",
+      "GraphicsWindow",
+      "Program",
+      "Clock"
     ],
     "answer": "0",
-    "explanation": "This template question covers Small Basic Programming. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "TextWindow is the Small Basic object for text-based output (and input). Use TextWindow.WriteLine() to print text.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -147,18 +147,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "presentations-sample-q001",
+    "id": "presentations-q001",
     "topicKey": "presentations",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Smart Presentations (Presentations). Replace this with a real question about Smart Presentations.",
+    "text": "Which view in PowerPoint shows all slides as small thumbnails in sequence?",
     "options": [
-      "Sample correct answer about Smart Presentations",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Slide Sorter",
+      "Normal",
+      "Reading",
+      "Presenter"
     ],
     "answer": "0",
-    "explanation": "This template question covers Smart Presentations. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Slide Sorter view displays all slides as thumbnails, making it easy to reorder or delete slides.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -168,18 +168,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "excel-basics-sample-q001",
+    "id": "excel-basics-q001",
     "topicKey": "excel-basics",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Excel 2016 Basics (Excel). Replace this with a real question about Excel 2016 Basics.",
+    "text": "In Excel, which function adds up all values in the range A1 to A10?",
     "options": [
-      "Sample correct answer about Excel 2016 Basics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "=SUM(A1:A10)",
+      "=ADD(A1:A10)",
+      "=TOTAL(A1:A10)",
+      "=PLUS(A1:A10)"
     ],
     "answer": "0",
-    "explanation": "This template question covers Excel 2016 Basics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "=SUM(A1:A10) is the correct Excel formula to add all values from cell A1 through A10.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -189,18 +189,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch1-intro-sample-q001",
+    "id": "gr7-ch1-intro-q001",
     "topicKey": "gr7-ch1-intro",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Introduction to Computing (Grade 7 CS). Replace this with a real question about Ch 1 – Introduction to Computing.",
+    "text": "Which of the following best describes a computer?",
     "options": [
-      "Sample correct answer about Ch 1 – Introduction to Computing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "An electronic device that processes data according to instructions",
+      "A machine that only stores information",
+      "A device that only outputs information",
+      "A tool used only for communication"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Introduction to Computing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A computer is an electronic device that accepts input, processes it according to stored instructions, and produces output.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -210,18 +210,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch2-ipo-sample-q001",
+    "id": "gr7-ch2-ipo-q001",
     "topicKey": "gr7-ch2-ipo",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Input, Processing & Output (Grade 7 CS). Replace this with a real question about Ch 2 – Input, Processing & Output.",
+    "text": "In the IPO model, what does the letter 'P' stand for?",
     "options": [
-      "Sample correct answer about Ch 2 – Input, Processing & Output",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Processing",
+      "Printing",
+      "Programming",
+      "Presenting"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Input, Processing & Output. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "IPO stands for Input – Processing – Output, the three fundamental stages of how a computer handles data.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -231,18 +231,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch3-data-sample-q001",
+    "id": "gr7-ch3-data-q001",
     "topicKey": "gr7-ch3-data",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Data & Information (Grade 7 CS). Replace this with a real question about Ch 3 – Data & Information.",
+    "text": "Which of the following is an example of information rather than raw data?",
     "options": [
-      "Sample correct answer about Ch 3 – Data & Information",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A calculated class average of 72%",
+      "A list of unprocessed test scores",
+      "Temperature readings from a sensor",
+      "A set of survey responses before analysis"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Data & Information. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Information is data that has been processed and given meaning. A calculated average is processed data, making it information.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -252,18 +252,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch4-networks-sample-q001",
+    "id": "gr7-ch4-networks-q001",
     "topicKey": "gr7-ch4-networks",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Networks & the Internet (Grade 7 CS). Replace this with a real question about Ch 4 – Networks & the Internet.",
+    "text": "What is the primary purpose of the internet?",
     "options": [
-      "Sample correct answer about Ch 4 – Networks & the Internet",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To connect computers and devices globally for communication and data sharing",
+      "To store all the world's data in one place",
+      "To control all computers from a central server",
+      "To run programs faster on local machines"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Networks & the Internet. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The internet is a global network of interconnected computers and devices that enables communication and data sharing worldwide.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -273,18 +273,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch5-safety-sample-q001",
+    "id": "gr7-ch5-safety-q001",
     "topicKey": "gr7-ch5-safety",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Digital Safety & Ethics (Grade 7 CS). Replace this with a real question about Ch 5 – Digital Safety & Ethics.",
+    "text": "Which practice best protects your online accounts from being hacked?",
     "options": [
-      "Sample correct answer about Ch 5 – Digital Safety & Ethics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Using strong, unique passwords for each account",
+      "Using the same simple password everywhere",
+      "Sharing your password with trusted friends",
+      "Never logging out of accounts"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Digital Safety & Ethics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Strong, unique passwords for each account reduce the risk that a breach on one site compromises other accounts.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -294,18 +294,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch1-peripherals-sample-q001",
+    "id": "gr4-ch1-peripherals-q001",
     "topicKey": "gr4-ch1-peripherals",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Computer Peripherals (Grade 4 Computing). Replace this with a real question about Ch 1 – Computer Peripherals.",
+    "text": "Which of the following is an OUTPUT device?",
     "options": [
-      "Sample correct answer about Ch 1 – Computer Peripherals",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Monitor",
+      "Keyboard",
+      "Mouse",
+      "Scanner"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Computer Peripherals. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A monitor displays information from the computer, making it an output device. Keyboards, mice, and scanners are input devices.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -315,18 +315,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch2-logo-sample-q001",
+    "id": "gr4-ch2-logo-q001",
     "topicKey": "gr4-ch2-logo",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Circles & Polygons in Logo (Grade 4 Computing). Replace this with a real question about Ch 2 – Circles & Polygons in Logo.",
+    "text": "In Logo programming, which command moves the turtle forward by 50 steps?",
     "options": [
-      "Sample correct answer about Ch 2 – Circles & Polygons in Logo",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "FORWARD 50",
+      "MOVE 50",
+      "GO 50",
+      "STEP 50"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Circles & Polygons in Logo. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "FORWARD (or FD) 50 moves the Logo turtle forward by 50 units in the direction it is currently facing.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -336,18 +336,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch3-files-sample-q001",
+    "id": "gr4-ch3-files-q001",
     "topicKey": "gr4-ch3-files",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Managing Files & Folders (Grade 4 Computing). Replace this with a real question about Ch 3 – Managing Files & Folders.",
+    "text": "What is a folder (directory) used for on a computer?",
     "options": [
-      "Sample correct answer about Ch 3 – Managing Files & Folders",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To organise and group related files together",
+      "To run programs faster",
+      "To connect to the internet",
+      "To increase storage space"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Managing Files & Folders. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Folders (directories) are used to organise files into groups, making it easier to find and manage them.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -357,18 +357,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch4-desktop-sample-q001",
+    "id": "gr4-ch4-desktop-q001",
     "topicKey": "gr4-ch4-desktop",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Personalising Your Computer (Grade 4 Computing). Replace this with a real question about Ch 4 – Personalising Your Computer.",
+    "text": "Which part of the Windows desktop shows the time, date, and system icons?",
     "options": [
-      "Sample correct answer about Ch 4 – Personalising Your Computer",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Taskbar / System Tray",
+      "Desktop wallpaper",
+      "Recycle Bin",
+      "Start Menu"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Personalising Your Computer. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The taskbar (specifically the system tray or notification area) at the bottom of the screen shows the clock, date, and system icons.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -378,18 +378,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch5-formatting-sample-q001",
+    "id": "gr4-ch5-formatting-q001",
     "topicKey": "gr4-ch5-formatting",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Formatting Text (Grade 4 Computing). Replace this with a real question about Ch 5 – Formatting Text.",
+    "text": "Which keyboard shortcut makes selected text bold in most word processors?",
     "options": [
-      "Sample correct answer about Ch 5 – Formatting Text",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Ctrl + B",
+      "Ctrl + U",
+      "Ctrl + I",
+      "Ctrl + F"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Formatting Text. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Ctrl + B applies bold formatting to selected text in most word-processing applications.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -399,18 +399,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch6-word-sample-q001",
+    "id": "gr4-ch6-word-q001",
     "topicKey": "gr4-ch6-word",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 6 – Styling a Word Document (Grade 4 Computing). Replace this with a real question about Ch 6 – Styling a Word Document.",
+    "text": "In Microsoft Word, which feature lets you apply a pre-designed combination of fonts, colours, and effects to text?",
     "options": [
-      "Sample correct answer about Ch 6 – Styling a Word Document",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Styles",
+      "Templates",
+      "Themes",
+      "Macros"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 6 – Styling a Word Document. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Styles in Word are named sets of formatting (font, size, colour, spacing) that can be applied to text with one click.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -420,18 +420,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch7-internet-sample-q001",
+    "id": "gr4-ch7-internet-q001",
     "topicKey": "gr4-ch7-internet",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 7 – The Net Connect (Grade 4 Computing). Replace this with a real question about Ch 7 – The Net Connect.",
+    "text": "What does URL stand for?",
     "options": [
-      "Sample correct answer about Ch 7 – The Net Connect",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Uniform Resource Locator",
+      "Universal Reference Link",
+      "Unified Resource Language",
+      "Unique Routing Label"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 7 – The Net Connect. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "URL stands for Uniform Resource Locator — the web address used to locate a specific resource on the internet.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -441,18 +441,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch8-ppt1-sample-q001",
+    "id": "gr4-ch8-ppt1-q001",
     "topicKey": "gr4-ch8-ppt1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 8 – Creating a Presentation (Grade 4 Computing). Replace this with a real question about Ch 8 – Creating a Presentation.",
+    "text": "In PowerPoint, what is each individual page of a presentation called?",
     "options": [
-      "Sample correct answer about Ch 8 – Creating a Presentation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Slide",
+      "Frame",
+      "Sheet",
+      "Page"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 8 – Creating a Presentation. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Each page in a PowerPoint presentation is called a slide. A presentation is made up of one or more slides.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -462,18 +462,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr4-ch9-ppt2-sample-q001",
+    "id": "gr4-ch9-ppt2-q001",
     "topicKey": "gr4-ch9-ppt2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 9 – Designing a Presentation (Grade 4 Computing). Replace this with a real question about Ch 9 – Designing a Presentation.",
+    "text": "Which PowerPoint feature controls how one slide transitions to the next during a slideshow?",
     "options": [
-      "Sample correct answer about Ch 9 – Designing a Presentation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Transitions",
+      "Animations",
+      "Timings",
+      "Themes"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 9 – Designing a Presentation. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Transitions are visual effects that appear between slides. Animations apply to objects within a slide.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -483,18 +483,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch1-history-sample-q001",
+    "id": "gr5-ch1-history-q001",
     "topicKey": "gr5-ch1-history",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Computer Evolution (Grade 5 Computing). Replace this with a real question about Ch 1 – Computer Evolution.",
+    "text": "What generation of computers first used transistors instead of vacuum tubes?",
     "options": [
-      "Sample correct answer about Ch 1 – Computer Evolution",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Second generation",
+      "First generation",
+      "Third generation",
+      "Fourth generation"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Computer Evolution. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Second-generation computers (late 1950s–early 1960s) replaced vacuum tubes with transistors, making them smaller and more reliable.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -504,18 +504,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch2-storage-sample-q001",
+    "id": "gr5-ch2-storage-q001",
     "topicKey": "gr5-ch2-storage",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Data Storage Media (Grade 5 Computing). Replace this with a real question about Ch 2 – Data Storage Media.",
+    "text": "Which storage medium uses laser light to read and write data?",
     "options": [
-      "Sample correct answer about Ch 2 – Data Storage Media",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Optical disc (CD/DVD)",
+      "Hard disk drive",
+      "USB flash drive",
+      "RAM"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Data Storage Media. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Optical discs (CDs, DVDs, Blu-rays) use a laser beam to read and write data stored as tiny pits on the disc surface.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -525,18 +525,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch3-tables-sample-q001",
+    "id": "gr5-ch3-tables-q001",
     "topicKey": "gr5-ch3-tables",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Organising in Word (Grade 5 Computing). Replace this with a real question about Ch 3 – Organising in Word.",
+    "text": "In Microsoft Word, which menu option do you use to insert a table into your document?",
     "options": [
-      "Sample correct answer about Ch 3 – Organising in Word",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Insert → Table",
+      "Home → Table",
+      "Layout → Table",
+      "View → Table"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Organising in Word. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Tables are inserted via the Insert tab in Microsoft Word. You can choose the number of rows and columns.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -546,18 +546,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch4-pptanim-sample-q001",
+    "id": "gr5-ch4-pptanim-q001",
     "topicKey": "gr5-ch4-pptanim",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Enliven a Presentation (Grade 5 Computing). Replace this with a real question about Ch 4 – Enliven a Presentation.",
+    "text": "In PowerPoint, what is the difference between an animation and a transition?",
     "options": [
-      "Sample correct answer about Ch 4 – Enliven a Presentation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Animations apply to objects on a slide; transitions apply between slides",
+      "Transitions apply to objects on a slide; animations apply between slides",
+      "They are the same thing",
+      "Animations only work on text, transitions only work on images"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Enliven a Presentation. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Animations control how objects (text, images) appear or move on a slide. Transitions control how the whole slide changes to the next.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -567,18 +567,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch5-slideshow-sample-q001",
+    "id": "gr5-ch5-slideshow-q001",
     "topicKey": "gr5-ch5-slideshow",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Slide Show Setup (Grade 5 Computing). Replace this with a real question about Ch 5 – Slide Show Setup.",
+    "text": "Which key starts a PowerPoint slideshow from the beginning?",
     "options": [
-      "Sample correct answer about Ch 5 – Slide Show Setup",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "F5",
+      "F1",
+      "Esc",
+      "Enter"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Slide Show Setup. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Pressing F5 starts the slideshow from the first slide. Shift+F5 starts from the current slide.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -588,18 +588,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch6-internet-sample-q001",
+    "id": "gr5-ch6-internet-q001",
     "topicKey": "gr5-ch6-internet",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 6 – Dialog on the Internet (Grade 5 Computing). Replace this with a real question about Ch 6 – Dialog on the Internet.",
+    "text": "What is the purpose of a search engine?",
     "options": [
-      "Sample correct answer about Ch 6 – Dialog on the Internet",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To find and index web pages based on keywords",
+      "To store your personal files online",
+      "To send emails",
+      "To create websites"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 6 – Dialog on the Internet. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A search engine (e.g. Google) crawls and indexes the web so users can find pages relevant to their search keywords.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -609,18 +609,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch7-multimedia-sample-q001",
+    "id": "gr5-ch7-multimedia-q001",
     "topicKey": "gr5-ch7-multimedia",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 7 – Multimedia Around Us (Grade 5 Computing). Replace this with a real question about Ch 7 – Multimedia Around Us.",
+    "text": "Which of the following is NOT a type of multimedia?",
     "options": [
-      "Sample correct answer about Ch 7 – Multimedia Around Us",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Spreadsheet formula",
+      "Video",
+      "Audio",
+      "Animation"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 7 – Multimedia Around Us. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Multimedia refers to content that uses a combination of text, audio, images, video, and animation. A spreadsheet formula is not multimedia.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -630,18 +630,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch8-scratch1-sample-q001",
+    "id": "gr5-ch8-scratch1-q001",
     "topicKey": "gr5-ch8-scratch1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 8 – Scratch Basics (Grade 5 Computing). Replace this with a real question about Ch 8 – Scratch Basics.",
+    "text": "In Scratch, which block category contains the 'move 10 steps' block?",
     "options": [
-      "Sample correct answer about Ch 8 – Scratch Basics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Motion",
+      "Looks",
+      "Control",
+      "Sound"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 8 – Scratch Basics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The Motion category contains blocks that control sprite movement, including 'move 10 steps' and 'turn' blocks.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -651,19 +651,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr5-ch9-scratch2-sample-q001",
+    "id": "gr5-ch9-scratch2-q001",
     "topicKey": "gr5-ch9-scratch2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 9 – Scratch Next Steps (Grade 5 Computing). Replace this with a real question about Ch 9 – Scratch Next Steps.",
+    "text": "In Scratch, what does the 'broadcast' block do?",
     "options": [
-      "Sample correct answer about Ch 9 – Scratch Next Steps",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Sends a message that other sprites can receive and respond to",
+      "Makes the sprite louder",
+      "Moves the sprite to a random position",
+      "Changes the sprite's costume"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 9 – Scratch Next Steps. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Broadcast sends a named message to all sprites. Any sprite with a 'when I receive' block listening for that message will run its script.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -672,18 +672,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch1-robotics-sample-q001",
+    "id": "gr6-ch1-robotics-q001",
     "topicKey": "gr6-ch1-robotics",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Robotics (Grade 6 Computing). Replace this with a real question about Ch 1 – Robotics.",
+    "text": "What is a sensor in the context of robotics?",
     "options": [
-      "Sample correct answer about Ch 1 – Robotics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A device that detects information from the environment",
+      "A motor that moves the robot",
+      "The robot's central processor",
+      "The battery that powers the robot"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Robotics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Sensors detect environmental inputs (light, temperature, distance, etc.) and convert them into signals the robot can process.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -693,18 +693,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch2-mailmerge-sample-q001",
+    "id": "gr6-ch2-mailmerge-q001",
     "topicKey": "gr6-ch2-mailmerge",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Create & Send Invitations (Grade 6 Computing). Replace this with a real question about Ch 2 – Create & Send Invitations.",
+    "text": "What is the main purpose of mail merge in Microsoft Word?",
     "options": [
-      "Sample correct answer about Ch 2 – Create & Send Invitations",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To personalise a document (e.g. a letter) with data from a list",
+      "To merge two Word documents into one",
+      "To send emails directly from Word",
+      "To format all paragraphs identically"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Create & Send Invitations. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Mail merge combines a template document with a data source (e.g. a spreadsheet) to produce personalised copies for each recipient.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -714,18 +714,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch3-email-sample-q001",
+    "id": "gr6-ch3-email-q001",
     "topicKey": "gr6-ch3-email",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Communication Using Emails (Grade 6 Computing). Replace this with a real question about Ch 3 – Communication Using Emails.",
+    "text": "Which email field should you use to send a copy of a message to someone who is not the main recipient?",
     "options": [
-      "Sample correct answer about Ch 3 – Communication Using Emails",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "CC (Carbon Copy)",
+      "BCC (Blind Carbon Copy)",
+      "TO",
+      "Reply-To"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Communication Using Emails. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "CC (Carbon Copy) sends a visible copy to extra recipients. BCC sends a copy without other recipients seeing the address.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -735,18 +735,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch4-excel1-sample-q001",
+    "id": "gr6-ch4-excel1-q001",
     "topicKey": "gr6-ch4-excel1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Create a Spreadsheet (Grade 6 Computing). Replace this with a real question about Ch 4 – Create a Spreadsheet.",
+    "text": "In Excel, what is a cell reference?",
     "options": [
-      "Sample correct answer about Ch 4 – Create a Spreadsheet",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The address of a cell, e.g. B3",
+      "The formula entered in a cell",
+      "The value displayed in a cell",
+      "The name of the worksheet"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Create a Spreadsheet. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A cell reference (e.g. B3) identifies a specific cell by its column letter and row number. It is used in formulas to refer to that cell's value.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -756,18 +756,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch5-excel2-sample-q001",
+    "id": "gr6-ch5-excel2-q001",
     "topicKey": "gr6-ch5-excel2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Edit Cell Contents (Grade 6 Computing). Replace this with a real question about Ch 5 – Edit Cell Contents.",
+    "text": "Which Excel shortcut key opens the Find & Replace dialog?",
     "options": [
-      "Sample correct answer about Ch 5 – Edit Cell Contents",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Ctrl + H",
+      "Ctrl + F",
+      "Ctrl + G",
+      "Ctrl + R"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Edit Cell Contents. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Ctrl + H opens Find & Replace in Excel, letting you find specific text and replace it. Ctrl + F opens Find only.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -777,18 +777,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch6-excel3-sample-q001",
+    "id": "gr6-ch6-excel3-q001",
     "topicKey": "gr6-ch6-excel3",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 6 – Format Cell Contents (Grade 6 Computing). Replace this with a real question about Ch 6 – Format Cell Contents.",
+    "text": "In Excel, what does 'wrap text' formatting do to a cell?",
     "options": [
-      "Sample correct answer about Ch 6 – Format Cell Contents",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Displays long text on multiple lines within the cell",
+      "Shrinks the text to fit the cell width",
+      "Merges the cell with the one next to it",
+      "Rotates the text 90 degrees"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 6 – Format Cell Contents. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Wrap Text makes long cell content display on multiple lines within the same cell rather than overflowing into adjacent cells.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -798,18 +798,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch7-algorithms-sample-q001",
+    "id": "gr6-ch7-algorithms-q001",
     "topicKey": "gr6-ch7-algorithms",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 7 – Algorithms & Flowcharts (Grade 6 Computing). Replace this with a real question about Ch 7 – Algorithms & Flowcharts.",
+    "text": "Which flowchart symbol is used to represent a decision (yes/no question)?",
     "options": [
-      "Sample correct answer about Ch 7 – Algorithms & Flowcharts",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Diamond",
+      "Rectangle",
+      "Oval",
+      "Parallelogram"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 7 – Algorithms & Flowcharts. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A diamond shape in a flowchart represents a decision point, typically a yes/no or true/false condition.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -819,18 +819,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch8-scratch3-sample-q001",
+    "id": "gr6-ch8-scratch3-q001",
     "topicKey": "gr6-ch8-scratch3",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 8 – Scratch: More Blocks & Games (Grade 6 Computing). Replace this with a real question about Ch 8 – Scratch: More Blocks & Games.",
+    "text": "In Scratch, which block lets you sense whether the mouse button is being pressed?",
     "options": [
-      "Sample correct answer about Ch 8 – Scratch: More Blocks & Games",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "<mouse down?>",
+      "<touching mouse-pointer?>",
+      "ask [] and wait",
+      "set [mouse] to []"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 8 – Scratch: More Blocks & Games. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "'mouse down?' is a sensing block that reports true when the mouse button is currently held down.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -840,18 +840,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr6-ch9-qb64-sample-q001",
+    "id": "gr6-ch9-qb64-q001",
     "topicKey": "gr6-ch9-qb64",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 9 – QB64 Basics (Grade 6 Computing). Replace this with a real question about Ch 9 – QB64 Basics.",
+    "text": "In QB64 (QuickBASIC), which keyword is used to display text on the screen?",
     "options": [
-      "Sample correct answer about Ch 9 – QB64 Basics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "PRINT",
+      "DISPLAY",
+      "SHOW",
+      "OUTPUT"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 9 – QB64 Basics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The PRINT keyword in QB64/QBasic outputs text or values to the console screen.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -861,19 +861,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch1-numbers-sample-q001",
+    "id": "gr7-ch1-numbers-q001",
     "topicKey": "gr7-ch1-numbers",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Number Systems (Grade 7 Computing). Replace this with a real question about Ch 1 – Number Systems.",
+    "text": "What is the decimal value of the binary number 1011?",
     "options": [
-      "Sample correct answer about Ch 1 – Number Systems",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "11",
+      "9",
+      "13",
+      "7"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Number Systems. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "1011 in binary = 1×8 + 0×4 + 1×2 + 1×1 = 8 + 0 + 2 + 1 = 11 in decimal.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -882,18 +882,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch2-excel-calc-sample-q001",
+    "id": "gr7-ch2-excel-calc-q001",
     "topicKey": "gr7-ch2-excel-calc",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Calculations in Excel (Grade 7 Computing). Replace this with a real question about Ch 2 – Calculations in Excel.",
+    "text": "In Excel, which formula correctly calculates the average of cells B2 to B8?",
     "options": [
-      "Sample correct answer about Ch 2 – Calculations in Excel",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "=AVERAGE(B2:B8)",
+      "=MEAN(B2:B8)",
+      "=SUM(B2:B8)/COUNT",
+      "=AVG(B2:B8)"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Calculations in Excel. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "=AVERAGE(B2:B8) is the correct Excel function to calculate the arithmetic mean of cells B2 through B8.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -903,18 +903,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch3-excel-data-sample-q001",
+    "id": "gr7-ch3-excel-data-q001",
     "topicKey": "gr7-ch3-excel-data",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Analyse Data in Excel (Grade 7 Computing). Replace this with a real question about Ch 3 – Analyse Data in Excel.",
+    "text": "Which Excel feature arranges data from lowest to highest value?",
     "options": [
-      "Sample correct answer about Ch 3 – Analyse Data in Excel",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Sort Ascending (A→Z)",
+      "Filter",
+      "Group",
+      "Pivot Table"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Analyse Data in Excel. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Sort Ascending arranges data from smallest to largest (numbers) or A to Z (text).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -924,18 +924,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch4-excel-charts-sample-q001",
+    "id": "gr7-ch4-excel-charts-q001",
     "topicKey": "gr7-ch4-excel-charts",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Data Representation (Charts) (Grade 7 Computing). Replace this with a real question about Ch 4 – Data Representation (Charts).",
+    "text": "Which chart type is most suitable for showing how a value changes over time?",
     "options": [
-      "Sample correct answer about Ch 4 – Data Representation (Charts)",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Line chart",
+      "Pie chart",
+      "Bar chart",
+      "Scatter chart"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Data Representation (Charts). Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Line charts are best for showing trends and changes over a continuous period of time.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -945,18 +945,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch5-internet-sample-q001",
+    "id": "gr7-ch5-internet-q001",
     "topicKey": "gr7-ch5-internet",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Go Online (Grade 7 Computing). Replace this with a real question about Ch 5 – Go Online.",
+    "text": "Which protocol is used to securely transfer web pages over the internet?",
     "options": [
-      "Sample correct answer about Ch 5 – Go Online",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "HTTPS",
+      "HTTP",
+      "FTP",
+      "SMTP"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Go Online. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "HTTPS (Hypertext Transfer Protocol Secure) encrypts data between the browser and web server, making it the secure version of HTTP.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -966,18 +966,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch6-html1-sample-q001",
+    "id": "gr7-ch6-html1-q001",
     "topicKey": "gr7-ch6-html1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 6 – HTML Basics (Grade 7 Computing). Replace this with a real question about Ch 6 – HTML Basics.",
+    "text": "Which HTML tag creates a hyperlink?",
     "options": [
-      "Sample correct answer about Ch 6 – HTML Basics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "<a href='...'>",
+      "<link>",
+      "<url>",
+      "<navigate>"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 6 – HTML Basics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The <a> (anchor) tag creates hyperlinks. The href attribute specifies the destination URL.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -987,18 +987,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch7-html2-sample-q001",
+    "id": "gr7-ch7-html2-q001",
     "topicKey": "gr7-ch7-html2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 7 – HTML Next Steps (Grade 7 Computing). Replace this with a real question about Ch 7 – HTML Next Steps.",
+    "text": "What does the HTML <img> tag's 'alt' attribute do?",
     "options": [
-      "Sample correct answer about Ch 7 – HTML Next Steps",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Provides alternative text if the image cannot be displayed",
+      "Sets the image height",
+      "Aligns the image on the page",
+      "Adds a caption below the image"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 7 – HTML Next Steps. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The alt attribute supplies descriptive alternative text shown when an image fails to load, and is also read by screen readers.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1008,18 +1008,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch8-ai-sample-q001",
+    "id": "gr7-ch8-ai-q001",
     "topicKey": "gr7-ch8-ai",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 8 – Artificial Intelligence (Grade 7 Computing). Replace this with a real question about Ch 8 – Artificial Intelligence.",
+    "text": "Which of the following is an example of machine learning?",
     "options": [
-      "Sample correct answer about Ch 8 – Artificial Intelligence",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A spam filter that improves by analysing thousands of emails",
+      "A calculator following fixed rules",
+      "A remote control turning on a TV",
+      "A thermostat set to a fixed temperature"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 8 – Artificial Intelligence. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Machine learning systems improve their performance by learning patterns from large amounts of data, unlike rule-based programs.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1029,18 +1029,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch9-qb64-sample-q001",
+    "id": "gr7-ch9-qb64-q001",
     "topicKey": "gr7-ch9-qb64",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 9 – QB64 Next Steps (Grade 7 Computing). Replace this with a real question about Ch 9 – QB64 Next Steps.",
+    "text": "In QB64, which statement is used to receive input from the user during program execution?",
     "options": [
-      "Sample correct answer about Ch 9 – QB64 Next Steps",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "INPUT",
+      "GET",
+      "READ",
+      "RECEIVE"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 9 – QB64 Next Steps. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "The INPUT statement pauses program execution, displays an optional prompt, and stores what the user types into a variable.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1050,18 +1050,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr7-ch10-python-sample-q001",
+    "id": "gr7-ch10-python-q001",
     "topicKey": "gr7-ch10-python",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 10 – Python Basics (Grade 7 Computing). Replace this with a real question about Ch 10 – Python Basics.",
+    "text": "Which Python function is used to display output on the screen?",
     "options": [
-      "Sample correct answer about Ch 10 – Python Basics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "print()",
+      "display()",
+      "show()",
+      "output()"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 10 – Python Basics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "print() is the built-in Python function for outputting text and values to the console.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1071,18 +1071,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch1-ai-sample-q001",
+    "id": "gr8-ch1-ai-q001",
     "topicKey": "gr8-ch1-ai",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 1 – Artificial Intelligence (Grade 8 Computing). Replace this with a real question about Ch 1 – Artificial Intelligence.",
+    "text": "What type of AI task involves teaching a computer to recognise cats in photos?",
     "options": [
-      "Sample correct answer about Ch 1 – Artificial Intelligence",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Image classification",
+      "Natural language processing",
+      "Robotics control",
+      "Data encryption"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 1 – Artificial Intelligence. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Image classification is an AI task where a model is trained to assign labels (e.g. 'cat') to images.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1092,18 +1092,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch2-tech-sample-q001",
+    "id": "gr8-ch2-tech-q001",
     "topicKey": "gr8-ch2-tech",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 2 – Latest Technologies & Trends (Grade 8 Computing). Replace this with a real question about Ch 2 – Latest Technologies & Trends.",
+    "text": "What is the Internet of Things (IoT)?",
     "options": [
-      "Sample correct answer about Ch 2 – Latest Technologies & Trends",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A network of everyday physical devices connected to the internet",
+      "A new programming language",
+      "A type of computer virus",
+      "An internet service provider"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 2 – Latest Technologies & Trends. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "IoT refers to everyday objects (smart watches, fridges, sensors) embedded with technology that allows them to connect and exchange data over the internet.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1113,18 +1113,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch3-access1-sample-q001",
+    "id": "gr8-ch3-access1-q001",
     "topicKey": "gr8-ch3-access1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 3 – Database Management (Access) (Grade 8 Computing). Replace this with a real question about Ch 3 – Database Management (Access).",
+    "text": "In Microsoft Access, what is a table?",
     "options": [
-      "Sample correct answer about Ch 3 – Database Management (Access)",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A structured collection of data organised in rows (records) and columns (fields)",
+      "A visual form for entering data",
+      "A query that filters data",
+      "A printed summary of database information"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 3 – Database Management (Access). Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "In a database, a table stores data in rows (records) and columns (fields). It is the fundamental storage unit in Access.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1134,18 +1134,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch4-access2-sample-q001",
+    "id": "gr8-ch4-access2-q001",
     "topicKey": "gr8-ch4-access2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 4 – Table Relationships & Queries (Grade 8 Computing). Replace this with a real question about Ch 4 – Table Relationships & Queries.",
+    "text": "In Access, what is the purpose of a primary key?",
     "options": [
-      "Sample correct answer about Ch 4 – Table Relationships & Queries",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To uniquely identify each record in a table",
+      "To link two tables together",
+      "To sort records alphabetically",
+      "To lock the database from editing"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 4 – Table Relationships & Queries. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A primary key is a field (or set of fields) whose value is unique for every record, allowing each row to be identified unambiguously.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1155,18 +1155,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch5-access3-sample-q001",
+    "id": "gr8-ch5-access3-q001",
     "topicKey": "gr8-ch5-access3",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 5 – Forms & Reports (Grade 8 Computing). Replace this with a real question about Ch 5 – Forms & Reports.",
+    "text": "What is the purpose of a report in Microsoft Access?",
     "options": [
-      "Sample correct answer about Ch 5 – Forms & Reports",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To present database data in a formatted, printable layout",
+      "To enter new records into a table",
+      "To run calculations on data",
+      "To connect two database tables"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 5 – Forms & Reports. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Reports format and present database information for printing or viewing, often summarising or grouping data from queries or tables.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1176,18 +1176,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch6-networks-sample-q001",
+    "id": "gr8-ch6-networks-q001",
     "topicKey": "gr8-ch6-networks",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 6 – Communication Technology (Grade 8 Computing). Replace this with a real question about Ch 6 – Communication Technology.",
+    "text": "What does 'bandwidth' refer to in networking?",
     "options": [
-      "Sample correct answer about Ch 6 – Communication Technology",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The maximum amount of data that can be transmitted per second",
+      "The distance between two computers",
+      "The number of devices on a network",
+      "The security level of a network"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 6 – Communication Technology. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Bandwidth is the capacity of a network connection, measured in bits per second (bps). Higher bandwidth means more data can be sent per second.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1197,18 +1197,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch7-google-sample-q001",
+    "id": "gr8-ch7-google-q001",
     "topicKey": "gr8-ch7-google",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 7 – Play with Google Apps (Grade 8 Computing). Replace this with a real question about Ch 7 – Play with Google Apps.",
+    "text": "Which Google app is best suited for creating and collaborating on a spreadsheet online?",
     "options": [
-      "Sample correct answer about Ch 7 – Play with Google Apps",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Google Sheets",
+      "Google Docs",
+      "Google Slides",
+      "Google Drive"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 7 – Play with Google Apps. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Google Sheets is the Google Workspace equivalent of Microsoft Excel — an online spreadsheet application with real-time collaboration.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1218,18 +1218,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch8-malware-sample-q001",
+    "id": "gr8-ch8-malware-q001",
     "topicKey": "gr8-ch8-malware",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 8 – Computer Malware (Grade 8 Computing). Replace this with a real question about Ch 8 – Computer Malware.",
+    "text": "What type of malware disguises itself as legitimate software to trick users into installing it?",
     "options": [
-      "Sample correct answer about Ch 8 – Computer Malware",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Trojan horse",
+      "Virus",
+      "Worm",
+      "Spyware"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 8 – Computer Malware. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A Trojan horse appears to be a useful program but secretly carries malicious code. Unlike viruses, Trojans do not replicate themselves.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1239,18 +1239,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch9-html-tables-sample-q001",
+    "id": "gr8-ch9-html-tables-q001",
     "topicKey": "gr8-ch9-html-tables",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 9 – Website Designing: Tables (Grade 8 Computing). Replace this with a real question about Ch 9 – Website Designing: Tables.",
+    "text": "Which HTML tag defines a data cell within a table row?",
     "options": [
-      "Sample correct answer about Ch 9 – Website Designing: Tables",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "<td>",
+      "<th>",
+      "<tr>",
+      "<table>"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 9 – Website Designing: Tables. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "<td> (table data) defines a standard data cell. <th> defines a header cell. <tr> defines a row. <table> defines the table itself.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1260,18 +1260,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch10-social-sample-q001",
+    "id": "gr8-ch10-social-q001",
     "topicKey": "gr8-ch10-social",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 10 – Social Networking & Cyber Safety (Grade 8 Computing). Replace this with a real question about Ch 10 – Social Networking & Cyber Safety.",
+    "text": "What is cyberbullying?",
     "options": [
-      "Sample correct answer about Ch 10 – Social Networking & Cyber Safety",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Using digital technology to harass, threaten, or embarrass another person",
+      "Installing harmful software on someone's computer",
+      "Stealing someone's personal files",
+      "Sending unsolicited commercial emails"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 10 – Social Networking & Cyber Safety. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Cyberbullying is the use of electronic communication (social media, messaging) to bully, intimidate, or harm another person.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1281,18 +1281,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch11-troubleshoot-sample-q001",
+    "id": "gr8-ch11-troubleshoot-q001",
     "topicKey": "gr8-ch11-troubleshoot",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 11 – Troubleshooting (Grade 8 Computing). Replace this with a real question about Ch 11 – Troubleshooting.",
+    "text": "A computer is running very slowly. Which of the following is the FIRST troubleshooting step?",
     "options": [
-      "Sample correct answer about Ch 11 – Troubleshooting",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Restart the computer",
+      "Reinstall the operating system",
+      "Replace the hard drive",
+      "Buy a new computer"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 11 – Troubleshooting. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Restarting clears temporary files and memory and often resolves performance issues. It is always the first and simplest troubleshooting step.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1302,18 +1302,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr8-ch12-python-sample-q001",
+    "id": "gr8-ch12-python-q001",
     "topicKey": "gr8-ch12-python",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Ch 12 – Python Next Steps (Grade 8 Computing). Replace this with a real question about Ch 12 – Python Next Steps.",
+    "text": "In Python, which keyword starts a function definition?",
     "options": [
-      "Sample correct answer about Ch 12 – Python Next Steps",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "def",
+      "function",
+      "fun",
+      "define"
     ],
     "answer": "0",
-    "explanation": "This template question covers Ch 12 – Python Next Steps. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "In Python, functions are defined using the 'def' keyword, followed by the function name and parentheses, e.g. def greet():",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1323,19 +1323,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-cpu-sample-q001",
+    "id": "gr9-cpu-q001",
     "topicKey": "gr9-cpu",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Hardware & CPU (Grade 9 CS (IGCSE)). Replace this with a real question about Hardware & CPU.",
+    "text": "What is the role of the Control Unit (CU) within the CPU?",
     "options": [
-      "Sample correct answer about Hardware & CPU",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "It directs the operation of the processor by interpreting and executing instructions",
+      "It performs arithmetic and logical operations",
+      "It stores frequently used data temporarily",
+      "It manages input and output operations"
     ],
     "answer": "0",
-    "explanation": "This template question covers Hardware & CPU. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "The Control Unit fetches, decodes, and executes instructions. It coordinates the activities of the CPU and other hardware components.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1344,18 +1344,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-memory-sample-q001",
+    "id": "gr9-memory-q001",
     "topicKey": "gr9-memory",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Memory (RAM, ROM, Cache) (Grade 9 CS (IGCSE)). Replace this with a real question about Memory (RAM, ROM, Cache).",
+    "text": "Which type of memory loses its contents when the computer is switched off?",
     "options": [
-      "Sample correct answer about Memory (RAM, ROM, Cache)",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "RAM",
+      "ROM",
+      "Flash memory",
+      "Hard drive"
     ],
     "answer": "0",
-    "explanation": "This template question covers Memory (RAM, ROM, Cache). Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "RAM (Random Access Memory) is volatile — its contents are lost when power is removed. ROM and flash memory are non-volatile.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1365,18 +1365,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-io-devices-sample-q001",
+    "id": "gr9-io-devices-q001",
     "topicKey": "gr9-io-devices",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Input & Output Devices (Grade 9 CS (IGCSE)). Replace this with a real question about Input & Output Devices.",
+    "text": "Which of the following is a direct-entry input device?",
     "options": [
-      "Sample correct answer about Input & Output Devices",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Barcode scanner",
+      "Keyboard",
+      "Monitor",
+      "Printer"
     ],
     "answer": "0",
-    "explanation": "This template question covers Input & Output Devices. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A barcode scanner reads data directly without the user typing it, making it a direct-entry (automatic) input device.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1386,18 +1386,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-fde-sample-q001",
+    "id": "gr9-fde-q001",
     "topicKey": "gr9-fde",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Fetch-Decode-Execute Cycle (Grade 9 CS (IGCSE)). Replace this with a real question about Fetch-Decode-Execute Cycle.",
+    "text": "During which stage of the Fetch-Decode-Execute cycle is the instruction retrieved from main memory?",
     "options": [
-      "Sample correct answer about Fetch-Decode-Execute Cycle",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Fetch",
+      "Decode",
+      "Execute",
+      "Store"
     ],
     "answer": "0",
-    "explanation": "This template question covers Fetch-Decode-Execute Cycle. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "In the Fetch stage, the CPU retrieves the next instruction from main memory using the address stored in the Program Counter (PC).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1407,18 +1407,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-embedded-sample-q001",
+    "id": "gr9-embedded-q001",
     "topicKey": "gr9-embedded",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Embedded Systems & Sensors (Grade 9 CS (IGCSE)). Replace this with a real question about Embedded Systems & Sensors.",
+    "text": "Which of the following is an example of an embedded system?",
     "options": [
-      "Sample correct answer about Embedded Systems & Sensors",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The control system inside a microwave oven",
+      "A desktop computer running Windows",
+      "A laptop connected to the internet",
+      "A USB flash drive"
     ],
     "answer": "0",
-    "explanation": "This template question covers Embedded Systems & Sensors. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "An embedded system is a dedicated computer system built into a device to control a specific function, like the controller inside a microwave.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1428,18 +1428,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-storage-sample-q001",
+    "id": "gr9-storage-q001",
     "topicKey": "gr9-storage",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Secondary Storage (Grade 9 CS (IGCSE)). Replace this with a real question about Secondary Storage.",
+    "text": "Which secondary storage device has no moving parts and uses flash memory?",
     "options": [
-      "Sample correct answer about Secondary Storage",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Solid State Drive (SSD)",
+      "Hard Disk Drive (HDD)",
+      "Magnetic tape",
+      "Optical disc"
     ],
     "answer": "0",
-    "explanation": "This template question covers Secondary Storage. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "SSDs store data in flash memory chips with no moving mechanical parts, making them faster and more shock-resistant than HDDs.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1449,19 +1449,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-os-sample-q001",
+    "id": "gr9-os-q001",
     "topicKey": "gr9-os",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Operating Systems (Grade 9 CS (IGCSE)). Replace this with a real question about Operating Systems.",
+    "text": "Which of the following is NOT a function of an operating system?",
     "options": [
-      "Sample correct answer about Operating Systems",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Editing a word-processing document",
+      "Managing memory allocation",
+      "Controlling input and output devices",
+      "Providing a user interface"
     ],
     "answer": "0",
-    "explanation": "This template question covers Operating Systems. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Editing a document is done by application software. The OS manages hardware resources, memory, I/O, and provides a UI for applications to run on.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1470,19 +1470,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-languages-sample-q001",
+    "id": "gr9-languages-q001",
     "topicKey": "gr9-languages",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Programming Languages & Translators (Grade 9 CS (IGCSE)). Replace this with a real question about Programming Languages & Translators.",
+    "text": "What does a compiler do?",
     "options": [
-      "Sample correct answer about Programming Languages & Translators",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Translates the entire high-level source code into machine code before execution",
+      "Translates and executes source code one line at a time",
+      "Converts machine code back into source code",
+      "Checks source code for logic errors only"
     ],
     "answer": "0",
-    "explanation": "This template question covers Programming Languages & Translators. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "A compiler translates the whole high-level program into machine code in one go, producing an executable file. An interpreter translates line by line at run time.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1491,19 +1491,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-internet-sample-q001",
+    "id": "gr9-internet-q001",
     "topicKey": "gr9-internet",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: The Internet & the WWW (Grade 9 CS (IGCSE)). Replace this with a real question about The Internet & the WWW.",
+    "text": "What is the purpose of DNS (Domain Name System)?",
     "options": [
-      "Sample correct answer about The Internet & the WWW",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To translate domain names (e.g. www.google.com) into IP addresses",
+      "To encrypt web traffic between client and server",
+      "To assign IP addresses to devices on a network",
+      "To filter inappropriate content on the internet"
     ],
     "answer": "0",
-    "explanation": "This template question covers The Internet & the WWW. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "DNS acts like a phonebook for the internet, converting human-readable domain names into numerical IP addresses that computers use to route traffic.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1512,18 +1512,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-logic-sample-q001",
+    "id": "gr9-logic-q001",
     "topicKey": "gr9-logic",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Logic Gates & Circuits (Grade 9 CS (IGCSE)). Replace this with a real question about Logic Gates & Circuits.",
+    "text": "What is the output of an AND gate when both inputs are 1?",
     "options": [
-      "Sample correct answer about Logic Gates & Circuits",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "1",
+      "0",
+      "Undefined",
+      "Depends on the circuit"
     ],
     "answer": "0",
-    "explanation": "This template question covers Logic Gates & Circuits. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "An AND gate outputs 1 only when ALL inputs are 1. With both inputs at 1, the output is 1.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1533,18 +1533,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-rep-sample-q001",
+    "id": "gr9-data-rep-q001",
     "topicKey": "gr9-data-rep",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Data Representation (Grade 9 CS (IGCSE)). Replace this with a real question about Data Representation.",
+    "text": "How many different values can be represented with 4 bits?",
     "options": [
-      "Sample correct answer about Data Representation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "16",
+      "8",
+      "4",
+      "32"
     ],
     "answer": "0",
-    "explanation": "This template question covers Data Representation. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "With n bits you can represent 2ⁿ values. With 4 bits: 2⁴ = 16 possible values (0 through 15).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1554,19 +1554,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-binary-sample-q001",
+    "id": "gr9-data-binary-q001",
     "topicKey": "gr9-data-binary",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Binary & Hexadecimal (Grade 9 CS (IGCSE)). Replace this with a real question about Binary & Hexadecimal.",
+    "text": "Convert the hexadecimal number 2F to binary.",
     "options": [
-      "Sample correct answer about Binary & Hexadecimal",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "00101111",
+      "00110010",
+      "00101100",
+      "00111111"
     ],
     "answer": "0",
-    "explanation": "This template question covers Binary & Hexadecimal. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "2 in hex = 0010 in binary; F in hex = 1111 in binary. Combined: 00101111.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1575,19 +1575,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-twos-sample-q001",
+    "id": "gr9-data-twos-q001",
     "topicKey": "gr9-data-twos",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Two's Complement (Grade 9 CS (IGCSE)). Replace this with a real question about Two's Complement.",
+    "text": "Using 8-bit two's complement, what is the decimal value of 11111110?",
     "options": [
-      "Sample correct answer about Two's Complement",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "-2",
+      "-1",
+      "254",
+      "-126"
     ],
     "answer": "0",
-    "explanation": "This template question covers Two's Complement. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "For two's complement: 11111110 → invert bits = 00000001, add 1 = 00000010 = 2. Because MSB is 1 the number is negative: -2.",
+    "difficulty": "hard",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1596,18 +1596,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-text-sample-q001",
+    "id": "gr9-data-text-q001",
     "topicKey": "gr9-data-text",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: ASCII & Unicode (Grade 9 CS (IGCSE)). Replace this with a real question about ASCII & Unicode.",
+    "text": "What is the main advantage of Unicode over ASCII for text representation?",
     "options": [
-      "Sample correct answer about ASCII & Unicode",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Unicode supports a much larger range of characters including non-Latin scripts",
+      "Unicode uses fewer bits per character",
+      "Unicode is faster to process",
+      "Unicode is only used for programming languages"
     ],
     "answer": "0",
-    "explanation": "This template question covers ASCII & Unicode. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "ASCII uses 7 bits and covers only 128 characters (English). Unicode (e.g. UTF-8/UTF-16) supports over a million characters including Arabic, Chinese, emoji, etc.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1617,19 +1617,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-sound-sample-q001",
+    "id": "gr9-data-sound-q001",
     "topicKey": "gr9-data-sound",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Sound Representation (Grade 9 CS (IGCSE)). Replace this with a real question about Sound Representation.",
+    "text": "Which factor has the greatest effect on the file size of a digital audio recording?",
     "options": [
-      "Sample correct answer about Sound Representation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Sample rate and bit depth",
+      "The type of microphone used",
+      "The volume of the recording",
+      "The operating system used"
     ],
     "answer": "0",
-    "explanation": "This template question covers Sound Representation. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "File size = sample rate × bit depth × duration × channels. Higher sample rate and bit depth produce better quality but larger files.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1638,18 +1638,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-images-sample-q001",
+    "id": "gr9-data-images-q001",
     "topicKey": "gr9-data-images",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Image Representation (Grade 9 CS (IGCSE)). Replace this with a real question about Image Representation.",
+    "text": "What is a pixel?",
     "options": [
-      "Sample correct answer about Image Representation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The smallest unit of a digital image, representing a single point of colour",
+      "A unit of image file size",
+      "The resolution of a display screen",
+      "A type of image file format"
     ],
     "answer": "0",
-    "explanation": "This template question covers Image Representation. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A pixel (picture element) is the smallest unit of a digital image. Each pixel has a colour value; together they form the complete image.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1659,18 +1659,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-data-compression-sample-q001",
+    "id": "gr9-data-compression-q001",
     "topicKey": "gr9-data-compression",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Compression (Grade 9 CS (IGCSE)). Replace this with a real question about Compression.",
+    "text": "What is the key difference between lossy and lossless compression?",
     "options": [
-      "Sample correct answer about Compression",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Lossy removes some data permanently; lossless allows perfect reconstruction of the original",
+      "Lossless removes data permanently; lossy keeps the original intact",
+      "Lossy is always smaller than lossless",
+      "They are the same process with different names"
     ],
     "answer": "0",
-    "explanation": "This template question covers Compression. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Lossy compression (e.g. JPEG, MP3) discards some data for smaller files. Lossless compression (e.g. PNG, FLAC) reduces size without losing any data.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1680,18 +1680,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-number-systems-sample-q001",
+    "id": "gr9-number-systems-q001",
     "topicKey": "gr9-number-systems",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Number Systems (Grade 9 CS (IGCSE)). Replace this with a real question about Number Systems.",
+    "text": "What is the base (radix) of the hexadecimal number system?",
     "options": [
-      "Sample correct answer about Number Systems",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "16",
+      "2",
+      "8",
+      "10"
     ],
     "answer": "0",
-    "explanation": "This template question covers Number Systems. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Hexadecimal is base-16, using digits 0–9 and letters A–F to represent values 0–15.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1701,18 +1701,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-text-sound-images-sample-q001",
+    "id": "gr9-text-sound-images-q001",
     "topicKey": "gr9-text-sound-images",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Text, Sound & Images (Grade 9 CS (IGCSE)). Replace this with a real question about Text, Sound & Images.",
+    "text": "Which file format is typically used for lossless image compression?",
     "options": [
-      "Sample correct answer about Text, Sound & Images",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "PNG",
+      "JPEG",
+      "MP3",
+      "AVI"
     ],
     "answer": "0",
-    "explanation": "This template question covers Text, Sound & Images. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "PNG uses lossless compression — no image data is discarded, making it suitable for graphics that require sharp edges.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1722,19 +1722,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-compression-sample-q001",
+    "id": "gr9-compression-q001",
     "topicKey": "gr9-compression",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Compression (Grade 9 CS (IGCSE)). Replace this with a real question about Compression.",
+    "text": "Run-length encoding (RLE) is most effective for which type of data?",
     "options": [
-      "Sample correct answer about Compression",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Data with many consecutive repeated values",
+      "Data that is already compressed",
+      "Data with no repeating values",
+      "Audio data"
     ],
     "answer": "0",
-    "explanation": "This template question covers Compression. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "RLE replaces runs of repeated values with a count and a single value. It is highly effective when data has long sequences of the same value (e.g. simple images).",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1743,18 +1743,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-networking-sample-q001",
+    "id": "gr9-networking-q001",
     "topicKey": "gr9-networking",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Networking & Protocols (Grade 9 CS (IGCSE)). Replace this with a real question about Networking & Protocols.",
+    "text": "What is the purpose of the TCP/IP protocol suite?",
     "options": [
-      "Sample correct answer about Networking & Protocols",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To define rules for how data is sent and received over the internet",
+      "To encrypt all internet traffic",
+      "To assign domain names to websites",
+      "To detect viruses on a network"
     ],
     "answer": "0",
-    "explanation": "This template question covers Networking & Protocols. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "TCP/IP is the foundational set of communication protocols for the internet, governing how data is packetised, addressed, transmitted, routed, and received.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1764,18 +1764,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-networks-sample-q001",
+    "id": "gr9-networks-q001",
     "topicKey": "gr9-networks",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Data Transmission & Networking (Grade 9 CS (IGCSE)). Replace this with a real question about Data Transmission & Networking.",
+    "text": "What is a MAC address?",
     "options": [
-      "Sample correct answer about Data Transmission & Networking",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A unique hardware identifier assigned to a network interface card",
+      "A software address assigned by a DHCP server",
+      "A URL for accessing a website",
+      "A password for a wireless network"
     ],
     "answer": "0",
-    "explanation": "This template question covers Data Transmission & Networking. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A MAC (Media Access Control) address is a 48-bit hardware identifier permanently assigned to a network interface by its manufacturer.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1785,18 +1785,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-programming-sample-q001",
+    "id": "gr9-programming-q001",
     "topicKey": "gr9-programming",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Programming Fundamentals (Grade 9 CS (IGCSE)). Replace this with a real question about Programming Fundamentals.",
+    "text": "What is a variable in programming?",
     "options": [
-      "Sample correct answer about Programming Fundamentals",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A named storage location in memory that holds a value",
+      "A fixed value that never changes",
+      "A type of loop",
+      "A function that returns a result"
     ],
     "answer": "0",
-    "explanation": "This template question covers Programming Fundamentals. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A variable is a named container in memory whose value can be read, changed, or used during program execution.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1806,19 +1806,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-algorithms-sample-q001",
+    "id": "gr9-algorithms-q001",
     "topicKey": "gr9-algorithms",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Algorithm Design (Grade 9 CS (IGCSE)). Replace this with a real question about Algorithm Design.",
+    "text": "What is the time complexity of a linear search on a list of n items in the worst case?",
     "options": [
-      "Sample correct answer about Algorithm Design",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "O(n)",
+      "O(1)",
+      "O(log n)",
+      "O(n²)"
     ],
     "answer": "0",
-    "explanation": "This template question covers Algorithm Design. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "In the worst case, linear search checks every element once, giving O(n) time complexity.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -1827,18 +1827,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9-cybersec-sample-q001",
+    "id": "gr9-cybersec-q001",
     "topicKey": "gr9-cybersec",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Cybersecurity (Grade 9 CS (IGCSE)). Replace this with a real question about Cybersecurity.",
+    "text": "What is phishing?",
     "options": [
-      "Sample correct answer about Cybersecurity",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A fraudulent attempt to obtain sensitive information by pretending to be a trustworthy source",
+      "Installing a program that monitors keystrokes",
+      "Flooding a server with traffic to make it unavailable",
+      "Encrypting a victim's files and demanding a ransom"
     ],
     "answer": "0",
-    "explanation": "This template question covers Cybersecurity. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Phishing tricks users (typically via fake emails or websites) into revealing passwords, credit card numbers, or other sensitive data.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1848,18 +1848,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-influences-sample-q001",
+    "id": "gr9dt-influences-q001",
     "topicKey": "gr9dt-influences",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Influences on Designing (Grade 9 DT (IGCSE)). Replace this with a real question about Influences on Designing.",
+    "text": "Which of the following is a cultural influence on product design?",
     "options": [
-      "Sample correct answer about Influences on Designing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Designing a product that reflects the traditions and values of a specific community",
+      "Choosing cheaper materials to reduce cost",
+      "Making a product as small as possible",
+      "Using only one colour throughout the design"
     ],
     "answer": "0",
-    "explanation": "This template question covers Influences on Designing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Cultural influences include local traditions, aesthetics, symbols, and values that shape what a product looks like or how it is used.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1869,18 +1869,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-design-brief-sample-q001",
+    "id": "gr9dt-design-brief-q001",
     "topicKey": "gr9dt-design-brief",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Identifying & Defining (Grade 9 DT (IGCSE)). Replace this with a real question about Identifying & Defining.",
+    "text": "What is the purpose of a design brief?",
     "options": [
-      "Sample correct answer about Identifying & Defining",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To clearly define the design problem and outline what the final product must achieve",
+      "To list the tools needed for manufacturing",
+      "To provide a detailed manufacturing plan",
+      "To record the cost of materials used"
     ],
     "answer": "0",
-    "explanation": "This template question covers Identifying & Defining. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A design brief is a short written statement that identifies the design problem and sets the goals, constraints, and requirements the solution must meet.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1890,18 +1890,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-developing-sample-q001",
+    "id": "gr9dt-developing-q001",
     "topicKey": "gr9dt-developing",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Proposing & Developing (Grade 9 DT (IGCSE)). Replace this with a real question about Proposing & Developing.",
+    "text": "Why is it important to produce multiple design proposals before choosing one?",
     "options": [
-      "Sample correct answer about Proposing & Developing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "It allows comparison of different ideas and selection of the most suitable solution",
+      "It is a legal requirement for product design",
+      "It makes the final product cheaper",
+      "It reduces the need for a design brief"
     ],
     "answer": "0",
-    "explanation": "This template question covers Proposing & Developing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Multiple proposals widen the solution space, allow evaluation against design criteria, and reduce the risk of overlooking a better solution.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1911,18 +1911,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-plan-sample-q001",
+    "id": "gr9dt-plan-q001",
     "topicKey": "gr9dt-plan",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Planning (Grade 9 DT (IGCSE)). Replace this with a real question about Planning.",
+    "text": "What does a production plan (manufacturing plan) include?",
     "options": [
-      "Sample correct answer about Planning",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The sequence of steps, tools, materials, and time needed to make the product",
+      "The final selling price of the product",
+      "A drawing of what the product will look like",
+      "User feedback on the finished product"
     ],
     "answer": "0",
-    "explanation": "This template question covers Planning. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A production plan sets out the order of manufacturing operations, the tools and materials required, and estimated time for each step.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1932,18 +1932,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-evaluation-sample-q001",
+    "id": "gr9dt-evaluation-q001",
     "topicKey": "gr9dt-evaluation",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Testing & Evaluating (Grade 9 DT (IGCSE)). Replace this with a real question about Testing & Evaluating.",
+    "text": "Against what should a final product be evaluated?",
     "options": [
-      "Sample correct answer about Testing & Evaluating",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The original design specification",
+      "Products made by other students",
+      "The cost of materials only",
+      "The teacher's personal preference"
     ],
     "answer": "0",
-    "explanation": "This template question covers Testing & Evaluating. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A design specification lists the measurable criteria the product must meet. Evaluating against it gives an objective measure of success.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1953,18 +1953,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-design1-sample-q001",
+    "id": "gr9dt-design1-q001",
     "topicKey": "gr9dt-design1",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Identifying & Defining (Grade 9 DT (IGCSE)). Replace this with a real question about Identifying & Defining.",
+    "text": "What is a design specification?",
     "options": [
-      "Sample correct answer about Identifying & Defining",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A detailed list of criteria the design solution must meet",
+      "A rough sketch of a possible solution",
+      "A list of materials required",
+      "A record of user feedback"
     ],
     "answer": "0",
-    "explanation": "This template question covers Identifying & Defining. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A design specification is a precise list of requirements (size, function, safety, cost, aesthetics) that the final solution must satisfy.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1974,18 +1974,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-design2-sample-q001",
+    "id": "gr9dt-design2-q001",
     "topicKey": "gr9dt-design2",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Proposing & Developing (Grade 9 DT (IGCSE)). Replace this with a real question about Proposing & Developing.",
+    "text": "What is the purpose of a prototype in the design process?",
     "options": [
-      "Sample correct answer about Proposing & Developing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To test and evaluate a design idea before full production",
+      "To finalise the selling price",
+      "To replace the design brief",
+      "To identify the target market"
     ],
     "answer": "0",
-    "explanation": "This template question covers Proposing & Developing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A prototype is a working model used to test how well a design meets its specification, identify problems, and inform improvements.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -1995,18 +1995,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-design3-sample-q001",
+    "id": "gr9dt-design3-q001",
     "topicKey": "gr9dt-design3",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Planning & Testing (Grade 9 DT (IGCSE)). Replace this with a real question about Planning & Testing.",
+    "text": "Which method is used to evaluate a design against specific, measurable criteria?",
     "options": [
-      "Sample correct answer about Planning & Testing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Comparing the product point by point against the design specification",
+      "Asking a friend if they like it",
+      "Counting the number of design proposals made",
+      "Measuring only the cost of production"
     ],
     "answer": "0",
-    "explanation": "This template question covers Planning & Testing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Systematic evaluation checks each criterion in the specification (e.g. dimensions, function, safety) against the actual product.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2016,19 +2016,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-communication-sample-q001",
+    "id": "gr9dt-communication-q001",
     "topicKey": "gr9dt-communication",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Communicating Designs (Grade 9 DT (IGCSE)). Replace this with a real question about Communicating Designs.",
+    "text": "Which drawing technique shows a 3D object with three faces visible, drawn along axes at 30° to the horizontal?",
     "options": [
-      "Sample correct answer about Communicating Designs",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Isometric drawing",
+      "Orthographic projection",
+      "Perspective drawing",
+      "Exploded diagram"
     ],
     "answer": "0",
-    "explanation": "This template question covers Communicating Designs. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Isometric drawing uses axes at 30° to show three faces of an object simultaneously, giving a 3D appearance without vanishing points.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2037,18 +2037,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-making-sample-q001",
+    "id": "gr9dt-making-q001",
     "topicKey": "gr9dt-making",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Making Principles (Grade 9 DT (IGCSE)). Replace this with a real question about Making Principles.",
+    "text": "Which of the following is a reason to wear safety goggles when working in a workshop?",
     "options": [
-      "Sample correct answer about Making Principles",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To protect the eyes from flying particles, dust, or chemical splashes",
+      "To improve vision in low light",
+      "To identify the correct tool to use",
+      "To prevent static electricity"
     ],
     "answer": "0",
-    "explanation": "This template question covers Making Principles. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Safety goggles are personal protective equipment (PPE) that shield eyes from hazards such as debris, sparks, or chemical splashes.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2058,19 +2058,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-materials-sample-q001",
+    "id": "gr9dt-materials-q001",
     "topicKey": "gr9dt-materials",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Material Classification (Grade 9 DT (IGCSE)). Replace this with a real question about Material Classification.",
+    "text": "Which of the following is a thermoplastic?",
     "options": [
-      "Sample correct answer about Material Classification",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Acrylic (Perspex)",
+      "Fibreglass (GRP)",
+      "Urea formaldehyde",
+      "Melamine"
     ],
     "answer": "0",
-    "explanation": "This template question covers Material Classification. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Thermoplastics (e.g. acrylic, PET, HDPE) soften when heated and can be reshaped. Thermosets (e.g. fibreglass, melamine) permanently harden when cured.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2079,18 +2079,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-manufacturing-sample-q001",
+    "id": "gr9dt-manufacturing-q001",
     "topicKey": "gr9dt-manufacturing",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Manufacturing Processes (Grade 9 DT (IGCSE)). Replace this with a real question about Manufacturing Processes.",
+    "text": "What is vacuum forming used to produce?",
     "options": [
-      "Sample correct answer about Manufacturing Processes",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Thin plastic sheets moulded into 3D shapes",
+      "Metal components with precise dimensions",
+      "Wooden joints and furniture",
+      "Fabric patterns for clothing"
     ],
     "answer": "0",
-    "explanation": "This template question covers Manufacturing Processes. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Vacuum forming heats a thermoplastic sheet, drapes it over a mould, then uses vacuum pressure to pull it into the mould shape.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2100,18 +2100,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-health-safety-sample-q001",
+    "id": "gr9dt-health-safety-q001",
     "topicKey": "gr9dt-health-safety",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Health & Safety in Making (Grade 9 DT (IGCSE)). Replace this with a real question about Health & Safety in Making.",
+    "text": "Before using a power tool, what should always be checked first?",
     "options": [
-      "Sample correct answer about Health & Safety in Making",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "That the tool is in good working order and guards are in place",
+      "That the tool matches the colour of the workpiece",
+      "That no one else is watching",
+      "That the tool is the most expensive available"
     ],
     "answer": "0",
-    "explanation": "This template question covers Health & Safety in Making. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Pre-use checks ensure guards are fitted, cables are undamaged, and the tool functions correctly — preventing accidents during use.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2121,19 +2121,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-structures-sample-q001",
+    "id": "gr9dt-structures-q001",
     "topicKey": "gr9dt-structures",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Structures (Grade 9 DT (IGCSE)). Replace this with a real question about Structures.",
+    "text": "What is a triangulated structure?",
     "options": [
-      "Sample correct answer about Structures",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A structure strengthened by arranging members in triangles to distribute loads",
+      "A structure built from three identical parts",
+      "A structure that can only support vertical loads",
+      "A structure made entirely from triangular cross-section beams"
     ],
     "answer": "0",
-    "explanation": "This template question covers Structures. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Triangulation rigidifies a structure by converting bending forces into tension and compression through triangular arrangements of members (e.g. in trusses).",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2142,19 +2142,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr9dt-mechanisms-sample-q001",
+    "id": "gr9dt-mechanisms-q001",
     "topicKey": "gr9dt-mechanisms",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Mechanisms (Grade 9 DT (IGCSE)). Replace this with a real question about Mechanisms.",
+    "text": "What is a gear ratio?",
     "options": [
-      "Sample correct answer about Mechanisms",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The ratio of the number of teeth on the driver gear to the number of teeth on the driven gear",
+      "The speed of the motor in rpm",
+      "The size of the gear wheel",
+      "The force applied to the gear"
     ],
     "answer": "0",
-    "explanation": "This template question covers Mechanisms. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Gear ratio = teeth on driver ÷ teeth on driven gear. It determines the change in speed and torque between the two gears.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2163,18 +2163,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-data-integrity-sample-q001",
+    "id": "gr10-data-integrity-q001",
     "topicKey": "gr10-data-integrity",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Data Integrity (Grade 10 CS (IGCSE)). Replace this with a real question about Data Integrity.",
+    "text": "Which validation check ensures that a number entered falls within an acceptable range?",
     "options": [
-      "Sample correct answer about Data Integrity",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Range check",
+      "Type check",
+      "Length check",
+      "Presence check"
     ],
     "answer": "0",
-    "explanation": "This template question covers Data Integrity. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A range check tests whether a value is between a specified minimum and maximum (e.g. a month number must be 1–12).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2184,18 +2184,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-cybersecurity-sample-q001",
+    "id": "gr10-cybersecurity-q001",
     "topicKey": "gr10-cybersecurity",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Cybersecurity (Grade 10 CS (IGCSE)). Replace this with a real question about Cybersecurity.",
+    "text": "What is a firewall?",
     "options": [
-      "Sample correct answer about Cybersecurity",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A system that monitors and controls incoming and outgoing network traffic based on security rules",
+      "A type of antivirus software",
+      "A hardware device used to boost Wi-Fi signal",
+      "A tool for encrypting files"
     ],
     "answer": "0",
-    "explanation": "This template question covers Cybersecurity. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A firewall filters network traffic using predefined security rules to allow or block data packets, protecting a network from unauthorised access.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2205,19 +2205,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-encryption-sample-q001",
+    "id": "gr10-encryption-q001",
     "topicKey": "gr10-encryption",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Encryption & Security (Grade 10 CS (IGCSE)). Replace this with a real question about Encryption & Security.",
+    "text": "In asymmetric encryption, what is used to encrypt a message that only the recipient can decrypt?",
     "options": [
-      "Sample correct answer about Encryption & Security",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The recipient's public key",
+      "The sender's private key",
+      "A shared secret key",
+      "A hash function"
     ],
     "answer": "0",
-    "explanation": "This template question covers Encryption & Security. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "In asymmetric (public-key) encryption, the sender encrypts with the recipient's public key. Only the recipient's private key can decrypt it.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2226,18 +2226,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-sensors-sample-q001",
+    "id": "gr10-sensors-q001",
     "topicKey": "gr10-sensors",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Sensors & Microcontrollers (Grade 10 CS (IGCSE)). Replace this with a real question about Sensors & Microcontrollers.",
+    "text": "Which type of sensor would be used to detect how bright it is in a room?",
     "options": [
-      "Sample correct answer about Sensors & Microcontrollers",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Light dependent resistor (LDR)",
+      "Thermistor",
+      "Pressure sensor",
+      "Moisture sensor"
     ],
     "answer": "0",
-    "explanation": "This template question covers Sensors & Microcontrollers. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "An LDR (light dependent resistor) changes its electrical resistance in response to light intensity, making it suitable for measuring brightness.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2247,18 +2247,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-robotics-sample-q001",
+    "id": "gr10-robotics-q001",
     "topicKey": "gr10-robotics",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Automated Systems & Robotics (Grade 10 CS (IGCSE)). Replace this with a real question about Automated Systems & Robotics.",
+    "text": "What is the purpose of an actuator in an automated system?",
     "options": [
-      "Sample correct answer about Automated Systems & Robotics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To convert a control signal into physical movement or action",
+      "To detect changes in the environment",
+      "To process and interpret sensor data",
+      "To store instructions for the system"
     ],
     "answer": "0",
-    "explanation": "This template question covers Automated Systems & Robotics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Actuators (motors, servos, solenoids) receive electrical signals from the controller and produce mechanical movement or other physical effects.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2268,19 +2268,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-ai-sample-q001",
+    "id": "gr10-ai-q001",
     "topicKey": "gr10-ai",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Artificial Intelligence (Grade 10 CS (IGCSE)). Replace this with a real question about Artificial Intelligence.",
+    "text": "What does a neural network use to improve its accuracy over time?",
     "options": [
-      "Sample correct answer about Artificial Intelligence",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Training data and adjustment of weights between nodes",
+      "Faster processor speeds",
+      "More storage memory",
+      "A larger operating system"
     ],
     "answer": "0",
-    "explanation": "This template question covers Artificial Intelligence. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "A neural network is trained by feeding it labelled examples and adjusting connection weights using algorithms (e.g. backpropagation) to minimise errors.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2289,19 +2289,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-quantum-sample-q001",
+    "id": "gr10-quantum-q001",
     "topicKey": "gr10-quantum",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Quantum Computing (Grade 10 CS (IGCSE)). Replace this with a real question about Quantum Computing.",
+    "text": "What is a qubit in quantum computing?",
     "options": [
-      "Sample correct answer about Quantum Computing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The quantum equivalent of a classical bit, which can exist in a superposition of 0 and 1",
+      "A unit of classical computing memory",
+      "A type of quantum processor chip",
+      "A measurement of computing speed"
     ],
     "answer": "0",
-    "explanation": "This template question covers Quantum Computing. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "A qubit can be in a superposition of both 0 and 1 simultaneously (until measured), enabling quantum computers to process many states in parallel.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2310,18 +2310,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-abstraction-sample-q001",
+    "id": "gr10-abstraction-q001",
     "topicKey": "gr10-abstraction",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Abstraction & Decomposition (Grade 10 CS (IGCSE)). Replace this with a real question about Abstraction & Decomposition.",
+    "text": "What is abstraction in problem-solving and programming?",
     "options": [
-      "Sample correct answer about Abstraction & Decomposition",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Removing unnecessary details to focus on the essential aspects of a problem",
+      "Writing code as quickly as possible",
+      "Breaking a problem into smaller sub-problems",
+      "Testing every possible input"
     ],
     "answer": "0",
-    "explanation": "This template question covers Abstraction & Decomposition. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Abstraction simplifies complexity by hiding irrelevant details and representing only what is necessary to solve the problem.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2331,19 +2331,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-algorithms-sample-q001",
+    "id": "gr10-algorithms-q001",
     "topicKey": "gr10-algorithms",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Algorithm Design & Analysis (Grade 10 CS (IGCSE)). Replace this with a real question about Algorithm Design & Analysis.",
+    "text": "Which sorting algorithm repeatedly finds the smallest unsorted element and places it in the correct position?",
     "options": [
-      "Sample correct answer about Algorithm Design & Analysis",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Selection sort",
+      "Bubble sort",
+      "Merge sort",
+      "Insertion sort"
     ],
     "answer": "0",
-    "explanation": "This template question covers Algorithm Design & Analysis. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Selection sort scans the unsorted portion to find the minimum element and swaps it into its correct position, repeating until sorted.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2352,19 +2352,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-boolean-sample-q001",
+    "id": "gr10-boolean-q001",
     "topicKey": "gr10-boolean",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Boolean Logic & Circuits (Grade 10 CS (IGCSE)). Replace this with a real question about Boolean Logic & Circuits.",
+    "text": "Simplify the Boolean expression: A AND NOT A",
     "options": [
-      "Sample correct answer about Boolean Logic & Circuits",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "0 (always false)",
+      "1 (always true)",
+      "A",
+      "NOT A"
     ],
     "answer": "0",
-    "explanation": "This template question covers Boolean Logic & Circuits. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "A AND NOT A is a contradiction — a variable and its complement can never both be true at the same time, so the result is always 0.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2373,18 +2373,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-programming-sample-q001",
+    "id": "gr10-programming-q001",
     "topicKey": "gr10-programming",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Further Programming & Testing (Grade 10 CS (IGCSE)). Replace this with a real question about Further Programming & Testing.",
+    "text": "What is the purpose of a test plan when developing software?",
     "options": [
-      "Sample correct answer about Further Programming & Testing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To document what inputs will be tested, expected outputs, and whether tests passed",
+      "To describe the user interface design",
+      "To list the programming languages used",
+      "To plan the project schedule"
     ],
     "answer": "0",
-    "explanation": "This template question covers Further Programming & Testing. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A test plan specifies test cases (normal, boundary, erroneous data), expected results, and records actual outcomes to verify software correctness.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2394,18 +2394,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-system-analysis-sample-q001",
+    "id": "gr10-system-analysis-q001",
     "topicKey": "gr10-system-analysis",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: System Analysis & Design (Grade 10 CS (IGCSE)). Replace this with a real question about System Analysis & Design.",
+    "text": "In the system development life cycle, what happens during the analysis stage?",
     "options": [
-      "Sample correct answer about System Analysis & Design",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The current system is investigated and requirements for the new system are identified",
+      "The new system is coded and built",
+      "The completed system is handed over to users",
+      "The system is tested with real data"
     ],
     "answer": "0",
-    "explanation": "This template question covers System Analysis & Design. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Analysis involves studying the existing system, identifying problems, and defining what the new or improved system must do (requirements gathering).",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2415,18 +2415,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-sql-sample-q001",
+    "id": "gr10-sql-q001",
     "topicKey": "gr10-sql",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Databases & SQL (Grade 10 CS (IGCSE)). Replace this with a real question about Databases & SQL.",
+    "text": "Which SQL keyword is used to retrieve data from a database table?",
     "options": [
-      "Sample correct answer about Databases & SQL",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE"
     ],
     "answer": "0",
-    "explanation": "This template question covers Databases & SQL. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "SELECT is the SQL command for querying a database. It specifies which columns to return and can be combined with WHERE, ORDER BY, etc.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2436,19 +2436,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-algorithms-adv-sample-q001",
+    "id": "gr10-algorithms-adv-q001",
     "topicKey": "gr10-algorithms-adv",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Algorithm Design (Grade 10 CS (IGCSE)). Replace this with a real question about Algorithm Design.",
+    "text": "What is the worst-case time complexity of binary search?",
     "options": [
-      "Sample correct answer about Algorithm Design",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "O(log n)",
+      "O(n)",
+      "O(n²)",
+      "O(1)"
     ],
     "answer": "0",
-    "explanation": "This template question covers Algorithm Design. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Binary search halves the search space with each comparison, giving O(log n) worst-case time complexity.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2457,19 +2457,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr10-python-adv-sample-q001",
+    "id": "gr10-python-adv-q001",
     "topicKey": "gr10-python-adv",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Further Programming (Grade 10 CS (IGCSE)). Replace this with a real question about Further Programming.",
+    "text": "In Python, what does the 'open()' function return when used to read a file?",
     "options": [
-      "Sample correct answer about Further Programming",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A file object that can be iterated or read with methods like .read() or .readlines()",
+      "The entire file contents as a string immediately",
+      "The file size in bytes",
+      "A list of filenames in the directory"
     ],
     "answer": "0",
-    "explanation": "This template question covers Further Programming. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "open() returns a file object. You then call methods such as .read(), .readline(), or .readlines() on it to access the file's content.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2478,19 +2478,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-information-sample-q001",
+    "id": "gr11-information-q001",
     "topicKey": "gr11-information",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Information Representation (Grade 11 CS (IGCSE)). Replace this with a real question about Information Representation.",
+    "text": "How many bytes are needed to store a single character in UTF-16 encoding (minimum)?",
     "options": [
-      "Sample correct answer about Information Representation",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "2 bytes",
+      "1 byte",
+      "3 bytes",
+      "4 bytes"
     ],
     "answer": "0",
-    "explanation": "This template question covers Information Representation. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "UTF-16 uses a minimum of 2 bytes (16 bits) per character for the Basic Multilingual Plane, compared to ASCII's 1 byte.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2499,18 +2499,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-communication-sample-q001",
+    "id": "gr11-communication-q001",
     "topicKey": "gr11-communication",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Communication & Networking (Grade 11 CS (IGCSE)). Replace this with a real question about Communication & Networking.",
+    "text": "What is the difference between a LAN and a WAN?",
     "options": [
-      "Sample correct answer about Communication & Networking",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A LAN covers a small geographic area; a WAN covers a large geographic area",
+      "A LAN uses wireless only; a WAN uses wired only",
+      "A WAN is faster than a LAN",
+      "A LAN requires an internet connection; a WAN does not"
     ],
     "answer": "0",
-    "explanation": "This template question covers Communication & Networking. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "LAN (Local Area Network) covers a limited area such as a building. WAN (Wide Area Network) spans large geographic areas, often connecting multiple LANs.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2520,19 +2520,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-hardware-sample-q001",
+    "id": "gr11-hardware-q001",
     "topicKey": "gr11-hardware",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Logic Circuits & Boolean Algebra (Grade 11 CS (IGCSE)). Replace this with a real question about Logic Circuits & Boolean Algebra.",
+    "text": "What is De Morgan's first law?",
     "options": [
-      "Sample correct answer about Logic Circuits & Boolean Algebra",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "NOT(A AND B) = NOT A OR NOT B",
+      "NOT(A OR B) = NOT A AND NOT B",
+      "A AND B = B AND A",
+      "NOT(NOT A) = A"
     ],
     "answer": "0",
-    "explanation": "This template question covers Logic Circuits & Boolean Algebra. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "De Morgan's first law: NOT(A AND B) ≡ NOT A OR NOT B. This allows conversion between AND and OR gates using inverters.",
+    "difficulty": "hard",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2541,40 +2541,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-logic-sample-q001",
-    "topicKey": "gr11-logic",
-    "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Logic Gates & Simplification (Grade 11 CS (IGCSE)). Replace this with a real question about Logic Gates & Simplification.",
-    "options": [
-      "Sample correct answer about Logic Gates & Simplification",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
-    ],
-    "answer": "0",
-    "explanation": "This template question covers Logic Gates & Simplification. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
-    "points": 1,
-    "chapter": 1,
-    "approvalStatus": "approved",
-    "source": "imported",
-    "quizId": null,
-    "createdAt": 1700000000000
-  },
-  {
-    "id": "gr11-processor-sample-q001",
+    "id": "gr11-processor-q001",
     "topicKey": "gr11-processor",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Processor & Memory (Grade 11 CS (IGCSE)). Replace this with a real question about Processor & Memory.",
+    "text": "What is pipelining in a CPU?",
     "options": [
-      "Sample correct answer about Processor & Memory",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Overlapping the fetch, decode, and execute stages of multiple instructions simultaneously",
+      "Running two processors in parallel",
+      "Caching frequently used instructions",
+      "Reducing the clock speed to save energy"
     ],
     "answer": "0",
-    "explanation": "This template question covers Processor & Memory. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Pipelining allows different stages of multiple instructions to run concurrently, improving throughput. While one instruction is executing, the next is being decoded, and the one after is being fetched.",
+    "difficulty": "hard",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2583,19 +2562,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-os-sample-q001",
+    "id": "gr11-os-q001",
     "topicKey": "gr11-os",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: OS & System Software (Grade 11 CS (IGCSE)). Replace this with a real question about OS & System Software.",
+    "text": "What is virtual memory?",
     "options": [
-      "Sample correct answer about OS & System Software",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A technique that uses secondary storage to extend the apparent size of RAM",
+      "Memory built directly into the CPU",
+      "Cache memory on the motherboard",
+      "A type of read-only memory"
     ],
     "answer": "0",
-    "explanation": "This template question covers OS & System Software. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Virtual memory uses a section of the hard drive as extra RAM, allowing the OS to run programs larger than physical RAM by swapping data in and out.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2604,39 +2583,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-system-software-sample-q001",
-    "topicKey": "gr11-system-software",
-    "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: System Software (Grade 11 CS (IGCSE)). Replace this with a real question about System Software.",
-    "options": [
-      "Sample correct answer about System Software",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
-    ],
-    "answer": "0",
-    "explanation": "This template question covers System Software. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
-    "points": 1,
-    "chapter": 1,
-    "approvalStatus": "approved",
-    "source": "imported",
-    "quizId": null,
-    "createdAt": 1700000000000
-  },
-  {
-    "id": "gr11-security-sample-q001",
+    "id": "gr11-security-q001",
     "topicKey": "gr11-security",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Security & Ethics (Grade 11 CS (IGCSE)). Replace this with a real question about Security & Ethics.",
+    "text": "What does two-factor authentication (2FA) require?",
     "options": [
-      "Sample correct answer about Security & Ethics",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Two separate forms of verification (e.g. password + one-time code)",
+      "Two different passwords for the same account",
+      "A password longer than 16 characters",
+      "Biometric data only"
     ],
     "answer": "0",
-    "explanation": "This template question covers Security & Ethics. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "2FA requires something you know (password) AND something you have (phone OTP) or something you are (biometrics), making unauthorised access much harder.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2646,19 +2604,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-ai-advanced-sample-q001",
+    "id": "gr11-ai-advanced-q001",
     "topicKey": "gr11-ai-advanced",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: AI & Quantum (Revision) (Grade 11 CS (IGCSE)). Replace this with a real question about AI & Quantum (Revision).",
+    "text": "In machine learning, what is overfitting?",
     "options": [
-      "Sample correct answer about AI & Quantum (Revision)",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "When a model learns the training data too well and performs poorly on new data",
+      "When a model is too simple to capture patterns in the data",
+      "When a model takes too long to train",
+      "When a model uses too much memory"
     ],
     "answer": "0",
-    "explanation": "This template question covers AI & Quantum (Revision). Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Overfitting occurs when a model memorises training examples (including noise) instead of learning general patterns, causing poor generalisation to unseen data.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2667,19 +2625,19 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-programming-sample-q001",
+    "id": "gr11-programming-q001",
     "topicKey": "gr11-programming",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: File Handling & Testing (Grade 11 CS (IGCSE)). Replace this with a real question about File Handling & Testing.",
+    "text": "In Python, what mode string opens a file for appending new content without deleting existing content?",
     "options": [
-      "Sample correct answer about File Handling & Testing",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "\"a\"",
+      "\"w\"",
+      "\"r\"",
+      "\"x\""
     ],
     "answer": "0",
-    "explanation": "This template question covers File Handling & Testing. Replace the text, options, answer index, and explanation with real content.",
-    "difficulty": "easy",
+    "explanation": "Opening a file with mode 'a' (append) positions the write pointer at the end of existing content, so new data is added without overwriting anything.",
+    "difficulty": "medium",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
@@ -2688,18 +2646,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-oop-sample-q001",
+    "id": "gr11-oop-q001",
     "topicKey": "gr11-oop",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Object-Oriented Programming (Grade 11 CS (IGCSE)). Replace this with a real question about Object-Oriented Programming.",
+    "text": "What is inheritance in object-oriented programming?",
     "options": [
-      "Sample correct answer about Object-Oriented Programming",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "A mechanism where a child class derives attributes and methods from a parent class",
+      "Combining data and methods into a single unit",
+      "Hiding internal implementation details from the user",
+      "Creating multiple objects from the same class"
     ],
     "answer": "0",
-    "explanation": "This template question covers Object-Oriented Programming. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Inheritance lets a subclass reuse (inherit) properties and behaviours from a superclass, enabling code reuse and a hierarchy of related classes.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2709,18 +2667,18 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-data-structures-sample-q001",
+    "id": "gr11-data-structures-q001",
     "topicKey": "gr11-data-structures",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Abstract Data Types (Grade 11 CS (IGCSE)). Replace this with a real question about Abstract Data Types.",
+    "text": "Which data structure operates on a Last In, First Out (LIFO) principle?",
     "options": [
-      "Sample correct answer about Abstract Data Types",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "Stack",
+      "Queue",
+      "Linked list",
+      "Hash table"
     ],
     "answer": "0",
-    "explanation": "This template question covers Abstract Data Types. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A stack is LIFO — the last element added (pushed) is the first one removed (popped). A queue is FIFO.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2730,18 +2688,39 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-algorithms-sample-q001",
+    "id": "gr11-algorithms-q001",
     "topicKey": "gr11-algorithms",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Algorithms (Revision) (Grade 11 CS (IGCSE)). Replace this with a real question about Algorithms (Revision).",
+    "text": "What does Big O notation describe?",
     "options": [
-      "Sample correct answer about Algorithms (Revision)",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "The growth rate of an algorithm's time or space requirements as input size increases",
+      "The exact running time of an algorithm in seconds",
+      "The number of lines of code in an algorithm",
+      "The programming language used to implement an algorithm"
     ],
     "answer": "0",
-    "explanation": "This template question covers Algorithms (Revision). Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "Big O notation expresses how the resource requirements (time or memory) of an algorithm scale with input size, independent of hardware or implementation details.",
+    "difficulty": "medium",
+    "points": 1,
+    "chapter": 1,
+    "approvalStatus": "approved",
+    "source": "imported",
+    "quizId": null,
+    "createdAt": 1700000000000
+  },
+  {
+    "id": "gr11-databases-q001",
+    "topicKey": "gr11-databases",
+    "type": "mcq",
+    "text": "Which SQL clause filters the results of a SELECT query to rows that match a condition?",
+    "options": [
+      "WHERE",
+      "HAVING",
+      "GROUP BY",
+      "ORDER BY"
+    ],
+    "answer": "0",
+    "explanation": "WHERE filters individual rows before any grouping. HAVING filters grouped results after GROUP BY.",
     "difficulty": "easy",
     "points": 1,
     "chapter": 1,
@@ -2751,19 +2730,40 @@
     "createdAt": 1700000000000
   },
   {
-    "id": "gr11-databases-sample-q001",
-    "topicKey": "gr11-databases",
+    "id": "gr11-system-software-q001",
+    "topicKey": "gr11-system-software",
     "type": "mcq",
-    "text": "[TEMPLATE] This is a sample question for the topic: Databases & SQL (Grade 11 CS (IGCSE)). Replace this with a real question about Databases & SQL.",
+    "text": "What is the role of a device driver?",
     "options": [
-      "Sample correct answer about Databases & SQL",
-      "Wrong answer option A",
-      "Wrong answer option B",
-      "Wrong answer option C"
+      "To allow the operating system to communicate with a specific hardware device",
+      "To speed up the processor",
+      "To manage network connections",
+      "To encrypt stored files"
     ],
     "answer": "0",
-    "explanation": "This template question covers Databases & SQL. Replace the text, options, answer index, and explanation with real content.",
+    "explanation": "A device driver is software that acts as a translator between the OS and a hardware component (printer, graphics card, etc.), handling low-level communication.",
     "difficulty": "easy",
+    "points": 1,
+    "chapter": 1,
+    "approvalStatus": "approved",
+    "source": "imported",
+    "quizId": null,
+    "createdAt": 1700000000000
+  },
+  {
+    "id": "gr11-logic-q001",
+    "topicKey": "gr11-logic",
+    "type": "mcq",
+    "text": "What is a Karnaugh map (K-map) used for?",
+    "options": [
+      "Simplifying Boolean expressions by grouping adjacent 1s in a grid",
+      "Drawing logic gate diagrams",
+      "Converting binary to hexadecimal",
+      "Calculating the clock speed of a CPU"
+    ],
+    "answer": "0",
+    "explanation": "A K-map is a visual tool for minimising Boolean expressions. Grouping adjacent 1s in powers of 2 allows common factors to be cancelled, simplifying the expression.",
+    "difficulty": "hard",
     "points": 1,
     "chapter": 1,
     "approvalStatus": "approved",
