@@ -590,11 +590,35 @@ function GeoTab({ points }: { points: GeoPoint[] }) {
   );
 }
 
+// Keys that were renamed — used to migrate existing orphaned Firestore questions
+const TOPIC_REMAP: Record<string, string> = {
+  'gr5-computer-evolution':          'gr5-ch1-history',
+  'gr5-storage-media':               'gr5-ch2-storage',
+  'gr8-artificial-intelligence':     'gr8-ch1-ai',
+  'gr8-technology-trends':           'gr8-ch2-tech',
+  'gr9-cs-cpu-architecture':         'gr9-cpu',
+  'gr9-cs-data-storage':             'gr9-storage',
+  'gr9-cs-os-accounts-security':     'gr9-os',
+  'gr9-cs-os-file-management':       'gr9-os',
+  'gr9-cs-os-interrupts':            'gr9-os',
+  'gr9-cs-os-memory-management':     'gr9-os',
+  'gr9-cs-os-peripherals-drivers':   'gr9-os',
+  'gr9-cs-os-process-management':    'gr9-os',
+  'gr9-cs-os-purpose':               'gr9-os',
+  'gr9-dt-defining':                 'gr9dt-design-brief',
+  'gr9-dt-developing':               'gr9dt-developing',
+  'gr9-dt-identifying':              'gr9dt-design1',
+  'gr9-dt-influences-designing':     'gr9dt-influences',
+  'gr9-dt-proposing':                'gr9dt-plan',
+};
+
 /* ─────────────── Question Bank Tab ─────────────── */
 function QuestionBankTab() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // topicKey pending confirm
   const [deleting, setDeleting] = useState<string | null>(null);           // topicKey being deleted
   const [deleteResult, setDeleteResult] = useState<{ topicKey: string; deleted: number; errors: number } | null>(null);
+  const [repairing, setRepairing] = useState(false);
+  const [repairResult, setRepairResult] = useState<{ migrated: number; skipped: number; errors: number } | null>(null);
 
   // Firestore-backed question counts per topicKey
   const [fsTopicCounts, setFsTopicCounts] = useState<Record<string, number> | null>(null);
@@ -643,6 +667,44 @@ function QuestionBankTab() {
     } catch { /* silently ignore refresh errors */ }
   }, []);
 
+  // Migrate orphaned questions whose topicKey appears in TOPIC_REMAP → canonical key
+  const handleRepairOrphans = useCallback(async () => {
+    setRepairing(true);
+    setRepairResult(null);
+    try {
+      const { getFirebaseInstances } = await import('@/lib/firebase/config');
+      const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore');
+      const { fs } = getFirebaseInstances();
+      if (!fs) { setRepairing(false); return; }
+
+      const snap = await getDocs(collection(fs, 'questions'));
+      let migrated = 0, skipped = 0, errors = 0;
+      const BATCH_SIZE = 400;
+
+      const toMigrate: { id: string; newKey: string }[] = [];
+      snap.forEach(d => {
+        const tk = (d.data() as { topicKey?: string }).topicKey;
+        if (tk && TOPIC_REMAP[tk]) toMigrate.push({ id: d.id, newKey: TOPIC_REMAP[tk] });
+        else if (tk && !TOPIC_LABELS[tk]) skipped++;
+      });
+
+      for (let i = 0; i < toMigrate.length; i += BATCH_SIZE) {
+        const batch = writeBatch(fs);
+        const chunk = toMigrate.slice(i, i + BATCH_SIZE);
+        chunk.forEach(({ id, newKey }) => batch.update(doc(fs, 'questions', id), { topicKey: newKey }));
+        try { await batch.commit(); migrated += chunk.length; }
+        catch { errors += chunk.length; }
+      }
+
+      setRepairResult({ migrated, skipped, errors });
+      await refreshCounts();
+    } catch {
+      setRepairResult({ migrated: 0, skipped: 0, errors: 1 });
+    } finally {
+      setRepairing(false);
+    }
+  }, [refreshCounts]);
+
   // Build subject → chapter map from TOPIC_LABELS + Firestore counts
   const topicCounts = fsTopicCounts ?? {};
   const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
@@ -656,7 +718,14 @@ function QuestionBankTab() {
   }
 
   // Sort subjects by grade number
-  const subjectOrder = ['Grade 4 Computing','Grade 5 Computing','Grade 6 Computing','Grade 7 CS','Grade 8 Computing','Grade 9 CS','Grade 9 DT','Grade 10 CS','Grade 11 CS'];
+  const subjectOrder = [
+    'Grade 4 Computing', 'Grade 5 Computing', 'Grade 6 Computing',
+    'Grade 7 CS', 'Grade 7 Computing',
+    'Grade 8 Computing',
+    'Grade 9 CS (IGCSE)', 'Grade 9 DT (IGCSE)',
+    'Grade 10 CS (IGCSE)',
+    'Grade 11 CS (IGCSE)',
+  ];
   const subjects = subjectOrder.filter(s => bySubject[s]);
 
   // Only count questions that belong to a recognised topicKey (what's actually displayed)
@@ -713,13 +782,47 @@ function QuestionBankTab() {
       {/* Orphan warning — questions with unrecognised topicKeys */}
       {!fsLoading && orphanTotal > 0 && (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           padding: '12px 18px', borderRadius: 10, marginBottom: 16,
           background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)',
         }}>
           <span style={{ fontSize: 13, color: '#fbbf24' }}>
             ⚠️ {orphanTotal.toLocaleString()} question{orphanTotal !== 1 ? 's' : ''} in Firestore have an unrecognised topic key and are not shown below. These may be leftover pre-built questions or imports with mismatched keys.
           </span>
+          <button
+            onClick={handleRepairOrphans}
+            disabled={repairing}
+            style={{
+              flexShrink: 0, fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+              background: repairing ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.2)',
+              border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24',
+            }}
+          >
+            {repairing ? 'Repairing…' : 'Repair Keys'}
+          </button>
+        </div>
+      )}
+
+      {/* Repair result banner */}
+      {repairResult && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderRadius: 10, marginBottom: 16,
+          background: repairResult.errors > 0 ? 'rgba(251,191,36,0.1)' : 'rgba(52,211,153,0.1)',
+          border: `1px solid ${repairResult.errors > 0 ? 'rgba(251,191,36,0.3)' : 'rgba(52,211,153,0.3)'}`,
+        }}>
+          <span style={{ fontSize: 13, color: repairResult.errors > 0 ? '#fbbf24' : '#34d399' }}>
+            {repairResult.errors > 0
+              ? `⚠️ Repaired ${repairResult.migrated} question${repairResult.migrated !== 1 ? 's' : ''} with ${repairResult.errors} error(s). ${repairResult.skipped} key(s) have no known mapping.`
+              : repairResult.migrated === 0
+                ? `✓ No questions with remappable keys found. ${repairResult.skipped} question${repairResult.skipped !== 1 ? 's' : ''} still have unknown keys (not in remap table).`
+                : `✓ Repaired ${repairResult.migrated} question${repairResult.migrated !== 1 ? 's' : ''} — topic keys updated to canonical names.`
+            }
+          </span>
+          <button onClick={() => setRepairResult(null)} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: repairResult.errors > 0 ? '#fbbf24' : '#34d399', fontSize: 16,
+          }}>✕</button>
         </div>
       )}
 
