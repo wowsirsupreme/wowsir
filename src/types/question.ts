@@ -171,21 +171,25 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 9 — DT IGCSE 0445 (Graphic Products)
   // ════════════════════════════════════════════════════════════════
-  'gr9dt-influences':    { title: '1.1 – Influences on Designing',           subject: 'Grade 9 DT (IGCSE)', emoji: '🎭' },
-  'gr9dt-design-brief':  { title: '1.2.1/1.2.2 – Identifying & Defining',   subject: 'Grade 9 DT (IGCSE)', emoji: '🔍' },
-  'gr9dt-developing':    { title: '1.2.3/1.2.4 – Proposing & Developing',   subject: 'Grade 9 DT (IGCSE)', emoji: '✏️' },
-  'gr9dt-plan':          { title: '1.2.5 – Planning',                        subject: 'Grade 9 DT (IGCSE)', emoji: '📋' },
-  'gr9dt-evaluation':    { title: '1.2.6 – Testing & Evaluating',            subject: 'Grade 9 DT (IGCSE)', emoji: '✅' },
-  'gr9dt-design1':       { title: '1.2.1/1.2.2 – Identifying & Defining',   subject: 'Grade 9 DT (IGCSE)', emoji: '🔍' },
-  'gr9dt-design2':       { title: '1.2.3/1.2.4 – Proposing & Developing',   subject: 'Grade 9 DT (IGCSE)', emoji: '✏️' },
-  'gr9dt-design3':       { title: '1.2.5/1.2.6 – Planning & Testing',       subject: 'Grade 9 DT (IGCSE)', emoji: '📋' },
-  'gr9dt-communication': { title: '1.3 – Communicating Designs',             subject: 'Grade 9 DT (IGCSE)', emoji: '📐' },
-  'gr9dt-making':        { title: '1.4 – Making Principles',                 subject: 'Grade 9 DT (IGCSE)', emoji: '🔨' },
-  'gr9dt-materials':     { title: '1.5 – Material Classification',           subject: 'Grade 9 DT (IGCSE)', emoji: '🧱' },
-  'gr9dt-manufacturing': { title: '1.4 – Manufacturing Processes',           subject: 'Grade 9 DT (IGCSE)', emoji: '🏭' },
-  'gr9dt-health-safety': { title: '1.4 – Health & Safety in Making',         subject: 'Grade 9 DT (IGCSE)', emoji: '🦺' },
-  'gr9dt-structures':    { title: '1.6 – Structures',                        subject: 'Grade 9 DT (IGCSE)', emoji: '🏗️' },
-  'gr9dt-mechanisms':    { title: '1.7 – Mechanisms',                        subject: 'Grade 9 DT (IGCSE)', emoji: '⚙️' },
+  // ── Common content (Section 1) ──
+  'gr9dt-influences':    { title: '1.1 – Influences on Designing',              subject: 'Grade 9 DT (IGCSE)', emoji: '🎭' },
+  'gr9dt-design-brief':  { title: '1.2.1/1.2.2 – Identifying & Defining',      subject: 'Grade 9 DT (IGCSE)', emoji: '🔍' },
+  'gr9dt-developing':    { title: '1.2.3/1.2.4 – Proposing & Developing',      subject: 'Grade 9 DT (IGCSE)', emoji: '✏️' },
+  'gr9dt-plan':          { title: '1.2.5 – Planning',                           subject: 'Grade 9 DT (IGCSE)', emoji: '📋' },
+  'gr9dt-evaluation':    { title: '1.2.6 – Testing & Evaluating',               subject: 'Grade 9 DT (IGCSE)', emoji: '✅' },
+  'gr9dt-communication': { title: '1.3 – Communicating Designs',                subject: 'Grade 9 DT (IGCSE)', emoji: '📐' },
+  'gr9dt-making':        { title: '1.4 – Making Principles',                    subject: 'Grade 9 DT (IGCSE)', emoji: '🔨' },
+  'gr9dt-materials':     { title: '1.5 – Material Classification',              subject: 'Grade 9 DT (IGCSE)', emoji: '🧱' },
+  'gr9dt-structures':    { title: '1.6 – Structures',                           subject: 'Grade 9 DT (IGCSE)', emoji: '🏗️' },
+  'gr9dt-mechanisms':    { title: '1.7 – Mechanisms',                           subject: 'Grade 9 DT (IGCSE)', emoji: '⚙️' },
+  'gr9dt-electronics':   { title: '1.8 – Electronics',                          subject: 'Grade 9 DT (IGCSE)', emoji: '⚡' },
+  // ── Materials option (Section 2) ──
+  'gr9dt-manufacturing': { title: '2.3 – Commercial Manufacturing Methods',     subject: 'Grade 9 DT (IGCSE)', emoji: '🏭' },
+  'gr9dt-health-safety': { title: '2.2.5 – Safe Working Practices',             subject: 'Grade 9 DT (IGCSE)', emoji: '🦺' },
+  // ── Legacy alias keys — kept for Firestore backwards-compat, hidden from picker ──
+  'gr9dt-design1':       { title: '1.2.1/1.2.2 – Identifying & Defining',      subject: 'Grade 9 DT (IGCSE)', emoji: '🔍' },
+  'gr9dt-design2':       { title: '1.2.3/1.2.4 – Proposing & Developing',      subject: 'Grade 9 DT (IGCSE)', emoji: '✏️' },
+  'gr9dt-design3':       { title: '1.2.5/1.2.6 – Planning & Testing',          subject: 'Grade 9 DT (IGCSE)', emoji: '📋' },
 
   // ════════════════════════════════════════════════════════════════
   // GRADE 10 — CS IGCSE 0478 (Year 2, 2027–28)
@@ -250,6 +254,10 @@ const LEGACY_TOPIC_KEYS = new Set([
   // Grade 11 — duplicate keys
   'gr11-system-software',  // duplicate of gr11-os
   'gr11-logic',            // duplicate of gr11-hardware (both Ch 2.1)
+  // Grade 9 DT — duplicate/alias keys superseded by granular design-process keys
+  'gr9dt-design1',         // duplicate of gr9dt-design-brief (1.2.1/1.2.2)
+  'gr9dt-design2',         // duplicate of gr9dt-developing (1.2.3/1.2.4)
+  'gr9dt-design3',         // superseded by gr9dt-plan + gr9dt-evaluation (1.2.5/1.2.6)
 ]);
 
 /** Returns topics grouped by their subject, preserving insertion order.

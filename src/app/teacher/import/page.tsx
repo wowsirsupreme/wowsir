@@ -63,11 +63,13 @@ const BG = [
 //   gr9-data-sound   gr9-data-images  gr9-data-compression
 //   gr9-networking   gr9-programming
 //
-// Grade 9 DT IGCSE 0445:
+// Grade 9 DT IGCSE 0445 — Section 1 Common content:
 //   gr9dt-influences  gr9dt-design-brief  gr9dt-developing  gr9dt-plan
 //   gr9dt-evaluation  gr9dt-communication  gr9dt-making
-//   gr9dt-materials   gr9dt-manufacturing  gr9dt-health-safety
-//   gr9dt-structures  gr9dt-mechanisms
+//   gr9dt-materials   gr9dt-structures    gr9dt-mechanisms  gr9dt-electronics
+// Section 2 Materials option:
+//   gr9dt-manufacturing  gr9dt-health-safety
+// (Legacy/alias keys — still accepted but hidden from picker: gr9dt-design1  gr9dt-design2  gr9dt-design3)
 //
 // Grade 10 CS IGCSE 0478:
 //   gr10-data-integrity  gr10-cybersecurity  gr10-encryption
@@ -188,6 +190,7 @@ const TEMPLATE_ROWS = [
   `gr9dt-health-safety-q001,gr9dt-health-safety,mcq,Before using a power tool; what should always be checked first?,That the tool is in good working order and guards are in place,That the tool matches the colour of the workpiece,That no one else is watching,That the tool is the most expensive available,0,Pre-use checks ensure guards are fitted; cables are undamaged; and the tool functions correctly — preventing accidents during use.,easy,1,1,`,
   `gr9dt-structures-q001,gr9dt-structures,mcq,What is a triangulated structure?,A structure strengthened by arranging members in triangles to distribute loads,A structure built from three identical parts,A structure that can only support vertical loads,A structure made entirely from triangular cross-section beams,0,Triangulation rigidifies a structure by converting bending forces into tension and compression through triangular arrangements of members (e.g. in trusses).,medium,1,1,`,
   `gr9dt-mechanisms-q001,gr9dt-mechanisms,mcq,What is a gear ratio?,The ratio of the number of teeth on the driver gear to the number of teeth on the driven gear,The speed of the motor in rpm,The size of the gear wheel,The force applied to the gear,0,Gear ratio = teeth on driver ÷ teeth on driven gear. It determines the change in speed and torque between the two gears.,medium,1,1,`,
+  `gr9dt-electronics-q001,gr9dt-electronics,mcq,What is the function of a resistor in an electronic circuit?,To limit the flow of current and protect components from excessive current,To store electrical charge,To amplify a signal,To convert AC to DC,0,A resistor opposes the flow of electrical current. It is used to control current levels and to protect sensitive components such as LEDs from burning out.,easy,1,1,`,
   `gr10-data-integrity-q001,gr10-data-integrity,mcq,Which validation check ensures that a number entered falls within an acceptable range?,Range check,Type check,Length check,Presence check,0,A range check tests whether a value is between a specified minimum and maximum (e.g. a month number must be 1–12).,easy,1,1,`,
   `gr10-cybersecurity-q001,gr10-cybersecurity,mcq,What is a firewall?,A system that monitors and controls incoming and outgoing network traffic based on security rules,A type of antivirus software,A hardware device used to boost Wi-Fi signal,A tool for encrypting files,0,A firewall filters network traffic using predefined security rules to allow or block data packets; protecting a network from unauthorised access.,easy,1,1,`,
   `gr10-encryption-q001,gr10-encryption,mcq,In asymmetric encryption; what is used to encrypt a message that only the recipient can decrypt?,The recipient’s public key,The sender’s private key,A shared secret key,A hash function,0,In asymmetric (public-key) encryption; the sender encrypts with the recipient’s public key. Only the recipient’s private key can decrypt it.,medium,1,1,`,
