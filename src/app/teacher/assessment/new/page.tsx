@@ -11,10 +11,12 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { useToast } from '@/components/ui/Toast';
-import { getQuestionsByTopic } from '@/lib/firebase/questions';
+import { getQuestionsByTopic, getQuestionsByIds } from '@/lib/firebase/questions';
 import { savePaper, getPaper } from '@/lib/firebase/papers';
+import { getTeacherQuizzes } from '@/lib/firebase/quizzes';
 import { TOPIC_LABELS } from '@/types/question';
 import type { Question as BankQuestion } from '@/types/question';
+import type { Quiz } from '@/types/quiz';
 import TopicPicker from '@/components/TopicPicker';
 
 /* ─── types ────────────────────────────────────────────────────────── */
@@ -1358,27 +1360,62 @@ function SectionEditor({
 }
 
 /* ─── bank import modal ─────────────────────────────────────────────── */
-function BankImportModal({ onClose, onImport }: {
+function BankImportModal({ onClose, onImport, teacherId }: {
   onClose: () => void;
   onImport: (qs: PaperQuestion[]) => void;
+  teacherId: string;
 }) {
+  const [tab, setTab] = useState<'bank' | 'quiz'>('bank');
+
+  // Bank tab state
   const [topicKey, setTopicKey] = useState('');
   const [bankQs, setBankQs] = useState<BankQuestion[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
+  const [bankLoading, setBankLoading] = useState(false);
 
+  // Quiz tab state
+  const [quizList, setQuizList] = useState<Quiz[]>([]);
+  const [quizListLoading, setQuizListLoading] = useState(false);
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null);
+  const [quizQs, setQuizQs] = useState<BankQuestion[]>([]);
+  const [quizQsLoading, setQuizQsLoading] = useState(false);
+
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Load topic bank questions when topic changes
   useEffect(() => {
     if (!topicKey) return;
-    setLoading(true);
-    getQuestionsByTopic(topicKey, ['approved', 'pending']).then(qs => { setBankQs(qs); setLoading(false); });
+    setBankLoading(true);
+    getQuestionsByTopic(topicKey, ['approved', 'pending']).then(qs => { setBankQs(qs); setBankLoading(false); });
   }, [topicKey]);
+
+  // Load quiz list when switching to quiz tab
+  useEffect(() => {
+    if (tab !== 'quiz' || quizList.length > 0) return;
+    setQuizListLoading(true);
+    getTeacherQuizzes(teacherId).then(qs => { setQuizList(qs); setQuizListLoading(false); });
+  }, [tab, teacherId, quizList.length]);
+
+  // Load quiz questions when a quiz is selected
+  useEffect(() => {
+    if (!selectedQuizId) return;
+    const quiz = quizList.find(q => q.id === selectedQuizId);
+    if (!quiz?.questionIds?.length) { setQuizQs([]); return; }
+    setQuizQsLoading(true);
+    getQuestionsByIds(quiz.questionIds).then(qs => { setQuizQs(qs); setQuizQsLoading(false); });
+  }, [selectedQuizId, quizList]);
 
   function toggle(id: string) {
     setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
+  function switchTab(t: 'bank' | 'quiz') {
+    setTab(t);
+    setSelected(new Set());
+  }
+
   function doImport() {
-    const chosen = bankQs.filter(q => selected.has(q.id));
+    const source = tab === 'bank' ? bankQs : quizQs;
+    const chosen = source.filter(q => selected.has(q.id));
     const converted: PaperQuestion[] = chosen.map(q => ({
       id: uid(),
       type: q.type === 'truefalse' ? 'true_false' as const : q.type === 'mcq' ? 'mcq' as const : 'short' as const,
@@ -1395,24 +1432,72 @@ function BankImportModal({ onClose, onImport }: {
     onClose();
   }
 
+  const currentQs = tab === 'bank' ? bankQs : quizQs;
+  const isLoading = tab === 'bank' ? bankLoading : quizQsLoading;
+
+  const TAB_BTN = (active: boolean) => ({
+    flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active ? 700 : 400,
+    background: active ? 'rgba(196,181,253,0.15)' : 'transparent',
+    color: active ? 'rgba(196,181,253,0.9)' : 'rgba(255,255,255,0.35)',
+    transition: 'all 0.15s',
+  } as React.CSSProperties);
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: '#0f0f1e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Header */}
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>Import from Question Bank</span>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>Import Questions</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', fontSize: 20, lineHeight: 1 }}>×</button>
         </div>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <TopicPicker
-            value={topicKey}
-            onChange={key => { setTopicKey(key); setSelected(new Set()); }}
-            inputStyle={INPUT}
-          />
+
+        {/* Tab switcher */}
+        <div style={{ padding: '10px 20px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 4, marginBottom: 10 }}>
+            <button style={TAB_BTN(tab === 'bank')} onClick={() => switchTab('bank')}>Topic Bank</button>
+            <button style={TAB_BTN(tab === 'quiz')} onClick={() => switchTab('quiz')}>From Quiz</button>
+          </div>
+
+          {/* Bank: topic picker */}
+          {tab === 'bank' && (
+            <div style={{ paddingBottom: 10 }}>
+              <TopicPicker
+                value={topicKey}
+                onChange={key => { setTopicKey(key); setSelected(new Set()); }}
+                inputStyle={INPUT}
+              />
+            </div>
+          )}
+
+          {/* Quiz: quiz selector dropdown */}
+          {tab === 'quiz' && (
+            <div style={{ paddingBottom: 10 }}>
+              {quizListLoading
+                ? <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, margin: 0 }}>Loading quizzes…</p>
+                : quizList.length === 0
+                  ? <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, margin: 0 }}>No quizzes found.</p>
+                  : <select
+                      value={selectedQuizId ?? ''}
+                      onChange={e => { setSelectedQuizId(e.target.value || null); setSelected(new Set()); }}
+                      style={{ ...INPUT, color: selectedQuizId ? '#fff' : 'rgba(255,255,255,0.35)' }}
+                    >
+                      <option value=''>— Select a quiz —</option>
+                      {quizList.map(qz => (
+                        <option key={qz.id} value={qz.id}>{qz.title}</option>
+                      ))}
+                    </select>
+              }
+            </div>
+          )}
         </div>
+
+        {/* Question list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '10px 20px' }}>
-          {loading && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>Loading…</p>}
-          {!loading && bankQs.length === 0 && topicKey && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No questions found for this topic.</p>}
-          {!loading && bankQs.map(q => {
+          {isLoading && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>Loading…</p>}
+          {!isLoading && tab === 'bank' && currentQs.length === 0 && topicKey && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No questions found for this topic.</p>}
+          {!isLoading && tab === 'quiz' && selectedQuizId && currentQs.length === 0 && <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>No questions found in this quiz.</p>}
+          {!isLoading && currentQs.map(q => {
             const checked = selected.has(q.id);
             return (
               <label key={q.id} onClick={() => toggle(q.id)}
@@ -1428,6 +1513,8 @@ function BankImportModal({ onClose, onImport }: {
             );
           })}
         </div>
+
+        {/* Footer */}
         <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
           <button onClick={doImport} disabled={selected.size === 0}
@@ -2049,6 +2136,7 @@ function AssessmentBuilderInner() {
 
       {bankTargetSection && (
         <BankImportModal
+          teacherId={user?.uid ?? ''}
           onClose={() => setBankTargetSection(null)}
           onImport={qs => { importToSection(bankTargetSection, qs); setBankTargetSection(null); }}
         />

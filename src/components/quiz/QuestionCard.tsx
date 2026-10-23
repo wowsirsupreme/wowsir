@@ -137,7 +137,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerT
   return (
     <div className="w-full">
       {/* Question text */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-8">
+      <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(196,181,253,0.3)', borderRadius: 18, padding: '40px 40px', marginBottom: 32 }}>
         {question.imageUrl && (
           <img
             src={question.imageUrl}
@@ -171,16 +171,34 @@ export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerT
                 onClick={() => !disabled && onAnswer(i)}
                 disabled={disabled}
                 className={cn(
-                  'flex items-center gap-4 text-left px-6 py-5 rounded-xl border-[1.5px] transition-all duration-200',
-                  'bg-white/6 border-white/10 text-paper font-body text-[18px] leading-relaxed',
-                  !disabled && 'hover:bg-gold/15 hover:border-gold hover:-translate-y-0.5',
-                  isSelected && !revealed && 'border-gold',
-                  revealed && isCorrect && 'bg-green/30 border-green-500 animate-revealPulse',
-                  revealed && isSelected && !isCorrect && 'bg-red/20 border-red-500',
+                  'flex items-center gap-4 text-left px-6 py-5 rounded-xl transition-all duration-200',
+                  'text-paper font-body text-[18px] leading-relaxed',
+                  !disabled && !revealed && 'hover:-translate-y-0.5',
                   disabled && 'cursor-default'
                 )}
+                style={{
+                  border: revealed
+                    ? isCorrect
+                      ? '2px solid rgba(74,222,128,0.7)'
+                      : isSelected
+                        ? '2px solid rgba(248,113,113,0.7)'
+                        : '1.5px solid rgba(196,181,253,0.15)'
+                    : isSelected
+                      ? '2px solid rgba(196,181,253,0.75)'
+                      : '1.5px solid rgba(196,181,253,0.2)',
+                  background: revealed
+                    ? isCorrect
+                      ? 'rgba(74,222,128,0.12)'
+                      : isSelected
+                        ? 'rgba(248,113,113,0.1)'
+                        : 'rgba(255,255,255,0.04)'
+                    : isSelected
+                      ? 'rgba(196,181,253,0.1)'
+                      : 'rgba(255,255,255,0.04)',
+                }}
               >
-                <span className="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[14px] font-bold font-mono flex-shrink-0">
+                <span className="w-9 h-9 rounded-full flex items-center justify-center text-[14px] font-bold font-mono flex-shrink-0"
+                  style={{ background: isSelected ? 'rgba(196,181,253,0.2)' : 'rgba(255,255,255,0.07)', color: isSelected ? 'rgba(196,181,253,0.9)' : 'rgba(255,255,255,0.5)' }}>
                   {labels[i]}
                 </span>
                 {opt}
@@ -203,14 +221,30 @@ export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerT
                 onClick={() => !disabled && onAnswer(i)}
                 disabled={disabled}
                 className={cn(
-                  'flex items-center justify-center gap-3 px-5 py-7 rounded-xl border-[1.5px] transition-all duration-200',
-                  'bg-white/6 border-white/10 text-paper text-xl font-semibold',
-                  !disabled && 'hover:bg-gold/15 hover:border-gold',
-                  isSelected && !revealed && 'border-gold',
-                  revealed && isCorrect && 'bg-green/30 border-green-500',
-                  revealed && isSelected && !isCorrect && 'bg-red/20 border-red-500',
+                  'flex items-center justify-center gap-3 px-5 py-7 rounded-xl transition-all duration-200',
+                  'text-paper text-xl font-semibold',
                   disabled && 'cursor-default'
                 )}
+                style={{
+                  border: revealed
+                    ? isCorrect
+                      ? '2px solid rgba(74,222,128,0.7)'
+                      : isSelected
+                        ? '2px solid rgba(248,113,113,0.7)'
+                        : '1.5px solid rgba(196,181,253,0.15)'
+                    : isSelected
+                      ? '2px solid rgba(196,181,253,0.75)'
+                      : '1.5px solid rgba(196,181,253,0.2)',
+                  background: revealed
+                    ? isCorrect
+                      ? 'rgba(74,222,128,0.12)'
+                      : isSelected
+                        ? 'rgba(248,113,113,0.1)'
+                        : 'rgba(255,255,255,0.04)'
+                    : isSelected
+                      ? 'rgba(196,181,253,0.1)'
+                      : 'rgba(255,255,255,0.04)',
+                }}
               >
                 {opt === 'True' ? '✓' : '✗'} {opt}
               </button>
