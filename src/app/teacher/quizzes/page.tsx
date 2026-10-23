@@ -241,10 +241,10 @@ export default function MyQuizzesPage() {
                   }}
                 >
                   {/* Main row */}
-                  <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
 
                     {/* Icon + info */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0, flex: '1 1 200px' }}>
                       <div style={{
                         width: 42, height: 42, borderRadius: 12, flexShrink: 0,
                         background: isLive ? 'rgba(16,185,129,0.15)' : 'rgba(201,168,76,0.15)',
@@ -287,7 +287,7 @@ export default function MyQuizzesPage() {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <div className="flex flex-wrap w-full sm:w-auto sm:flex-shrink-0" style={{ gap: 6 }}>
                       <button
                         onClick={() => router.push(`/teacher/results/quiz/${q.id}`)}
                         title="View results"
