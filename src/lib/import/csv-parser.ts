@@ -2,6 +2,27 @@ import Papa from 'papaparse';
 import type { Question, QuestionType } from '@/types/question';
 import { uid } from '@/lib/utils';
 
+/**
+ * Convert semicolon-escaped thousand separators back to commas.
+ * e.g. "1;000" → "1,000", "1;000;000" → "1,000,000"
+ *
+ * When CSV files contain numbers like 1,000 the comma conflicts with the
+ * delimiter, so authors replace it with a semicolon (1;000). This function
+ * restores the original comma formatting wherever a digit is immediately
+ * followed by a semicolon and then exactly three more digits.
+ */
+export function fixThousandSeparators(s: string): string {
+  let result = s;
+  let prev = '';
+  // Loop because a single pass turns "1;000;000" → "1,000;000"
+  // The second pass then turns "1,000;000" → "1,000,000"
+  while (result !== prev) {
+    prev = result;
+    result = result.replace(/(\d);(\d{3})(?!\d)/g, '$1,$2');
+  }
+  return result;
+}
+
 export interface RawRow {
   [key: string]: string;
 }
@@ -78,7 +99,7 @@ export function mapAndValidate(
 ): ParsedRow[] {
   return rows.map((row, i) => {
     const errors: string[] = [];
-    const text = (row[mapping.text] || '').trim();
+    const text = fixThousandSeparators((row[mapping.text] || '').trim());
     const typeRaw = (row[mapping.type] || 'mcq').trim().toLowerCase();
 
     if (!text) errors.push('Question text is empty');
@@ -94,10 +115,10 @@ export function mapAndValidate(
     }
 
     const options = [
-      (row[mapping.option_a] || '').trim(),
-      (row[mapping.option_b] || '').trim(),
-      (row[mapping.option_c] || '').trim(),
-      (row[mapping.option_d] || '').trim(),
+      fixThousandSeparators((row[mapping.option_a] || '').trim()),
+      fixThousandSeparators((row[mapping.option_b] || '').trim()),
+      fixThousandSeparators((row[mapping.option_c] || '').trim()),
+      fixThousandSeparators((row[mapping.option_d] || '').trim()),
     ].filter(Boolean);
 
     if (type === 'mcq' && options.length < 2) {
@@ -115,7 +136,7 @@ export function mapAndValidate(
       answer = (lower.startsWith('t') || lower === '1' || lower === 'yes') ? '0' : '1';
     } else {
       // shortanswer / fillinblank — answer is the expected text; lowercase to match grading
-      answer = answerRaw.toLowerCase();
+      answer = fixThousandSeparators(answerRaw).toLowerCase();
     }
 
     if (!answerRaw && type !== 'shortanswer') errors.push('Answer is empty');
@@ -128,7 +149,7 @@ export function mapAndValidate(
       text,
       options,
       answer,
-      explanation: mapping.explanation ? (row[mapping.explanation] || '') : '',
+      explanation: mapping.explanation ? fixThousandSeparators(row[mapping.explanation] || '') : '',
       difficulty: (mapping.difficulty ? row[mapping.difficulty] : undefined) as Question['difficulty'],
       tags: mapping.tags ? (row[mapping.tags] || '').split(',').map(t => t.trim()).filter(Boolean) : [],
       approvalStatus: errors.length === 0 ? 'pending' : 'rejected',

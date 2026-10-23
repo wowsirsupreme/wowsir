@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { getAllQuestionsForExport } from '@/lib/firebase/questions';
+import { getAllQuestionsForExport, updateQuestion } from '@/lib/firebase/questions';
 import { TOPIC_LABELS } from '@/types/question';
 import type { Question, QuestionType } from '@/types/question';
+import { fixThousandSeparators } from '@/lib/import/csv-parser';
 
 const PASSWORD = 'wowadmin2024';
 
@@ -116,6 +117,44 @@ function buildTypeSummary(rows: AuditRow[]) {
   return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
 }
 
+// ── Semicolon migration helpers ────────────────────────────────────────────────
+
+/** Returns true if the question has any digit;digit pattern in its text/options/explanation */
+function hasSemicolonNumbers(q: Question): boolean {
+  const RE = /\d;\d/;
+  if (RE.test(q.text || '')) return true;
+  if (Array.isArray(q.options) && q.options.some(o => RE.test(o || ''))) return true;
+  if (RE.test(q.explanation || '')) return true;
+  // Only relevant for text-answer types
+  if ((q.type === 'shortanswer' || q.type === 'fillinblank') && RE.test(q.answer || '')) return true;
+  return false;
+}
+
+/** Build a partial update that replaces semicolon-escaped thousands back to commas */
+function buildSemicolonFix(q: Question): Partial<Question> {
+  const update: Partial<Question> = {};
+
+  const newText = fixThousandSeparators(q.text || '');
+  if (newText !== q.text) update.text = newText;
+
+  if (Array.isArray(q.options)) {
+    const newOpts = q.options.map(o => fixThousandSeparators(o || ''));
+    if (newOpts.some((o, i) => o !== (q.options as string[])[i])) update.options = newOpts;
+  }
+
+  if (q.explanation) {
+    const newEx = fixThousandSeparators(q.explanation);
+    if (newEx !== q.explanation) update.explanation = newEx;
+  }
+
+  if ((q.type === 'shortanswer' || q.type === 'fillinblank') && q.answer) {
+    const newAns = fixThousandSeparators(q.answer);
+    if (newAns !== q.answer) update.answer = newAns;
+  }
+
+  return update;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const BG = [
@@ -139,6 +178,11 @@ export default function DbAuditPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Semicolon migration
+  const [migrateStatus, setMigrateStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [migrateFixed, setMigrateFixed] = useState(0);
+  const [migrateError, setMigrateError] = useState<string | null>(null);
+
   const runAudit = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -151,6 +195,32 @@ export default function DbAuditPage() {
     }
     setLoading(false);
   }, []);
+
+  const runSemicolonFix = useCallback(async () => {
+    if (!rows) return;
+    setMigrateStatus('running');
+    setMigrateError(null);
+    setMigrateFixed(0);
+    try {
+      const toFix = rows.filter(r => hasSemicolonNumbers(r.question));
+      let fixed = 0;
+      for (const { question: q } of toFix) {
+        const patch = buildSemicolonFix(q);
+        if (Object.keys(patch).length > 0 && q.id) {
+          await updateQuestion(q.id, patch);
+          fixed++;
+        }
+      }
+      setMigrateFixed(fixed);
+      setMigrateStatus('done');
+      // Refresh audit rows with updated data
+      const refreshed = await getAllQuestionsForExport();
+      setRows(refreshed.map(q => ({ question: q, issues: validateQuestion(q) })));
+    } catch (err) {
+      setMigrateError(err instanceof Error ? err.message : 'Migration failed');
+      setMigrateStatus('error');
+    }
+  }, [rows]);
 
   // ── Auth gate ──
   if (!authed) {
@@ -324,6 +394,52 @@ export default function DbAuditPage() {
                 </div>
               ))}
             </div>
+
+            {/* Semicolon migration */}
+            {(() => {
+              const semicolonCount = rows.filter(r => hasSemicolonNumbers(r.question)).length;
+              if (semicolonCount === 0 && migrateStatus !== 'done') return null;
+              return (
+                <div style={{
+                  borderRadius: 16, padding: '18px 20px', marginBottom: 20,
+                  background: migrateStatus === 'done' ? 'rgba(16,185,129,0.07)' : 'rgba(245,158,11,0.07)',
+                  border: `1.5px solid ${migrateStatus === 'done' ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: 4 }}>SEMICOLON NUMBER FIX</p>
+                      {migrateStatus === 'done' ? (
+                        <p style={{ fontSize: 14, color: '#6ee7b7', margin: 0 }}>
+                          ✔ Fixed {migrateFixed} question{migrateFixed !== 1 ? 's' : ''} — numbers like 1;000 → 1,000
+                        </p>
+                      ) : (
+                        <p style={{ fontSize: 14, color: '#fbbf24', margin: 0 }}>
+                          {semicolonCount} question{semicolonCount !== 1 ? 's' : ''} contain semicolon-escaped numbers (e.g. 1;000 instead of 1,000)
+                        </p>
+                      )}
+                      {migrateStatus === 'error' && migrateError && (
+                        <p style={{ fontSize: 12, color: '#f87171', marginTop: 4 }}>⚠ {migrateError}</p>
+                      )}
+                    </div>
+                    {migrateStatus !== 'done' && semicolonCount > 0 && (
+                      <button
+                        onClick={runSemicolonFix}
+                        disabled={migrateStatus === 'running'}
+                        style={{
+                          padding: '9px 20px', borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: migrateStatus === 'running' ? 'default' : 'pointer',
+                          background: migrateStatus === 'running' ? 'rgba(255,255,255,0.06)' : 'rgba(245,158,11,0.2)',
+                          border: `1.5px solid ${migrateStatus === 'running' ? 'rgba(255,255,255,0.1)' : 'rgba(245,158,11,0.4)'}`,
+                          color: migrateStatus === 'running' ? 'rgba(255,255,255,0.3)' : '#fbbf24',
+                          opacity: migrateStatus === 'running' ? 0.7 : 1,
+                        }}
+                      >
+                        {migrateStatus === 'running' ? 'Fixing…' : `Fix ${semicolonCount} Question${semicolonCount !== 1 ? 's' : ''}`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Type distribution */}
             <div style={{ borderRadius: 16, padding: '18px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
