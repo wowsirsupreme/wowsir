@@ -21,6 +21,67 @@ interface Issue {
   message: string;
 }
 
+/**
+ * Mirrors getCorrectIndex from play/[code]/page.tsx exactly.
+ * 'true' → 0, 'false' → 1, else parseInt.
+ */
+function getCorrectIndex(answer: string): number {
+  const lower = (answer || '').toLowerCase().trim();
+  if (lower === 'true')  return 0;
+  if (lower === 'false') return 1;
+  return parseInt(answer, 10);
+}
+
+/** Grade explanation quality by character length */
+export type ExplGrade = 'MISSING' | 'TOO_SHORT' | 'BRIEF' | 'GOOD';
+function explGrade(q: Question): ExplGrade {
+  const ex = (q.explanation || '').trim();
+  if (!ex)            return 'MISSING';
+  if (ex.length < 20) return 'TOO_SHORT';
+  if (ex.length < 60) return 'BRIEF';
+  return 'GOOD';
+}
+
+/**
+ * Simulate a player entering the stored correct answer.
+ * Returns { pass, reason } — pass=true means grading would return correct.
+ */
+function simulateAnswer(q: Question): { pass: boolean; reason: string | null } {
+  if (q.type === 'mcq') {
+    const correctIdx = getCorrectIndex(q.answer || '');
+    const optCount   = (q.options || []).length;
+    if (isNaN(correctIdx) || correctIdx < 0 || correctIdx >= optCount) {
+      return { pass: false, reason: `answer index "${q.answer}" out of range (${optCount} option${optCount !== 1 ? 's' : ''})` };
+    }
+    return { pass: true, reason: null };
+  }
+
+  if (q.type === 'truefalse') {
+    const idx = getCorrectIndex(q.answer || '');
+    // Valid: 0 (True) or 1 (False) — accepts 'true', 'false', '0', '1'
+    if (idx !== 0 && idx !== 1) {
+      return { pass: false, reason: `truefalse answer "${q.answer}" resolves to index ${idx} — expected 0 or 1` };
+    }
+    return { pass: true, reason: null };
+  }
+
+  if (q.type === 'shortanswer' || q.type === 'fillinblank') {
+    if (!q.answer?.trim()) {
+      return { pass: false, reason: 'no answer text stored — player has nothing to match against' };
+    }
+    return { pass: true, reason: null };
+  }
+
+  if (q.type === 'matching' || q.type === 'ordering') {
+    if (!q.answer?.trim()) {
+      return { pass: false, reason: 'no answer stored' };
+    }
+    return { pass: true, reason: null };
+  }
+
+  return { pass: false, reason: `unknown type "${q.type}"` };
+}
+
 function validateQuestion(q: Question): Issue[] {
   const issues: Issue[] = [];
 
@@ -59,7 +120,7 @@ function validateQuestion(q: Question): Issue[] {
     if (q.options.length < 2) {
       issues.push({ severity: 'error', message: `MCQ has only ${q.options.length} option(s)` });
     }
-    const answerIdx = Number(q.answer);
+    const answerIdx = getCorrectIndex(q.answer || '');
     if (isNaN(answerIdx) || answerIdx < 0 || answerIdx >= q.options.length) {
       issues.push({ severity: 'error', message: `MCQ answer "${q.answer}" is not a valid option index (0–${q.options.length - 1})` });
     }
@@ -69,13 +130,24 @@ function validateQuestion(q: Question): Issue[] {
   }
 
   if (q.type === 'truefalse') {
-    if (q.answer !== 'true' && q.answer !== 'false') {
-      issues.push({ severity: 'error', message: `true/false answer must be "true" or "false", got: "${q.answer}"` });
+    // Accept: 'true'/'false' (literal) OR '0'/'1' (stored by CSV parser)
+    // getCorrectIndex handles all four; only flag if none match
+    const idx = getCorrectIndex(q.answer || '');
+    if (idx !== 0 && idx !== 1) {
+      issues.push({ severity: 'error', message: `truefalse answer "${q.answer}" is not valid (expected true/false/0/1)` });
     }
   }
 
   if (q.type === 'shortanswer' && !q.answer?.trim()) {
     issues.push({ severity: 'warn', message: 'shortanswer has no answer text' });
+  }
+
+  // Explanation quality
+  const grade = explGrade(q);
+  if (grade === 'MISSING') {
+    issues.push({ severity: 'warn', message: 'No explanation' });
+  } else if (grade === 'TOO_SHORT') {
+    issues.push({ severity: 'warn', message: `Explanation very short (${q.explanation!.length} chars)` });
   }
 
   // Points sanity
@@ -276,6 +348,19 @@ export default function DbAuditPage() {
   const totalWarns     = rows ? rows.reduce((n, r) => n + r.issues.filter(i => i.severity === 'warn').length, 0) : 0;
   const cleanCount     = rows ? rows.filter(r => r.issues.length === 0).length : 0;
 
+  // Simulation stats (computed once when rows are available)
+  const simResults = rows ? rows.map(r => simulateAnswer(r.question)) : [];
+  const simPassCount   = simResults.filter(s => s.pass).length;
+  const simFailRows    = rows ? rows.filter((_, i) => !simResults[i].pass) : [];
+
+  // Explanation quality breakdown
+  const explBreakdown = rows ? {
+    GOOD:      rows.filter(r => explGrade(r.question) === 'GOOD').length,
+    BRIEF:     rows.filter(r => explGrade(r.question) === 'BRIEF').length,
+    TOO_SHORT: rows.filter(r => explGrade(r.question) === 'TOO_SHORT').length,
+    MISSING:   rows.filter(r => explGrade(r.question) === 'MISSING').length,
+  } : null;
+
   const topicSummary   = rows ? buildTopicSummary(rows) : [];
   const typeSummary    = rows ? buildTypeSummary(rows) : [];
   const allTopicKeys   = topicSummary.map(t => t.key);
@@ -394,6 +479,83 @@ export default function DbAuditPage() {
                 </div>
               ))}
             </div>
+
+            {/* ── Quiz Simulation Results ── */}
+            {rows && explBreakdown && (
+              <div style={{
+                borderRadius: 16, padding: '18px 22px', marginBottom: 20,
+                background: simFailRows.length === 0 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)',
+                border: `1.5px solid ${simFailRows.length === 0 ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+              }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', marginBottom: 12 }}>
+                  QUIZ SIMULATION — answering every question with its stored correct answer
+                </p>
+
+                {/* Pass rate */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+                  <div>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 2 }}>Simulation pass rate</p>
+                    <p style={{ fontSize: 30, fontWeight: 800, fontFamily: 'var(--font-mono)', margin: 0, color: simFailRows.length === 0 ? '#6ee7b7' : '#fca5a5' }}>
+                      {rows.length > 0 ? Math.round(simPassCount / rows.length * 100) : 0}%
+                    </p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                      {simPassCount} / {rows.length} questions grade correctly
+                    </p>
+                  </div>
+                  <div style={{ width: 1, height: 48, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+                  {/* Explanation quality */}
+                  <div style={{ flex: 1, minWidth: 240 }}>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>Explanation quality</p>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {([
+                        ['GOOD',      explBreakdown.GOOD,      '#6ee7b7', 'rgba(16,185,129,0.15)'],
+                        ['BRIEF',     explBreakdown.BRIEF,     '#7dd3fc', 'rgba(56,189,248,0.12)'],
+                        ['TOO SHORT', explBreakdown.TOO_SHORT, '#fbbf24', 'rgba(245,158,11,0.12)'],
+                        ['MISSING',   explBreakdown.MISSING,   '#fca5a5', 'rgba(239,68,68,0.12)'],
+                      ] as [string, number, string, string][]).map(([label, count, color, bg]) => (
+                        <div key={label} style={{ padding: '6px 12px', borderRadius: 8, background: bg, textAlign: 'center' }}>
+                          <p style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)', margin: 0 }}>{count}</p>
+                          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: 0, marginTop: 2, letterSpacing: '0.06em' }}>{label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulation failures detail */}
+                {simFailRows.length > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+                    <p style={{ fontSize: 12, color: '#fca5a5', fontWeight: 700, marginBottom: 8 }}>
+                      ✖ {simFailRows.length} question{simFailRows.length !== 1 ? 's' : ''} would grade INCORRECTLY:
+                    </p>
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      {simFailRows.map((r, i) => {
+                        const sim = simResults[rows.indexOf(r)];
+                        return (
+                          <div key={r.question.id || i} style={{
+                            borderRadius: 8, padding: '8px 12px',
+                            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                            fontSize: 12,
+                          }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: '#c4b5fd', marginRight: 8 }}>[{r.question.type}]</span>
+                            <span style={{ color: 'rgba(255,255,255,0.65)' }}>
+                              {(r.question.text || '').slice(0, 60)}{(r.question.text || '').length > 60 ? '…' : ''}
+                            </span>
+                            <div style={{ marginTop: 4, color: '#fca5a5' }}>✖ {sim.reason}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {simFailRows.length === 0 && (
+                  <p style={{ fontSize: 13, color: '#6ee7b7', fontWeight: 700 }}>
+                    ✔ All {rows.length} questions pass simulation — correct answers grade correctly
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Semicolon migration */}
             {(() => {
@@ -517,9 +679,12 @@ export default function DbAuditPage() {
                 </div>
               )}
               {filteredRows.map(({ question: q, issues }) => {
-                const hasError = issues.some(i => i.severity === 'error');
-                const hasWarn  = issues.some(i => i.severity === 'warn');
+                const hasError   = issues.some(i => i.severity === 'error');
+                const hasWarn    = issues.some(i => i.severity === 'warn');
                 const isExpanded = expandedId === q.id;
+                const rowIdx     = rows!.findIndex(r => r.question.id === q.id);
+                const sim        = rowIdx >= 0 ? simResults[rowIdx] : null;
+                const exGrade    = explGrade(q);
                 const borderColor = hasError ? 'rgba(239,68,68,0.35)' : hasWarn ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.25)';
                 const bgColor     = hasError ? 'rgba(239,68,68,0.05)' : hasWarn ? 'rgba(245,158,11,0.04)' : 'rgba(16,185,129,0.04)';
 
@@ -567,6 +732,30 @@ export default function DbAuditPage() {
                         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: isExpanded ? 'normal' : 'nowrap' }}>
                           {q.text || <span style={{ color: '#f87171' }}>(no text)</span>}
                         </p>
+                        {/* Sim + explanation badges */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: issues.filter(i => !i.message.startsWith('No explanation') && !i.message.startsWith('Explanation')).length > 0 ? 5 : 0 }}>
+                          {sim && (
+                            <span style={{
+                              fontSize: 10, padding: '2px 7px', borderRadius: 999, fontWeight: 700,
+                              background: sim.pass ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                              border: `1px solid ${sim.pass ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.3)'}`,
+                              color: sim.pass ? '#6ee7b7' : '#fca5a5',
+                            }}>
+                              {sim.pass ? '✔ sim pass' : `✖ sim fail: ${sim.reason}`}
+                            </span>
+                          )}
+                          {(() => {
+                            const eg = explGrade(q);
+                            return (
+                              <span style={{
+                                fontSize: 10, padding: '2px 7px', borderRadius: 999, fontWeight: 600,
+                                background: eg === 'GOOD' ? 'rgba(16,185,129,0.10)' : eg === 'BRIEF' ? 'rgba(56,189,248,0.10)' : 'rgba(245,158,11,0.10)',
+                                border: `1px solid ${eg === 'GOOD' ? 'rgba(16,185,129,0.2)' : eg === 'BRIEF' ? 'rgba(56,189,248,0.2)' : 'rgba(245,158,11,0.25)'}`,
+                                color: eg === 'GOOD' ? '#6ee7b7' : eg === 'BRIEF' ? '#7dd3fc' : '#fbbf24',
+                              }}>expl: {eg.toLowerCase().replace('_', ' ')}</span>
+                            );
+                          })()}
+                        </div>
                         {/* Issues */}
                         {issues.length > 0 && (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
