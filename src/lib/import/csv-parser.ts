@@ -65,11 +65,13 @@ export function parseCSV(file: File): Promise<{ headers: string[]; rows: RawRow[
 }
 
 /**
- * Resolve an MCQ answer to a 0-based index.
+ * Resolve an MCQ answer to a 0-based index string.
  * Accepts all of: A/B/C/D, a/b/c/d, 1/2/3/4 (1-based), 0/1/2/3 (0-based), or the option text itself.
+ * Returns null when the answer cannot be resolved — caller should reject the row.
  */
-function resolveMCQAnswer(raw: string, options: string[]): string {
+function resolveMCQAnswer(raw: string, options: string[]): string | null {
   const trimmed = raw.trim();
+  if (!trimmed) return null;
 
   // Letter: A/B/C/D (case-insensitive)
   if (/^[a-dA-D]$/.test(trimmed)) {
@@ -88,7 +90,7 @@ function resolveMCQAnswer(raw: string, options: string[]): string {
   const idx = options.findIndex(o => o.toLowerCase() === trimmed.toLowerCase());
   if (idx >= 0) return String(idx);
 
-  return '0'; // fallback
+  return null; // unresolvable — caller must add an error
 }
 
 export function mapAndValidate(
@@ -129,7 +131,12 @@ export function mapAndValidate(
     let answer = '0';
 
     if (type === 'mcq') {
-      answer = resolveMCQAnswer(answerRaw, options);
+      const resolved = resolveMCQAnswer(answerRaw, options);
+      if (resolved === null) {
+        errors.push(`MCQ answer "${answerRaw}" could not be resolved — use A/B/C/D, 1–4, 0–3, or the full option text`);
+      } else {
+        answer = resolved;
+      }
     } else if (type === 'truefalse') {
       // Accept: True/False, T/F, 1/2, Yes/No — store as '0' (True) or '1' (False)
       const lower = answerRaw.toLowerCase();

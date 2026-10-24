@@ -212,8 +212,7 @@ export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerT
       {question.type === 'truefalse' && (
         <div className="grid grid-cols-2 gap-4">
           {['True', 'False'].map((opt, i) => {
-            const val = opt.toLowerCase();
-            const isCorrect = question.answer === val;
+            const isCorrect = resolveAnswerIndex(question.answer) === i;
             const isSelected = selected === i;
             return (
               <button

@@ -250,7 +250,7 @@ type ParsedRow = { ok: boolean; row: number; data?: Omit<Question, 'id'>; error?
 // ---------------------------------------------------------------------------
 // Parser
 // ---------------------------------------------------------------------------
-const VALID_TYPES = new Set<string>(['mcq']);
+const VALID_TYPES = new Set<string>(['mcq', 'truefalse', 'shortanswer', 'fillinblank', 'matching', 'ordering']);
 
 export interface ParseMeta { remapped: number; }
 
