@@ -105,6 +105,7 @@ export default function TopicPicker({ value, onChange, inputStyle }: Props) {
           display: 'flex',
           overflow: 'hidden',
           minHeight: 220,
+          maxHeight: 360,
         }}>
 
           {/* Left panel — subjects */}
