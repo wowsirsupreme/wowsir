@@ -228,6 +228,32 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   'gr11-data-structures': { title: 'Ch 11 – Databases & SQL',                        subject: 'Grade 11 CS (IGCSE)', emoji: '📦' },
   'gr11-algorithms':      { title: 'Ch 9.1–9.3 – Algorithms (Revision)',            subject: 'Grade 11 CS (IGCSE)', emoji: '🔀' },
   'gr11-databases':       { title: 'Ch 11 – Databases & SQL',                        subject: 'Grade 11 CS (IGCSE)', emoji: '🗄️' },
+
+  // ════════════════════════════════════════════════════════════════
+  // CS (A Level 9618) — Cambridge International AS & A Level
+  // AS Level — Papers 1 & 2 (Chapters 1–12)
+  // ════════════════════════════════════════════════════════════════
+  'alcs-data-rep':        { title: 'Ch 1 – Data Representation',                    subject: 'CS (A Level 9618)', emoji: '🔢' },
+  'alcs-communication':   { title: 'Ch 2 – Communication & Internet Technologies',  subject: 'CS (A Level 9618)', emoji: '📡' },
+  'alcs-hardware':        { title: 'Ch 3 – Hardware',                               subject: 'CS (A Level 9618)', emoji: '🖥️' },
+  'alcs-processor':       { title: 'Ch 4 – Processor Fundamentals',                 subject: 'CS (A Level 9618)', emoji: '⚡' },
+  'alcs-system-software': { title: 'Ch 5 – System Software',                        subject: 'CS (A Level 9618)', emoji: '🔧' },
+  'alcs-security':        { title: 'Ch 6 – Security, Privacy & Data Integrity',     subject: 'CS (A Level 9618)', emoji: '🔒' },
+  'alcs-ethics':          { title: 'Ch 7 – Ethics & Ownership',                     subject: 'CS (A Level 9618)', emoji: '⚖️' },
+  'alcs-databases':       { title: 'Ch 8 – Databases & Data Modelling',             subject: 'CS (A Level 9618)', emoji: '🗄️' },
+  'alcs-algorithms':      { title: 'Ch 9 – Algorithm Design & Problem Solving',     subject: 'CS (A Level 9618)', emoji: '🔀' },
+  'alcs-data-structures': { title: 'Ch 10 – Data Types, Structures & Algorithms',   subject: 'CS (A Level 9618)', emoji: '📦' },
+  'alcs-programming':     { title: 'Ch 11 – Programming',                           subject: 'CS (A Level 9618)', emoji: '💻' },
+  'alcs-software-dev':    { title: 'Ch 12 – Software Development',                  subject: 'CS (A Level 9618)', emoji: '🛠️' },
+  // A Level only — Papers 3 & 4 (Chapters 13–20)
+  'alcs-adv-data-rep':    { title: 'Ch 13 – Further Data Representation',           subject: 'CS (A Level 9618)', emoji: '🧮' },
+  'alcs-adv-internet':    { title: 'Ch 14 – Further Communication & Internet',      subject: 'CS (A Level 9618)', emoji: '🌐' },
+  'alcs-adv-hardware':    { title: 'Ch 15 – Further Hardware',                      subject: 'CS (A Level 9618)', emoji: '🔩' },
+  'alcs-adv-system':      { title: 'Ch 16 – System Software & Virtual Machines',   subject: 'CS (A Level 9618)', emoji: '🖧' },
+  'alcs-adv-security':    { title: 'Ch 17 – Cryptography & Network Security',       subject: 'CS (A Level 9618)', emoji: '🔐' },
+  'alcs-ai':              { title: 'Ch 18 – Artificial Intelligence',               subject: 'CS (A Level 9618)', emoji: '🧠' },
+  'alcs-adv-algorithms':  { title: 'Ch 19 – Further Algorithm Design & Complexity', subject: 'CS (A Level 9618)', emoji: '🔬' },
+  'alcs-adv-programming': { title: 'Ch 20 – Computational Intelligence & Paradigms',subject: 'CS (A Level 9618)', emoji: '🎯' },
 };
 
 const LEGACY_SUBJECTS = new Set([

@@ -1,7 +1,8 @@
 /**
  * Grade Question Banks — Barrel Export
  * All grades: 4, 5, 6, 7, 8, 9 CS (IGCSE 0478), 9 DT (IGCSE 0445),
- *             10 CS (IGCSE 0478 Year 2), 11 CS (A-Level 9618)
+ *             10 CS (IGCSE 0478 Year 2), 11 CS (IGCSE 0478 Year 3),
+ *             A Level CS (Cambridge 9618)
  *
  * Usage:
  *   import { allGradeQuestions } from '@/data/grades';
@@ -17,6 +18,7 @@ export { gr9csQuestions } from './gr9cs';
 export { gr9dtQuestions } from './gr9dt';
 export { gr10csQuestions } from './gr10cs';
 export { gr11csQuestions } from './gr11cs';
+export { grAlcsQuestions } from './grAlcs';
 
 // Convenience: all questions in one flat array
 import { gr4Questions } from './gr4';
@@ -28,6 +30,7 @@ import { gr9csQuestions } from './gr9cs';
 import { gr9dtQuestions } from './gr9dt';
 import { gr10csQuestions } from './gr10cs';
 import { gr11csQuestions } from './gr11cs';
+import { grAlcsQuestions } from './grAlcs';
 
 export const allGradeQuestions = [
   ...gr4Questions,
@@ -39,4 +42,5 @@ export const allGradeQuestions = [
   ...gr9dtQuestions,
   ...gr10csQuestions,
   ...gr11csQuestions,
+  ...grAlcsQuestions,
 ];

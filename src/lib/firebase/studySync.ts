@@ -29,6 +29,7 @@ import {
   gr9dtQuestions,
   gr10csQuestions,
   gr11csQuestions,
+  grAlcsQuestions,
 } from '@/data/grades';
 import type { Question } from '@/types/question';
 
@@ -115,7 +116,7 @@ export async function seedStudyQuestions(): Promise<{ written: number; skipped: 
  * Seed a specific grade's question bank, or all grades if grade is omitted.
  */
 export async function seedGradeBank(
-  grade?: 4 | 5 | 6 | 7 | 8 | 9 | '9dt' | 10 | 11,
+  grade?: 4 | 5 | 6 | 7 | 8 | 9 | '9dt' | 10 | 11 | 12,
 ): Promise<SeedResult> {
   const instances = getFirebaseInstances();
   const db = instances?.fs;
@@ -131,6 +132,7 @@ export async function seedGradeBank(
     '9dt': gr9dtQuestions,
     '10':  gr10csQuestions,
     '11':  gr11csQuestions,
+    '12':  grAlcsQuestions,
   };
 
   if (grade === undefined) {
@@ -193,10 +195,11 @@ export function getGradeBankStats(): { grade: string; subject: string; count: nu
     { grade: '6',   subject: 'Grade 6 Computing',              count: gr6Questions.length },
     { grade: '7',   subject: 'Grade 7 Computing',              count: gr7Questions.length },
     { grade: '8',   subject: 'Grade 8 Computing',              count: gr8Questions.length },
-    { grade: '9',   subject: 'Grade 9 CS (IGCSE 0478)',        count: gr9csQuestions.length },
-    { grade: '9dt', subject: 'Grade 9 DT (IGCSE 0445)',        count: gr9dtQuestions.length },
-    { grade: '10',  subject: 'Grade 10 CS (IGCSE 0478 Year 2)',count: gr10csQuestions.length },
-    { grade: '11',  subject: 'Grade 11 CS (A-Level 9618)',     count: gr11csQuestions.length },
+    { grade: '9',   subject: 'CS (IGCSE 0478)',                count: gr9csQuestions.length },
+    { grade: '9dt', subject: 'DT (IGCSE 0445)',                count: gr9dtQuestions.length },
+    { grade: '10',  subject: 'CS (IGCSE 0478 Year 2)',         count: gr10csQuestions.length },
+    { grade: '11',  subject: 'CS (IGCSE 0478 Year 3)',         count: gr11csQuestions.length },
+    { grade: '12',  subject: 'CS (A Level 9618)',              count: grAlcsQuestions.length },
   ];
 }
 
@@ -213,6 +216,7 @@ export function getTotalGradeBankCount(): number {
     gr9csQuestions.length +
     gr9dtQuestions.length +
     gr10csQuestions.length +
-    gr11csQuestions.length
+    gr11csQuestions.length +
+    grAlcsQuestions.length
   );
 }

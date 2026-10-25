@@ -85,7 +85,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   async function handleSeedGrade(grade: string) {
     setSeedingGrade(grade);
     try {
-      const g = grade === '9dt' ? '9dt' : (Number(grade) as 4|5|6|7|8|9|10|11);
+      const g = grade === '9dt' ? '9dt' : (Number(grade) as 4|5|6|7|8|9|10|11|12);
       const result = await seedGradeBank(g as Parameters<typeof seedGradeBank>[0]);
       toast(`Grade ${grade}: ${result.written} written, ${result.protected} protected`, 'success');
     } catch (err) {
