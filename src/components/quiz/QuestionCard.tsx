@@ -145,6 +145,14 @@ export function QuestionCard({ question, selected, revealed, onAnswer, onAnswerT
             className="w-full max-h-48 object-contain rounded-xl mb-6"
           />
         )}
+        {question.audioUrl && (
+          <audio
+            controls
+            src={question.audioUrl}
+            className="w-full mb-6 rounded-xl"
+            style={{ height: 40 }}
+          />
+        )}
         <p className="font-display text-[clamp(26px,4vw,38px)] leading-[1.5] text-paper">
           {question.text}
         </p>

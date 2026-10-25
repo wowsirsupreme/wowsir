@@ -14,6 +14,7 @@ import { allGradeQuestions } from '@/data/grades';
 import { resolveAnswerIndex } from '@/lib/utils';
 import TopicPicker from '@/components/TopicPicker';
 import ImageUploader from '@/components/ImageUploader';
+import AudioUploader from '@/components/AudioUploader';
 import type { Question } from '@/types/question';
 
 /** Human-readable label + colour for each question type */
@@ -79,9 +80,11 @@ export default function QuestionBankPage() {
   const [addDifficulty, setAddDifficulty] = useState<Question['difficulty']>('medium');
   const [addPoints, setAddPoints] = useState(1);
   const [addImageUrl, setAddImageUrl] = useState<string | null>(null);
+  const [addAudioUrl, setAddAudioUrl] = useState<string | null>(null);
   const [addSaving, setAddSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [editAudioUrl, setEditAudioUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [firestoreTotal, setFirestoreTotal] = useState<number | null>(null);
@@ -174,6 +177,7 @@ export default function QuestionBankPage() {
     setEditOptions(opts);
     setEditAnswer(q.answer ?? '');
     setEditImageUrl(q.imageUrl ?? null);
+    setEditAudioUrl(q.audioUrl ?? null);
   }
 
   async function saveEdit(q: Question) {
@@ -206,7 +210,7 @@ export default function QuestionBankPage() {
         options = editOptions.map(o => o.trim()).filter(Boolean);
       }
 
-      const update: Partial<Question> = { text: editText, explanation: editExplanation, type: editType as Question['type'], options, answer, teacherModified: true, imageUrl: editImageUrl ?? null };
+      const update: Partial<Question> = { text: editText, explanation: editExplanation, type: editType as Question['type'], options, answer, teacherModified: true, imageUrl: editImageUrl ?? null, audioUrl: editAudioUrl ?? null };
       await updateQuestion(editingId, update);
       setQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
       setPendingQuestions(prev => prev.map(x => x.id === editingId ? { ...x, ...update } : x));
@@ -275,6 +279,7 @@ export default function QuestionBankPage() {
         source: 'manual' as const,
         createdAt: Date.now(),
         ...(addImageUrl ? { imageUrl: addImageUrl } : {}),
+        ...(addAudioUrl ? { audioUrl: addAudioUrl } : {}),
       };
 
       const result = await saveQuestionDeduped(q);
@@ -290,7 +295,7 @@ export default function QuestionBankPage() {
       // Reset form
       setShowAddForm(false);
       setAddText(''); setAddOptionA(''); setAddOptionB(''); setAddOptionC(''); setAddOptionD('');
-      setAddAnswer(''); setAddExplanation(''); setAddDifficulty('medium'); setAddPoints(1); setAddImageUrl(null);
+      setAddAnswer(''); setAddExplanation(''); setAddDifficulty('medium'); setAddPoints(1); setAddImageUrl(null); setAddAudioUrl(null);
     } catch (e) {
       console.error('Add question error:', e);
       toast('Failed to save question', 'error');
@@ -545,6 +550,12 @@ export default function QuestionBankPage() {
                 <ImageUploader value={addImageUrl} onChange={setAddImageUrl} disabled={addSaving} />
               </div>
 
+              {/* Audio (optional) */}
+              <div>
+                <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>AUDIO (optional)</label>
+                <AudioUploader value={addAudioUrl} onChange={setAddAudioUrl} disabled={addSaving} />
+              </div>
+
               {/* Explanation + meta */}
               <div>
                 <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 5 }}>EXPLANATION</label>
@@ -770,6 +781,11 @@ export default function QuestionBankPage() {
                             <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>IMAGE (optional)</label>
                             <ImageUploader value={editImageUrl} onChange={setEditImageUrl} disabled={saving} />
                           </div>
+                          {/* Audio */}
+                          <div>
+                            <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>AUDIO (optional)</label>
+                            <AudioUploader value={editAudioUrl} onChange={setEditAudioUrl} disabled={saving} />
+                          </div>
                           {/* Explanation */}
                           <div>
                             <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>
@@ -958,6 +974,10 @@ export default function QuestionBankPage() {
                         <div>
                           <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>IMAGE (optional)</label>
                           <ImageUploader value={editImageUrl} onChange={setEditImageUrl} disabled={saving} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>AUDIO (optional)</label>
+                          <AudioUploader value={editAudioUrl} onChange={setEditAudioUrl} disabled={saving} />
                         </div>
                         <div>
                           <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', display: 'block', marginBottom: 4 }}>EXPLANATION</label>

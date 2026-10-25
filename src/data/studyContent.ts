@@ -204,6 +204,16 @@ const GRADE9DT_CHAPTERS: StudyChapter[] = [
   { key: 'gr9dt-materials',     shortTitle: 'Material Classification',       title: 'CC 1.6 – Material Classification',     description: 'Properties of materials: woods, metals, polymers, textiles and composites.',   questions: [], flashcards: [] },
   { key: 'gr9dt-mechanisms',    shortTitle: 'Mechanisms',                    title: 'CC 1.7 – Mechanisms',                  description: 'Levers, gears, cams, pulleys and mechanical advantage.',                      questions: [], flashcards: [] },
   { key: 'gr9dt-manufacturing', shortTitle: 'Manufacturing',                 title: 'CC 1.8 – Manufacturing',               description: 'Cutting, shaping, joining, finishing and scales of production.',               questions: [], flashcards: [] },
+  /* ── Additional CC topics ── */
+  { key: 'gr9dt-communicating', shortTitle: 'Communicating Designs',         title: 'CC 1.3 – Communicating Designs',       description: 'Orthographic, isometric and perspective drawing; CAD; models and prototypes.',   questions: [], flashcards: [] },
+  { key: 'gr9dt-structures',    shortTitle: 'Structures',                    title: 'CC 1.6 – Structures',                  description: 'Structural forces, loads, beams, frameworks, joints and stability.',             questions: [], flashcards: [] },
+  { key: 'gr9dt-electronics',   shortTitle: 'Electronic Systems',            title: 'CC 1.8 – Electronic Systems',          description: 'Electronic components, circuits, sensors, microcontrollers and PCBs.',           questions: [], flashcards: [] },
+  /* ── Graphic Products option (GP 3.1–3.5) ── */
+  { key: 'gr9dt-gp-materials',  shortTitle: 'GP: Materials',                 title: 'GP 3.1 – Graphic Product Materials',   description: 'Papers, boards, films, inks, laminates and smart materials in graphic products.', questions: [], flashcards: [] },
+  { key: 'gr9dt-gp-drawing',    shortTitle: 'GP: Technical Drawing',         title: 'GP 3.2 – Technical Drawing & CAD',     description: 'BS/ISO conventions, CAD tools, 2D and 3D drawing techniques for GP.',            questions: [], flashcards: [] },
+  { key: 'gr9dt-gp-making',     shortTitle: 'GP: Making',                    title: 'GP 3.3 – Making Graphic Products',     description: 'Cutting, printing, folding, laminating and manufacturing graphic products.',      questions: [], flashcards: [] },
+  { key: 'gr9dt-gp-analysis',   shortTitle: 'GP: Analysis & Evaluation',     title: 'GP 3.4 – Analysis & Evaluation',       description: 'Analysing existing products, ACCESS FM, sustainability and lifecycle.',          questions: [], flashcards: [] },
+  { key: 'gr9dt-gp-technology', shortTitle: 'GP: Technology in GP',          title: 'GP 3.5 – Technology in Graphic Products', description: 'CAD/CAM, digital printing, vinyl cutting, laser cutting and industrial processes.', questions: [], flashcards: [] },
 ];
 
 /* ══════════════════════════════════════════════════════
@@ -225,6 +235,8 @@ const GRADE10CS_CHAPTERS: StudyChapter[] = [
   { key: 'gr11-databases',       shortTitle: 'Databases & SQL',             title: 'Ch 11 – Databases & SQL',                     description: 'Relational databases, ER diagrams, normalisation and SQL queries.',                questions: [], flashcards: [] },
   { key: 'gr11-data-structures', shortTitle: 'Data Structures',             title: 'Ch 11 – Advanced Data Structures',            description: 'Stacks, queues, linked lists, trees and their practical implementations.',          questions: [], flashcards: [] },
   { key: 'gr11-algorithms',      shortTitle: 'Algorithms (Revision)',       title: 'Ch 9 – Algorithms (Exam Revision)',           description: 'Sorting, searching, recursion and algorithm analysis for the exam.',               questions: [], flashcards: [] },
+  /* ── Emerging technology ── */
+  { key: 'gr10-quantum',         shortTitle: 'Quantum Computing',           title: 'Ch 7.2 – Quantum Computing',                  description: 'Qubits, superposition, entanglement, quantum algorithms and post-quantum cryptography.', questions: [], flashcards: [] },
 ];
 
 /* ══════════════════════════════════════════════════════
@@ -363,14 +375,16 @@ export const GRADE_PRACTICE_TESTS: Record<string, PracticeTest[]> = {
   ],
   'gr9-dt': [
     { id: 'gr9dt-pt1', title: 'Practice Test 1', description: 'CC 1.1–1.4 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: GRADE9DT_CHAPTERS.slice(0,4).map(c=>c.key), maxQuestions: 20 },
-    { id: 'gr9dt-pt2', title: 'Practice Test 2', description: 'CC 1.5–1.8 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: GRADE9DT_CHAPTERS.slice(4).map(c=>c.key),   maxQuestions: 20 },
-    { id: 'gr9dt-full', title: 'Full Mock Exam', description: 'All CC topics · 40 questions · 55 min', timeLimitMinutes: 55, chapterKeys: GRADE9DT_CHAPTERS.map(c=>c.key), maxQuestions: 40 },
+    { id: 'gr9dt-pt2', title: 'Practice Test 2', description: 'CC 1.5–1.8 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: ['gr9dt-health-safety','gr9dt-materials','gr9dt-mechanisms','gr9dt-manufacturing'], maxQuestions: 20 },
+    { id: 'gr9dt-pt3', title: 'Practice Test 3', description: 'Graphic Products · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: ['gr9dt-gp-materials','gr9dt-gp-drawing','gr9dt-gp-making','gr9dt-gp-analysis','gr9dt-gp-technology'], maxQuestions: 20 },
+    { id: 'gr9dt-full', title: 'Full Mock Exam', description: 'All CC + GP topics · 50 questions · 70 min', timeLimitMinutes: 70, chapterKeys: GRADE9DT_CHAPTERS.map(c=>c.key), maxQuestions: 50 },
   ],
   'gr10-cs': [
-    { id: 'gr10cs-pt1',  title: 'Practice Test 1', description: 'Security & Robotics · 25 questions · 35 min',     timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(0,3).map(c=>c.key),  maxQuestions: 25 },
-    { id: 'gr10cs-pt2',  title: 'Practice Test 2', description: 'AI, Algorithms & Programming · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(3,6).map(c=>c.key),  maxQuestions: 25 },
-    { id: 'gr10cs-pt3',  title: 'Revision Test',   description: 'OOP, Databases & Algorithms · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(6).map(c=>c.key),    maxQuestions: 25 },
-    { id: 'gr10cs-full', title: 'Full Mock Exam',   description: 'All 12 topics · 50 questions · 75 min',          timeLimitMinutes: 75, chapterKeys: GRADE10CS_CHAPTERS.map(c=>c.key),             maxQuestions: 50 },
+    { id: 'gr10cs-pt1',     title: 'Practice Test 1', description: 'Security & Robotics · 25 questions · 35 min',           timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(0,3).map(c=>c.key),  maxQuestions: 25 },
+    { id: 'gr10cs-pt2',     title: 'Practice Test 2', description: 'AI, Algorithms & Programming · 25 questions · 35 min',   timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(3,6).map(c=>c.key),  maxQuestions: 25 },
+    { id: 'gr10cs-pt3',     title: 'Revision Test',   description: 'OOP, Databases & Algorithms · 25 questions · 35 min',   timeLimitMinutes: 35, chapterKeys: ['gr11-security','gr11-oop','gr11-programming','gr11-databases','gr11-data-structures','gr11-algorithms'], maxQuestions: 25 },
+    { id: 'gr10cs-quantum', title: 'Quantum Computing', description: 'Quantum Computing · 25 questions · 35 min',           timeLimitMinutes: 35, chapterKeys: ['gr10-quantum'],                             maxQuestions: 25 },
+    { id: 'gr10cs-full',    title: 'Full Mock Exam',   description: 'All topics including Quantum · 50 questions · 75 min', timeLimitMinutes: 75, chapterKeys: GRADE10CS_CHAPTERS.map(c=>c.key),             maxQuestions: 50 },
   ],
   'gr11-cs': [
     { id: 'alcs-as-pt1',  title: 'AS Paper 1 – Data & Systems',    description: 'Ch 1–6 · 30 questions · 45 min',   timeLimitMinutes: 45, chapterKeys: ALCS_CHAPTERS.slice(0,6).map(c=>c.key),   maxQuestions: 30 },
