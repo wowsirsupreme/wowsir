@@ -7298,10 +7298,7 @@ export const grAlcsQuestions: Omit<Question, 'quizId'>[] = [
     id: 'alcs-programming-q005',
     topicKey: 'alcs-programming',
     type: 'mcq' as const,
-    text: 'What is the output of this pseudocode?
-FOR i ← 1 TO 3
-  OUTPUT i * i
-NEXT i',
+    text: 'What is the output of this pseudocode? FOR i ← 1 TO 3 / OUTPUT i * i / NEXT i',
     options: ['1, 2, 3', '1, 4, 9', '2, 4, 6', '1, 3, 9'],
     answer: '1, 4, 9',
     explanation: 'i=1: 1×1=1; i=2: 2×2=4; i=3: 3×3=9. Outputs 1, 4, 9.',
