@@ -13,6 +13,7 @@ import {
   type QuestionStat, type UsageStat, type GeoPoint,
 } from '@/lib/firebase/adminHelpers';
 import { deleteQuestionsByTopic, getAllQuestionsByTopic } from '@/lib/firebase/questions';
+import { seedGradeBank, getGradeBankStats } from '@/lib/firebase/studySync';
 import { loginTeacher, logoutTeacher, onAuthChange } from '@/lib/firebase/auth';
 import type { User } from 'firebase/auth';
 import { useFirebase } from '@/hooks/useFirebase';
@@ -620,6 +621,37 @@ function QuestionBankTab() {
   const [repairing, setRepairing] = useState(false);
   const [repairResult, setRepairResult] = useState<{ migrated: number; skipped: number; errors: number } | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);    // topicKey being exported
+  const [seedingGrade, setSeedingGrade] = useState<string | null>(null);
+  const [seedingAll, setSeedingAll] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ written: number; protected: number } | null>(null);
+
+  const gradeBankStats = getGradeBankStats();
+  const totalSeedQ = gradeBankStats.reduce((s, g) => s + g.count, 0);
+
+  async function handleSeedGrade(grade: string) {
+    setSeedingGrade(grade);
+    setSeedResult(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await seedGradeBank(grade as any);
+      setSeedResult(result);
+      await refreshCounts();
+    } finally {
+      setSeedingGrade(null);
+    }
+  }
+
+  async function handleSeedAll() {
+    setSeedingAll(true);
+    setSeedResult(null);
+    try {
+      const result = await seedGradeBank(undefined);
+      setSeedResult(result);
+      await refreshCounts();
+    } finally {
+      setSeedingAll(false);
+    }
+  }
 
   const handleDownloadCSV = async (topicKey: string, topicTitle: string) => {
     setDownloading(topicKey);
@@ -769,6 +801,7 @@ function QuestionBankTab() {
     'Grade 9 CS (IGCSE)', 'Grade 9 DT (IGCSE)',
     'Grade 10 CS (IGCSE)',
     'Grade 11 CS (IGCSE)',
+    'CS (A Level 9618)',
   ];
   const subjects = subjectOrder.filter(s => bySubject[s]);
 
@@ -892,6 +925,54 @@ function QuestionBankTab() {
           >×</button>
         </div>
       )}
+
+      {/* ── Seed Grade Banks ── */}
+      <div style={{
+        borderRadius: 14, border: '1px solid rgba(201,168,76,0.2)',
+        background: 'rgba(201,168,76,0.04)', padding: '18px 20px', marginBottom: 20,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#c9a84c' }}>Seed Grade Banks</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginLeft: 10 }}>
+              {totalSeedQ.toLocaleString()} questions available — teacher-modified questions are never overwritten
+            </span>
+          </div>
+          <button
+            onClick={handleSeedAll}
+            disabled={seedingAll || seedingGrade !== null}
+            style={{
+              fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 8, cursor: seedingAll ? 'default' : 'pointer',
+              background: seedingAll ? 'rgba(201,168,76,0.1)' : 'rgba(201,168,76,0.18)',
+              border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', whiteSpace: 'nowrap',
+            }}
+          >
+            {seedingAll ? 'Seeding…' : `Seed ALL (${totalSeedQ.toLocaleString()}q)`}
+          </button>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {gradeBankStats.map(gs => (
+            <button
+              key={gs.grade}
+              onClick={() => handleSeedGrade(String(gs.grade))}
+              disabled={seedingGrade === String(gs.grade) || seedingAll}
+              style={{
+                fontSize: 11, padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
+                background: seedingGrade === String(gs.grade) ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)',
+              }}
+            >
+              {seedingGrade === String(gs.grade) ? '…' : `${gs.subject} (${gs.count}q)`}
+            </button>
+          ))}
+        </div>
+        {seedResult && (
+          <div style={{ marginTop: 10, fontSize: 12, color: '#34d399' }}>
+            ✓ {seedResult.written} written, {seedResult.protected} protected (teacher-modified)
+            <button onClick={() => setSeedResult(null)} style={{ marginLeft: 10, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
+      </div>
 
       <div style={{ display: 'grid', gap: 16 }}>
         {subjects.map(subj => {
