@@ -80,6 +80,7 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ════════════════════════════════════════════════════════════════
   // GRADE 5 — Computing
   // ════════════════════════════════════════════════════════════════
+  'gr5-ch1-history':   { title: 'Ch 1 – Computer Evolution',   subject: 'Grade 5 Computing', emoji: '🖥️' },
   'gr5-ch1-evolution': { title: 'Ch 1 – Computer Evolution',   subject: 'Grade 5 Computing', emoji: '🖥️' },
   'gr5-ch2-storage':   { title: 'Ch 2 – Data Storage Media',   subject: 'Grade 5 Computing', emoji: '💾' },
   'gr5-ch3-tables':    { title: 'Ch 3 – Organising in Word',         subject: 'Grade 5 Computing', emoji: '📊' },
@@ -186,6 +187,13 @@ export const TOPIC_LABELS: Record<string, { title: string; subject: string; emoj
   // ── Materials option (Section 2) ──
   'gr9dt-manufacturing': { title: '2.3 – Commercial Manufacturing Methods',     subject: 'Grade 9 DT (IGCSE)', emoji: '🏭' },
   'gr9dt-health-safety': { title: '2.2.5 – Safe Working Practices',             subject: 'Grade 9 DT (IGCSE)', emoji: '🦺' },
+  // ── Graphic Products option (Section 3) ──
+  'gr9dt-communicating': { title: '1.3 – Communicating Designs (GP)',           subject: 'Grade 9 DT (IGCSE)', emoji: '📐' },
+  'gr9dt-gp-materials':  { title: 'GP 3.1 – Graphic Product Materials',         subject: 'Grade 9 DT (IGCSE)', emoji: '📄' },
+  'gr9dt-gp-drawing':    { title: 'GP 3.2 – Technical Drawing & CAD',           subject: 'Grade 9 DT (IGCSE)', emoji: '📏' },
+  'gr9dt-gp-making':     { title: 'GP 3.3 – Making Graphic Products',           subject: 'Grade 9 DT (IGCSE)', emoji: '✂️' },
+  'gr9dt-gp-analysis':   { title: 'GP 3.4 – Analysis & Evaluation',             subject: 'Grade 9 DT (IGCSE)', emoji: '🔎' },
+  'gr9dt-gp-technology': { title: 'GP 3.5 – Technology in Graphic Products',    subject: 'Grade 9 DT (IGCSE)', emoji: '🖨️' },
   // ── Legacy alias keys — kept for Firestore backwards-compat, hidden from picker ──
   'gr9dt-design1':       { title: '1.2.1/1.2.2 – Identifying & Defining',      subject: 'Grade 9 DT (IGCSE)', emoji: '🔍' },
   'gr9dt-design2':       { title: '1.2.3/1.2.4 – Proposing & Developing',      subject: 'Grade 9 DT (IGCSE)', emoji: '✏️' },
@@ -264,8 +272,8 @@ const LEGACY_SUBJECTS = new Set([
 /** Individual topic keys hidden from the picker but kept in TOPIC_LABELS for
  *  Firestore backwards-compatibility (old quiz docs may reference these keys). */
 const LEGACY_TOPIC_KEYS = new Set([
-  // Grade 5 — old/granular keys superseded by chapter-level keys
-  'gr5-ch1-history',           // old chapter-level key
+  // Grade 5 — gr5-ch1-history is the ACTIVE key used by gr5.ts; gr5-ch1-evolution is the legacy alias
+  'gr5-ch1-evolution',         // old name — kept for backwards compat, superseded by gr5-ch1-history
   'gr5-ch1-early-counting', 'gr5-ch1-abacus', 'gr5-ch1-napier', 'gr5-ch1-pascaline',
   'gr5-ch1-leibniz', 'gr5-ch1-jacquard', 'gr5-ch1-babbage-lovelace', 'gr5-ch1-hollerith',
   'gr5-ch1-mark1', 'gr5-ch1-gen1', 'gr5-ch1-gen2', 'gr5-ch1-gen3', 'gr5-ch1-gen4',
