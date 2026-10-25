@@ -620,6 +620,9 @@ function QuestionBankTab() {
   const [deleteResult, setDeleteResult] = useState<{ topicKey: string; deleted: number; errors: number } | null>(null);
   const [repairing, setRepairing] = useState(false);
   const [repairResult, setRepairResult] = useState<{ migrated: number; skipped: number; errors: number } | null>(null);
+  const [purgingOrphans, setPurgingOrphans] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<{ deleted: number; keys: string[]; errors: number } | null>(null);
+  const [confirmPurge, setConfirmPurge] = useState(false);
   const [downloading, setDownloading] = useState<string | null>(null);    // topicKey being exported
   const [seedingGrade, setSeedingGrade] = useState<string | null>(null);
   const [seedingAll, setSeedingAll] = useState(false);
@@ -781,6 +784,46 @@ function QuestionBankTab() {
     }
   }, [refreshCounts]);
 
+  // Permanently delete all questions whose topicKey is not in TOPIC_LABELS
+  const handlePurgeOrphans = useCallback(async () => {
+    setPurgingOrphans(true);
+    setPurgeResult(null);
+    setConfirmPurge(false);
+    try {
+      const { getFirebaseInstances } = await import('@/lib/firebase/config');
+      const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore');
+      const { fs } = getFirebaseInstances();
+      if (!fs) { setPurgingOrphans(false); return; }
+
+      const snap = await getDocs(collection(fs, 'questions'));
+      const knownKeys = new Set(Object.keys(TOPIC_LABELS));
+      const toDelete: { id: string; topicKey: string }[] = [];
+      snap.forEach(d => {
+        const tk = (d.data() as { topicKey?: string }).topicKey;
+        if (tk && !knownKeys.has(tk)) toDelete.push({ id: d.id, topicKey: tk });
+      });
+
+      const orphanKeys = [...new Set(toDelete.map(d => d.topicKey))];
+      let deleted = 0, errors = 0;
+      const BATCH_SIZE = 400;
+
+      for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
+        const batch = writeBatch(fs);
+        const chunk = toDelete.slice(i, i + BATCH_SIZE);
+        chunk.forEach(({ id }) => batch.delete(doc(fs, 'questions', id)));
+        try { await batch.commit(); deleted += chunk.length; }
+        catch { errors += chunk.length; }
+      }
+
+      setPurgeResult({ deleted, keys: orphanKeys, errors });
+      await refreshCounts();
+    } catch {
+      setPurgeResult({ deleted: 0, keys: [], errors: 1 });
+    } finally {
+      setPurgingOrphans(false);
+    }
+  }, [refreshCounts]);
+
   // Build subject → chapter map from TOPIC_LABELS + Firestore counts
   const topicCounts = fsTopicCounts ?? {};
   const bySubject: Record<string, { topicKey: string; title: string; emoji: string; count: number }[]> = {};
@@ -859,24 +902,62 @@ function QuestionBankTab() {
       {/* Orphan warning — questions with unrecognised topicKeys */}
       {!fsLoading && orphanTotal > 0 && (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           padding: '12px 18px', borderRadius: 10, marginBottom: 16,
           background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)',
         }}>
-          <span style={{ fontSize: 13, color: '#fbbf24' }}>
-            ⚠️ {orphanTotal.toLocaleString()} question{orphanTotal !== 1 ? 's' : ''} in Firestore have an unrecognised topic key and are not shown below. These may be leftover pre-built questions or imports with mismatched keys.
-          </span>
-          <button
-            onClick={handleRepairOrphans}
-            disabled={repairing}
-            style={{
-              flexShrink: 0, fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-              background: repairing ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.2)',
-              border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24',
-            }}
-          >
-            {repairing ? 'Repairing…' : 'Repair Keys'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 13, color: '#fbbf24' }}>
+              ⚠️ {orphanTotal.toLocaleString()} question{orphanTotal !== 1 ? 's' : ''} in Firestore have an unrecognised topic key and are not shown below. These may be leftover pre-built questions or imports with mismatched keys.
+            </span>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={handleRepairOrphans}
+                disabled={repairing || purgingOrphans}
+                style={{
+                  fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                  background: repairing ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.2)',
+                  border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24',
+                }}
+              >
+                {repairing ? 'Repairing…' : 'Repair Keys'}
+              </button>
+              {!confirmPurge ? (
+                <button
+                  onClick={() => setConfirmPurge(true)}
+                  disabled={repairing || purgingOrphans}
+                  style={{
+                    fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                    background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171',
+                  }}
+                >
+                  Delete Orphans
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handlePurgeOrphans}
+                    disabled={purgingOrphans}
+                    style={{
+                      fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                      background: 'rgba(239,68,68,0.3)', border: '1px solid rgba(239,68,68,0.6)', color: '#fca5a5', fontWeight: 700,
+                    }}
+                  >
+                    {purgingOrphans ? 'Deleting…' : `Yes, delete ${orphanTotal}`}
+                  </button>
+                  <button
+                    onClick={() => setConfirmPurge(false)}
+                    disabled={purgingOrphans}
+                    style={{
+                      fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -899,6 +980,29 @@ function QuestionBankTab() {
           <button onClick={() => setRepairResult(null)} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: repairResult.errors > 0 ? '#fbbf24' : '#34d399', fontSize: 16,
+          }}>✕</button>
+        </div>
+      )}
+
+      {/* Purge orphans result banner */}
+      {purgeResult && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 18px', borderRadius: 10, marginBottom: 16,
+          background: purgeResult.errors > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(52,211,153,0.1)',
+          border: `1px solid ${purgeResult.errors > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(52,211,153,0.3)'}`,
+        }}>
+          <span style={{ fontSize: 13, color: purgeResult.errors > 0 ? '#f87171' : '#34d399' }}>
+            {purgeResult.errors > 0
+              ? `⚠️ Deleted ${purgeResult.deleted} orphan question${purgeResult.deleted !== 1 ? 's' : ''} with ${purgeResult.errors} error(s).`
+              : purgeResult.deleted === 0
+                ? `✓ No orphan questions found to delete.`
+                : `✓ Permanently deleted ${purgeResult.deleted} orphan question${purgeResult.deleted !== 1 ? 's' : ''} (keys: ${purgeResult.keys.join(', ')}).`
+            }
+          </span>
+          <button onClick={() => setPurgeResult(null)} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: purgeResult.errors > 0 ? '#f87171' : '#34d399', fontSize: 16,
           }}>✕</button>
         </div>
       )}
