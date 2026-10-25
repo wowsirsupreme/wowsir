@@ -12,6 +12,8 @@
 import type { Question } from '@/types/question';
 import { CHAPTER_RESOURCES } from './studyResources';
 import { ALL_STUDY_QUESTIONS } from './studyQuestions';
+// @ts-ignore — grAlcs uses ts-nocheck due to large union; cast is safe below
+import { grAlcsQuestions } from './grades/grAlcs';
 
 /* ── Flashcard (study-only, not in Firestore question bank) ── */
 export interface Flashcard {
@@ -217,14 +219,47 @@ function applyResources(chapters: StudyChapter[]): StudyChapter[] {
   }));
 }
 
+/* ══════════════════════════════════════════════════════
+   A LEVEL CS  (20 chapters · Cambridge AS & A Level 9618)
+   ══════════════════════════════════════════════════════ */
+const ALCS_CHAPTERS: StudyChapter[] = [
+  /* ── AS Level (Ch 1–12) ── */
+  { key: 'alcs-data-rep',        shortTitle: 'Data Representation',            title: 'Ch 1 – Data Representation',                      description: 'Binary, hex, two\'s complement, floating point and character encoding.',            questions: [], flashcards: [] },
+  { key: 'alcs-communication',   shortTitle: 'Communication & Internet',       title: 'Ch 2 – Communication & Internet Technologies',     description: 'Network types, protocols, TCP/IP, HTTP and internet services.',                     questions: [], flashcards: [] },
+  { key: 'alcs-hardware',        shortTitle: 'Hardware',                       title: 'Ch 3 – Hardware',                                  description: 'Logic gates, Boolean algebra, flip-flops and digital circuits.',                     questions: [], flashcards: [] },
+  { key: 'alcs-processor',       shortTitle: 'Processor Fundamentals',         title: 'Ch 4 – Processor Fundamentals',                    description: 'CPU architecture, fetch-decode-execute cycle, registers and instruction sets.',      questions: [], flashcards: [] },
+  { key: 'alcs-system-software', shortTitle: 'System Software',                title: 'Ch 5 – System Software',                           description: 'Operating systems, memory management, scheduling and file systems.',                 questions: [], flashcards: [] },
+  { key: 'alcs-security',        shortTitle: 'Security & Data Integrity',      title: 'Ch 6 – Security, Privacy & Data Integrity',        description: 'Threats, encryption, authentication and data validation techniques.',               questions: [], flashcards: [] },
+  { key: 'alcs-ethics',          shortTitle: 'Ethics & Ownership',             title: 'Ch 7 – Ethics & Ownership',                        description: 'Intellectual property, privacy, legal frameworks and AI ethics.',                    questions: [], flashcards: [] },
+  { key: 'alcs-databases',       shortTitle: 'Databases & Data Modelling',     title: 'Ch 8 – Databases & Data Modelling',                description: 'Relational databases, SQL, entity-relationship diagrams and normalisation.',         questions: [], flashcards: [] },
+  { key: 'alcs-algorithms',      shortTitle: 'Algorithm Design',               title: 'Ch 9 – Algorithm Design & Problem Solving',        description: 'Pseudocode, big-O notation, sorting and searching algorithms.',                     questions: [], flashcards: [] },
+  { key: 'alcs-data-structures', shortTitle: 'Data Structures',                title: 'Ch 10 – Data Types, Structures & Algorithms',      description: 'Arrays, stacks, queues, linked lists, trees and hash tables.',                      questions: [], flashcards: [] },
+  { key: 'alcs-programming',     shortTitle: 'Programming',                    title: 'Ch 11 – Programming',                              description: 'OOP, recursion, file handling, exception handling and testing.',                    questions: [], flashcards: [] },
+  { key: 'alcs-software-dev',    shortTitle: 'Software Development',           title: 'Ch 12 – Software Development',                     description: 'SDLC, testing strategies, project management and software lifecycles.',            questions: [], flashcards: [] },
+  /* ── A2 Level (Ch 13–20) ── */
+  { key: 'alcs-adv-data-rep',    shortTitle: 'Further Data Representation',    title: 'Ch 13 – Further Data Representation',              description: 'Advanced number systems, signed magnitude and IEEE 754 floating point.',           questions: [], flashcards: [] },
+  { key: 'alcs-adv-internet',    shortTitle: 'Further Communication',          title: 'Ch 14 – Further Communication & Internet',         description: 'Circuit vs packet switching, VPN, firewalls and advanced protocols.',              questions: [], flashcards: [] },
+  { key: 'alcs-adv-hardware',    shortTitle: 'Further Hardware',               title: 'Ch 15 – Further Hardware',                         description: 'Processor performance, pipelining, RISC vs CISC and parallel processing.',          questions: [], flashcards: [] },
+  { key: 'alcs-adv-system',      shortTitle: 'System Software & VMs',          title: 'Ch 16 – System Software & Virtual Machines',       description: 'Virtual machines, hypervisors, BIOS, device drivers and OS kernel.',              questions: [], flashcards: [] },
+  { key: 'alcs-adv-security',    shortTitle: 'Cryptography & Security',        title: 'Ch 17 – Cryptography & Network Security',          description: 'Symmetric/asymmetric encryption, digital signatures and certificates.',           questions: [], flashcards: [] },
+  { key: 'alcs-ai',              shortTitle: 'Artificial Intelligence',        title: 'Ch 18 – Artificial Intelligence',                  description: 'Machine learning, neural networks, expert systems and natural language processing.',questions: [], flashcards: [] },
+  { key: 'alcs-adv-algorithms',  shortTitle: 'Further Algorithm Design',       title: 'Ch 19 – Further Algorithm Design & Complexity',    description: 'Tractable/intractable problems, heuristics and abstract data type design.',       questions: [], flashcards: [] },
+  { key: 'alcs-adv-programming', shortTitle: 'Computational Intelligence',     title: 'Ch 20 – Computational Intelligence & Paradigms',   description: 'Functional programming, logic programming and declarative paradigms.',            questions: [], flashcards: [] },
+];
+
 const ALL_CHAPTER_ARRAYS = [
   GRADE4_CHAPTERS, GRADE5_CHAPTERS, GRADE6_CHAPTERS,
   GRADE7_CHAPTERS, GRADE8_CHAPTERS,
   GRADE9CS_CHAPTERS, GRADE9DT_CHAPTERS,
+  ALCS_CHAPTERS,
 ];
 /* Build a topicKey → questions lookup once */
 const _questionsByTopic: Record<string, Question[]> = {};
 for (const q of ALL_STUDY_QUESTIONS) {
+  (_questionsByTopic[q.topicKey] ??= []).push(q as unknown as Question);
+}
+/* Add A Level CS questions (800 questions across 20 chapters) */
+for (const q of (grAlcsQuestions as unknown as Array<{ topicKey: string } & Question>)) {
   (_questionsByTopic[q.topicKey] ??= []).push(q as unknown as Question);
 }
 
@@ -255,6 +290,7 @@ export const GRADE_CHAPTERS: Record<string, StudyChapter[]> = {
   'gr8-cs':  GRADE8_CHAPTERS,
   'gr9-cs':  GRADE9CS_CHAPTERS,
   'gr9-dt':  GRADE9DT_CHAPTERS,
+  'gr11-cs': ALCS_CHAPTERS,
 };
 
 /* ── Practice tests per grade ── */
@@ -294,6 +330,13 @@ export const GRADE_PRACTICE_TESTS: Record<string, PracticeTest[]> = {
     { id: 'gr9dt-pt1', title: 'Practice Test 1', description: 'CC 1.1–1.4 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: GRADE9DT_CHAPTERS.slice(0,4).map(c=>c.key), maxQuestions: 20 },
     { id: 'gr9dt-pt2', title: 'Practice Test 2', description: 'CC 1.5–1.8 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: GRADE9DT_CHAPTERS.slice(4).map(c=>c.key),   maxQuestions: 20 },
     { id: 'gr9dt-full', title: 'Full Mock Exam', description: 'All CC topics · 40 questions · 55 min', timeLimitMinutes: 55, chapterKeys: GRADE9DT_CHAPTERS.map(c=>c.key), maxQuestions: 40 },
+  ],
+  'gr11-cs': [
+    { id: 'alcs-as-pt1',  title: 'AS Paper 1 – Data & Systems',    description: 'Ch 1–6 · 30 questions · 45 min',   timeLimitMinutes: 45, chapterKeys: ALCS_CHAPTERS.slice(0,6).map(c=>c.key),   maxQuestions: 30 },
+    { id: 'alcs-as-pt2',  title: 'AS Paper 2 – Algorithms & OOP',  description: 'Ch 7–12 · 30 questions · 45 min',  timeLimitMinutes: 45, chapterKeys: ALCS_CHAPTERS.slice(6,12).map(c=>c.key),  maxQuestions: 30 },
+    { id: 'alcs-a2-pt1',  title: 'A2 Paper 3 – Further Systems',   description: 'Ch 13–16 · 25 questions · 40 min', timeLimitMinutes: 40, chapterKeys: ALCS_CHAPTERS.slice(12,16).map(c=>c.key), maxQuestions: 25 },
+    { id: 'alcs-a2-pt2',  title: 'A2 Paper 4 – AI & Paradigms',    description: 'Ch 17–20 · 25 questions · 40 min', timeLimitMinutes: 40, chapterKeys: ALCS_CHAPTERS.slice(16).map(c=>c.key),    maxQuestions: 25 },
+    { id: 'alcs-full',    title: 'Full Mock Exam',                  description: 'All 20 chapters · 60 questions · 90 min', timeLimitMinutes: 90, chapterKeys: ALCS_CHAPTERS.map(c=>c.key),   maxQuestions: 60 },
   ],
 };
 
