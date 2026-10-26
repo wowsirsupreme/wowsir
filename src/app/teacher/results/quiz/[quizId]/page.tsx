@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Users, Trophy, Target, TrendingUp, AlertTria
 import { useAuth } from '@/hooks/useAuth';
 import { useFirebase } from '@/hooks/useFirebase';
 import { useSession } from '@/hooks/useSession';
-import { getResultsByQuiz, findActiveSessionForQuiz, endSession, clearTeacherSession } from '@/lib/firebase/sessions';
+import { getResultsByQuiz, findActiveSessionForQuiz, endSession, clearTeacherSession, setLivePlayerScore, removeLivePlayer } from '@/lib/firebase/sessions';
 import { getQuiz } from '@/lib/firebase/quizzes';
 import type { SessionResult } from '@/types/session';
 import type { Quiz } from '@/types/quiz';
@@ -38,6 +38,25 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
   const [tab, setTab] = useState<'overview' | 'questions' | 'sessions' | 'students'>('overview');
   const [liveSession, setLiveSession] = useState<{ sessionId: string; code: string } | null>(null);
   const [endingSession, setEndingSession] = useState(false);
+
+  // Live moderation state
+  const [liveEditId, setLiveEditId] = useState<string | null>(null); // playerId being edited
+  const [liveEditScore, setLiveEditScore] = useState('');
+
+  async function handleLiveScoreEdit(playerId: string) {
+    if (!liveSession) return;
+    const n = parseInt(liveEditScore, 10);
+    if (isNaN(n) || n < 0) return;
+    await setLivePlayerScore(liveSession.sessionId, playerId, n);
+    setLiveEditId(null);
+    setLiveEditScore('');
+  }
+
+  async function handleLiveRemove(playerId: string, name: string) {
+    if (!liveSession) return;
+    if (!confirm(`Remove ${name} from the live leaderboard?`)) return;
+    await removeLivePlayer(liveSession.sessionId, playerId);
+  }
 
   // Real-time live session data (leaderboard updates as students answer)
   const { leaderboard: liveLeaderboard, players: livePlayers } = useSession(liveSession?.sessionId ?? null);
@@ -389,12 +408,13 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
                   const medals = ['🥇','🥈','🥉'];
                   const acc = p.total > 0 ? p.correct / p.total : null;
                   const accColor = acc == null ? '#fcd34d' : acc >= 0.7 ? '#34d399' : acc >= 0.4 ? '#fcd34d' : '#f87171';
+                  const isEditing = liveEditId === p.id;
                   return (
                     <div
                       key={p.id || i}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '11px 16px',
+                        padding: '9px 16px',
                         background: i === 0 ? 'rgba(201,168,76,0.08)' : i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
                         borderBottom: i < liveLeaderboard.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                       }}
@@ -404,15 +424,51 @@ export default function QuizAnalyticsPage({ params }: { params: Promise<{ quizId
                       </span>
                       <span style={{ flex: 1, fontSize: 14, fontWeight: i === 0 ? 700 : 500, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.85)' }}>
                         {p.name}
+                        {(p.tabSwitches ?? 0) > 0 && (
+                          <span title={`${p.tabSwitches} tab switch${p.tabSwitches !== 1 ? 'es' : ''}`} style={{ marginLeft: 6, fontSize: 11, color: '#f87171' }}>
+                            ⚠️ {p.tabSwitches}
+                          </span>
+                        )}
                       </span>
                       {acc != null && (
                         <span style={{ fontSize: 12, color: accColor, fontFamily: 'var(--font-mono)', width: 36, textAlign: 'right' }}>
                           {Math.round(acc * 100)}%
                         </span>
                       )}
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fcd34d', fontFamily: 'var(--font-mono)', width: 72, textAlign: 'right' }}>
-                        {p.score.toLocaleString()}
-                      </span>
+                      {isEditing ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <input
+                            type="number"
+                            value={liveEditScore}
+                            onChange={e => setLiveEditScore(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleLiveScoreEdit(p.id); if (e.key === 'Escape') { setLiveEditId(null); setLiveEditScore(''); } }}
+                            autoFocus
+                            style={{ width: 72, padding: '4px 8px', borderRadius: 8, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 13, fontFamily: 'var(--font-mono)', textAlign: 'right' }}
+                          />
+                          <button onClick={() => handleLiveScoreEdit(p.id)} style={{ padding: '4px 8px', borderRadius: 7, background: 'rgba(52,211,153,0.15)', color: '#34d399', border: '1px solid rgba(52,211,153,0.3)', fontSize: 12, cursor: 'pointer' }}>✓</button>
+                          <button onClick={() => { setLiveEditId(null); setLiveEditScore(''); }} style={{ padding: '4px 8px', borderRadius: 7, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, cursor: 'pointer' }}>✕</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: '#fcd34d', fontFamily: 'var(--font-mono)', width: 72, textAlign: 'right' }}>
+                            {p.score.toLocaleString()}
+                          </span>
+                          <button
+                            onClick={() => { setLiveEditId(p.id); setLiveEditScore(String(p.score)); }}
+                            title="Edit score"
+                            style={{ padding: '3px 7px', borderRadius: 7, background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleLiveRemove(p.id, p.name)}
+                            title="Remove player"
+                            style={{ padding: '3px 7px', borderRadius: 7, background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

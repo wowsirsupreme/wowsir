@@ -321,6 +321,18 @@ export async function findActiveSessionForQuiz(
   return null;
 }
 
+// ── Live session moderation ───────────────────────────────────────────────────
+
+/** Override a player's score directly in RTDB during a live session */
+export async function setLivePlayerScore(sessionId: string, playerId: string, score: number): Promise<void> {
+  await update(ref(db(), `sessions/${sessionId}/players/${playerId}`), { score });
+}
+
+/** Remove a player from RTDB during a live session (kick) */
+export async function removeLivePlayer(sessionId: string, playerId: string): Promise<void> {
+  await remove(ref(db(), `sessions/${sessionId}/players/${playerId}`));
+}
+
 /** Return all non-ended sessions for a teacher, enriched with live meta */
 export async function getTeacherActiveSessions(teacherId: string): Promise<TeacherActiveSession[]> {
   const snap = await get(ref(db(), `teacher_sessions/${teacherId}`));
