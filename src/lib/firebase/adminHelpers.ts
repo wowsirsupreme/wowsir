@@ -266,6 +266,56 @@ export async function wipeRTDBSessions(): Promise<ResetResult> {
   return { deleted, errors };
 }
 
+/** Fetch ALL session results (admin — no teacher filter). */
+export async function getAllSessionResults(): Promise<import('@/types/session').SessionResult[]> {
+  const { fs } = getFirebaseInstances();
+  if (!fs) return [];
+  const { collection, getDocs } = await import('firebase/firestore');
+  const snap = await getDocs(collection(fs, 'results'));
+  const results = snap.docs.map(d => d.data() as import('@/types/session').SessionResult);
+  return results.sort((a, b) => (b.completedAt ?? 0) - (a.completedAt ?? 0));
+}
+
+/**
+ * Update (or remove) a player's entry inside a SessionResult.
+ * Pass newScore to overwrite their score; pass null to remove them entirely.
+ */
+export async function patchSessionPlayerResult(
+  sessionId: string,
+  playerName: string,
+  patch: { score: number } | null,
+): Promise<void> {
+  const { fs } = getFirebaseInstances();
+  if (!fs) return;
+  const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+  const ref = doc(fs, 'results', sessionId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data() as import('@/types/session').SessionResult;
+
+  let updated = data.playerResults;
+  if (patch === null) {
+    // Remove the player
+    updated = updated.filter(p => p.name !== playerName);
+  } else {
+    // Update score
+    updated = updated.map(p => p.name === playerName ? { ...p, score: Math.max(0, patch.score) } : p);
+  }
+
+  const totalPlayers = updated.length;
+  const avgScore = totalPlayers ? updated.reduce((s, p) => s + p.score, 0) / totalPlayers : 0;
+  const avgAccuracy = totalPlayers ? updated.reduce((s, p) => s + p.accuracy, 0) / totalPlayers : 0;
+  const topScore = totalPlayers ? Math.max(...updated.map(p => p.score)) : 0;
+
+  await updateDoc(ref, {
+    playerResults: updated,
+    'summary.totalPlayers': totalPlayers,
+    'summary.avgScore': Math.round(avgScore),
+    'summary.avgAccuracy': Math.round(avgAccuracy),
+    'summary.topScore': topScore,
+  });
+}
+
 /** Wipe ALL data — results, practice leaderboard, and RTDB sessions */
 export async function wipeAllData(): Promise<{ deleted: number; errors: number }> {
   const [r1, r2, r3] = await Promise.all([
