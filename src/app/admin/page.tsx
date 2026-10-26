@@ -11,7 +11,8 @@ import {
   getUsageStats, getGeoStats, getAllQuestions,
   wipeResults, wipePracticeLeaderboard, wipeRTDBSessions, wipeAllData, wipeAllQuestions, backupDatabase,
   getAllSessionResults, patchSessionPlayerResult,
-  type QuestionStat, type UsageStat, type GeoPoint,
+  patchOsChapterAnswers,
+  type QuestionStat, type UsageStat, type GeoPoint, type PatchResult,
 } from '@/lib/firebase/adminHelpers';
 import type { SessionResult } from '@/types/session';
 import { deleteQuestionsByTopic, getAllQuestionsByTopic } from '@/lib/firebase/questions';
@@ -128,6 +129,11 @@ export default function AdminPage() {
   const [fbPass, setFbPass] = useState('');
   const [fbLoginErr, setFbLoginErr] = useState('');
   const [fbLogging, setFbLogging] = useState(false);
+
+  // Answer-patch state
+  const [patchStatus, setPatchStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [patchResult, setPatchResult] = useState<PatchResult | null>(null);
+  const [patchErr, setPatchErr] = useState('');
 
   // Restore session on mount, and set up lockout countdown timer
   useEffect(() => {
@@ -474,6 +480,22 @@ export default function AdminPage() {
             onFbPassChange={setFbPass}
             onFbLogin={handleFbLogin}
             onFbLogout={() => logoutTeacher()}
+            patchStatus={patchStatus}
+            patchResult={patchResult}
+            patchErr={patchErr}
+            onPatch={async () => {
+              setPatchStatus('running');
+              setPatchErr('');
+              setPatchResult(null);
+              try {
+                const r = await patchOsChapterAnswers('734JE8');
+                setPatchResult(r);
+                setPatchStatus('done');
+              } catch (e: unknown) {
+                setPatchErr(e instanceof Error ? e.message : 'Patch failed');
+                setPatchStatus('error');
+              }
+            }}
           />
         )}
       </div>
@@ -1496,10 +1518,15 @@ interface DatabaseTabProps {
   onFbPassChange: (v: string) => void;
   onFbLogin: () => void;
   onFbLogout: () => void;
+  patchStatus: 'idle' | 'running' | 'done' | 'error';
+  patchResult: PatchResult | null;
+  patchErr: string;
+  onPatch: () => void;
 }
 
 function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, onCancel, onBackup,
-  fbUser, fbEmail, fbPass, fbLoginErr, fbLogging, onFbEmailChange, onFbPassChange, onFbLogin, onFbLogout }: DatabaseTabProps) {
+  fbUser, fbEmail, fbPass, fbLoginErr, fbLogging, onFbEmailChange, onFbPassChange, onFbLogin, onFbLogout,
+  patchStatus, patchResult, patchErr, onPatch }: DatabaseTabProps) {
   const actions: { key: ResetKey; label: string; desc: string; accent: string }[] = [
     {
       key: 'results',
@@ -1689,6 +1716,45 @@ function DatabaseTab({ resetStatus, resetMsg, backupStatus, backupMsg, onWipe, o
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(99,179,237,0.12)'; }}
         >
           {backupStatus === 'running' ? '⏳ Exporting…' : backupStatus === 'done' ? 'Download again' : '⬇ Download Backup'}
+        </button>
+      </div>
+
+      {/* Fix Answer Mapping */}
+      <div style={{ marginTop: 28, borderRadius: 16, padding: '20px 24px', background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(251,191,36,0.2)' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Fix OS Chapter Answers (734JE8)</h3>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.38)', marginBottom: 4 }}>
+          36 imported questions have an off-by-one answer mapping (e.g. correct option C stored as B). This patches both the live session and Firestore.
+        </p>
+        <p style={{ fontSize: 12, color: 'rgba(251,191,36,0.7)', marginBottom: 16 }}>
+          Live session (RTDB) is fixed automatically. Firestore fix requires Firebase sign-in above.
+        </p>
+        {patchStatus === 'done' && patchResult && (
+          <div style={{ fontSize: 13, marginBottom: 12 }}>
+            <div style={{ color: '#4ade80', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Check size={14} /> Done
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>
+              Firestore: {patchResult.firestorePatched} patched{patchResult.firestoreErrors > 0 ? `, ${patchResult.firestoreErrors} errors` : ''}<br />
+              Live session: {patchResult.rtdbPatched} patched{patchResult.rtdbErrors > 0 ? ` (error)` : ''}{patchResult.rtdbSessionId ? ` — session ${patchResult.rtdbSessionId}` : ''}
+            </div>
+          </div>
+        )}
+        {patchStatus === 'error' && (
+          <div style={{ fontSize: 13, color: '#f87171', marginBottom: 12 }}>⚠ {patchErr}</div>
+        )}
+        <button
+          onClick={onPatch}
+          disabled={patchStatus === 'running'}
+          style={{
+            padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            cursor: patchStatus === 'running' ? 'not-allowed' : 'pointer',
+            background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)',
+            color: '#fbbf24', transition: 'background 0.15s', opacity: patchStatus === 'running' ? 0.6 : 1,
+          }}
+          onMouseEnter={e => { if (patchStatus !== 'running') (e.currentTarget as HTMLButtonElement).style.background = 'rgba(251,191,36,0.22)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(251,191,36,0.12)'; }}
+        >
+          {patchStatus === 'running' ? '⏳ Patching…' : patchStatus === 'done' ? '✓ Run again' : '🔧 Fix Answer Mapping'}
         </button>
       </div>
     </div>

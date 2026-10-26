@@ -334,6 +334,145 @@ export async function wipeAllQuestions(): Promise<ResetResult> {
   return deleteCollection('questions');
 }
 
+/* ── Answer-mapping fix (OS Chapter / 734JE8 off-by-one import bug) ── */
+
+/** Maps question Firestore ID → correct 0-based answer index string */
+export const OS_CHAPTER_ANSWER_FIXES: Record<string, string> = {
+  '7yKlBEqNQIrkpylyjcuO': '2',
+  '8ZYGKo8l8StcXQRmorZ0': '2',
+  '9EQXvzeFcRGsPwQDTy3Q': '3',
+  '9XmBCCK7iJASTIRpVjqZ': '1',
+  'AAxi6dkuPEXbik2cA5gq': '2',
+  'AOa11B1mHoKWV59Nk7Oe': '1',
+  'AuZ456PilvgaOEAJ9qxK': '3',
+  'CTsmhsXFIjT7mXcvKPZD': '1',
+  'CorgJTbh9C6pFuzbbHZj': '2',
+  'GMost7IYUgPvB8YTp7ZR': '1',
+  'HFVYgJ5Ni2H2gTiRV6np': '1',
+  'JJHxPEBz5lvAtcSGh4ii': '3',
+  'JOPmxDO9xUT2XowHcnEP': '1',
+  'Jbppp65m8gkvrGKHFKuk': '3',
+  'KZ9J6SyU70SVZPvmhWrE': '2',
+  'KhWPPDyJKQYTOibvs0bK': '3',
+  'KjHUwDFrQrFcENzLcTui': '2',
+  'LTlCiu7b1geBgkBd2F4L': '3',
+  'LV97TYVorfWGTbBCnPHL': '3',
+  'LyT2e9K4bgUwz9QUxTHD': '2',
+  'NrLAu56A74HYNWNuIKj6': '1',
+  'OKqxmZiX2Z1NQlJ6BgrL': '2',
+  'RFMzN68SbKcdEh7wQjtx': '3',
+  'RIQvA4aDP6kL9UF57bB6': '2',
+  'RJYpk5f5FeFpeC0OmqMo': '1',
+  'RnQay59CNlXjRIi5Jqjx': '1',
+  'Ui4PH7yCB7jJbnpBXpLh': '3',
+  'V2S3tsGjwAYucsz99Ne8': '2',
+  'XcByxTcchLxUVcpX0tx8': '1',
+  'YffdQtOi8zwSpE5Llez2': '2',
+  'ZAXiHmg2HCJRDSIAvxRH': '3',
+  'am81iWmaPTSyQHiHg1Ip': '2',
+  'ap9rMXjzre0lFnJJc8FD': '2',
+  'c2TfmAGkJoOtSLLTcoLB': '2',
+  'cPH7l6LjPIFXvTNnVtgQ': '1',
+  'dHrZL5ykC1nmuIA4AWGk': '2',
+};
+
+export interface PatchResult {
+  firestorePatched: number;
+  firestoreErrors: number;
+  rtdbPatched: number;
+  rtdbErrors: number;
+  rtdbSessionId: string;
+}
+
+/**
+ * Fix the 36 OS-chapter questions with off-by-one answer mappings.
+ *
+ * Firestore patch: requires the current Firebase user to have role='teacher'.
+ * RTDB patch: uses anonymous sign-in if no user is signed in (auth != null is enough).
+ *
+ * sessionCode — the live session code to patch (e.g. "734JE8").
+ */
+export async function patchOsChapterAnswers(sessionCode: string): Promise<PatchResult> {
+  const { fs, db, auth } = getFirebaseInstances();
+  const result: PatchResult = {
+    firestorePatched: 0,
+    firestoreErrors: 0,
+    rtdbPatched: 0,
+    rtdbErrors: 0,
+    rtdbSessionId: '',
+  };
+
+  // ── Firestore: patch each question document ──────────────────────────────
+  if (fs) {
+    const { doc: fsDoc, updateDoc: fsUpdate, writeBatch } = await import('firebase/firestore');
+    const fixes = Object.entries(OS_CHAPTER_ANSWER_FIXES);
+    const batchSize = 400;
+    for (let i = 0; i < fixes.length; i += batchSize) {
+      const batch = writeBatch(fs);
+      const chunk = fixes.slice(i, i + batchSize);
+      chunk.forEach(([id, answer]) => {
+        batch.update(fsDoc(fs, 'questions', id), { answer });
+      });
+      try {
+        await batch.commit();
+        result.firestorePatched += chunk.length;
+      } catch (err) {
+        // Batch failed — try one-by-one so partial success is captured
+        for (const [id, answer] of chunk) {
+          try {
+            await fsUpdate(fsDoc(fs, 'questions', id), { answer });
+            result.firestorePatched++;
+          } catch {
+            result.firestoreErrors++;
+          }
+        }
+      }
+    }
+  }
+
+  // ── RTDB: patch session_pub_questions for the live session ────────────────
+  if (db) {
+    try {
+      // Ensure we have at least anonymous auth so the RTDB "auth != null" rule passes
+      if (auth && !auth.currentUser) {
+        const { signInAnonymously } = await import('firebase/auth');
+        await signInAnonymously(auth);
+      }
+
+      const { ref, get, update: rtdbUpdate } = await import('firebase/database');
+
+      // Resolve session code → session ID
+      const codeSnap = await get(ref(db, `session_codes/${sessionCode.toUpperCase()}`));
+      if (!codeSnap.exists()) throw new Error(`No session found for code ${sessionCode}`);
+      const sessionId: string = codeSnap.val();
+      result.rtdbSessionId = sessionId;
+
+      // Fetch the stored question array
+      const qSnap = await get(ref(db, `session_pub_questions/${sessionId}`));
+      if (!qSnap.exists()) throw new Error('session_pub_questions not found');
+
+      const questions: Array<{ id?: string; answer?: string }> = qSnap.val();
+      const updates: Record<string, string> = {};
+
+      questions.forEach((q, idx) => {
+        if (q?.id && OS_CHAPTER_ANSWER_FIXES[q.id]) {
+          updates[`session_pub_questions/${sessionId}/${idx}/answer`] = OS_CHAPTER_ANSWER_FIXES[q.id];
+        }
+      });
+
+      if (Object.keys(updates).length > 0) {
+        await rtdbUpdate(ref(db, '/'), updates);
+        result.rtdbPatched = Object.keys(updates).length;
+      }
+    } catch (err) {
+      result.rtdbErrors++;
+      console.error('RTDB patch error:', err);
+    }
+  }
+
+  return result;
+}
+
 /** Export a full JSON backup of all Firestore collections + RTDB root */
 export async function backupDatabase(): Promise<void> {
   const { fs, db } = getFirebaseInstances();

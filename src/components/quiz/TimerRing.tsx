@@ -13,6 +13,11 @@ interface TimerRingProps {
 export function TimerRing({ seconds, onEnd, paused, size = 72 }: TimerRingProps) {
   const [timeLeft, setTimeLeft] = useState(seconds);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Keep a ref to onEnd so the interval callback always calls the latest version
+  // without onEnd needing to be a useEffect dependency (which would restart the
+  // timer on every parent re-render that recreates the callback).
+  const onEndRef = useRef(onEnd);
+  useEffect(() => { onEndRef.current = onEnd; });
   const total = seconds;
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -32,14 +37,14 @@ export function TimerRing({ seconds, onEnd, paused, size = 72 }: TimerRingProps)
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(intervalRef.current!);
-          onEnd?.();
+          onEndRef.current?.();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [paused, seconds, onEnd]);
+  }, [paused, seconds]); // onEnd intentionally omitted — use onEndRef instead
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
