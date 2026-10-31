@@ -8,6 +8,7 @@ import { useFirebase } from '@/hooks/useFirebase';
 import { batchSaveQuestions, getExistingQuestionTexts, getAllQuestionsForExport } from '@/lib/firebase/questions';
 import { useToast } from '@/components/ui/Toast';
 import type { Question } from '@/types/question';
+import { parseCSV, type AnswerConvention, type CSVParseResult } from '@/lib/quiz/csv-parser';
 
 const BG = [
   'radial-gradient(ellipse 70% 50% at 20% 10%,  rgba(16,185,129,0.1) 0%, transparent 55%)',
@@ -212,232 +213,6 @@ const TEMPLATE_ROWS = [
 
 const TEMPLATE_CSV = TEMPLATE_HEADERS + '\n' + TEMPLATE_ROWS.join('\n');
 
-// ---------------------------------------------------------------------------
-// topicKey auto-remap — old CSV keys → canonical app keys
-// Teachers who export from the generated bank will have the old keys;
-// this makes import work without manual editing.
-// ---------------------------------------------------------------------------
-const TOPIC_REMAP: Record<string, string> = {
-  // Grade 5
-  'gr5-computer-evolution': 'gr5-ch1-evolution',
-  'gr5-storage-media':      'gr5-ch2-storage',
-  // Grade 8
-  'gr8-artificial-intelligence': 'gr8-ch1-ai',
-  'gr8-technology-trends':       'gr8-ch2-tech',
-  // Grade 9 CS
-  'gr9-cs-cpu-architecture':       'gr9-cpu',
-  'gr9-cs-data-storage':           'gr9-storage',
-  'gr9-cs-os-accounts-security':   'gr9-os',
-  'gr9-cs-os-file-management':     'gr9-os',
-  'gr9-cs-os-interrupts':          'gr9-os',
-  'gr9-cs-os-memory-management':   'gr9-os',
-  'gr9-cs-os-peripherals-drivers': 'gr9-os',
-  'gr9-cs-os-process-management':  'gr9-os',
-  'gr9-cs-os-purpose':             'gr9-os',
-  // Grade 9 DT
-  'gr9-dt-defining':             'gr9dt-design-brief',
-  'gr9-dt-developing':           'gr9dt-developing',
-  'gr9-dt-identifying':          'gr9dt-design1',
-  'gr9-dt-influences-designing': 'gr9dt-influences',
-  'gr9-dt-proposing':            'gr9dt-plan',
-};
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-type ParsedRow = { ok: boolean; row: number; data?: Omit<Question, 'id'>; error?: string };
-
-// ---------------------------------------------------------------------------
-// Parser
-// ---------------------------------------------------------------------------
-const VALID_TYPES = new Set<string>(['mcq', 'truefalse', 'shortanswer', 'fillinblank', 'matching', 'ordering']);
-
-export interface ParseMeta { remapped: number; }
-
-function parseCSV(text: string): { rows: ParsedRow[]; meta: ParseMeta } {
-  const rows = _parseCSVRows(text);
-  const remapped = rows.filter(r => r.ok && (r as ParsedRow & { remappedKey?: boolean }).remappedKey).length;
-  return { rows, meta: { remapped } };
-}
-
-function _parseCSVRows(text: string): ParsedRow[] {
-  const lines = text.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return [{ ok: false, row: 0, error: 'File is empty or has no data rows' }];
-
-  // Strip the header row — we don't validate column names to stay lenient
-  const results: ParsedRow[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].replace(/\r/g, '');
-    if (!line.trim()) continue;
-
-    // Basic CSV split — no embedded-comma support (quoted fields not handled)
-    const cols = line.split(',');
-    if (cols.length < 9) {
-      results.push({ ok: false, row: i + 1, error: `Only ${cols.length} columns (need at least 9)` });
-      continue;
-    }
-
-    // Support both 14-col (legacy) and 15-col (with correctAnswerText at index 9)
-    const has15Cols = cols.length >= 15;
-    const [
-      id, topicKey, rawType, text,
-      optA, optB, optC, optD,
-      answer,
-      // col index 9: correctAnswerText (15-col) or explanation (14-col legacy)
-      col9, col10, col11, col12, col13, col14,
-    ] = cols;
-    const explanation  = has15Cols ? col10 : col9;
-    const difficulty   = has15Cols ? col11 : col10;
-    const pointsStr    = has15Cols ? col12 : col11;
-    const chapterStr   = has15Cols ? col13 : col12;
-    const imageUrlRaw  = has15Cols ? col14 : col13;
-
-    const type = rawType?.trim().toLowerCase();
-
-    if (!id?.trim() || !topicKey?.trim() || !text?.trim() || !answer?.trim()) {
-      results.push({ ok: false, row: i + 1, error: 'Missing required field (id, topicKey, text or answer)' });
-      continue;
-    }
-
-    // Auto-remap legacy topicKeys
-    const rawTopicKey = topicKey.trim();
-    const resolvedTopicKey = TOPIC_REMAP[rawTopicKey] ?? rawTopicKey;
-    const wasRemapped = resolvedTopicKey !== rawTopicKey;
-
-    if (!VALID_TYPES.has(type)) {
-      results.push({
-        ok: false, row: i + 1,
-        error: `Type "${type}" is not supported — only "mcq" is accepted at this time`,
-      });
-      continue;
-    }
-
-    let options: string[] = [];
-    let parsedAnswer: string = answer.trim();
-    let parseError: string | null = null;
-
-    switch (type) {
-      case 'mcq': {
-        options = [optA, optB, optC, optD].map(o => o?.trim()).filter(Boolean);
-        if (options.length < 2) {
-          parseError = 'MCQ needs at least 2 options (optionA–optionD)';
-          break;
-        }
-        // Accept: A/B/C/D, 1/2/3/4 (1-based), 0/1/2/3 (0-based)
-        let idx: number;
-        if (/^[a-dA-D]$/.test(parsedAnswer)) {
-          idx = 'abcd'.indexOf(parsedAnswer.toLowerCase());
-        } else {
-          const n = parseInt(parsedAnswer, 10);
-          if (isNaN(n)) {
-            parseError = `MCQ answer must be A–D, 1–4, or 0–3, got "${parsedAnswer}"`;
-            break;
-          }
-          // 1-based (1–4) → convert to 0-based
-          idx = (n >= 1 && n <= 4) ? n - 1 : n;
-        }
-        if (idx < 0 || idx >= options.length) {
-          parseError = `MCQ answer index ${idx} is out of range (0–${options.length - 1})`;
-          break;
-        }
-        parsedAnswer = String(idx);
-        break;
-      }
-
-      case 'truefalse': {
-        options = ['True', 'False'];
-        const norm = parsedAnswer.toLowerCase();
-        if (norm.startsWith('t') || norm === '1' || norm === 'yes') {
-          parsedAnswer = 'true';
-        } else if (norm.startsWith('f') || norm === '0' || norm === 'no' || norm === '2') {
-          parsedAnswer = 'false';
-        } else {
-          parseError = `True/False answer must be "True" or "False", got "${parsedAnswer}"`;
-          break;
-        }
-        break;
-      }
-
-      case 'shortanswer':
-      case 'fillinblank': {
-        // No options — answer is the expected text
-        options = [];
-        if (!parsedAnswer) parseError = 'Short-answer/fill-in-the-blank requires a non-empty answer';
-        break;
-      }
-
-      case 'matching': {
-        options = [optA, optB, optC, optD].map(o => o?.trim()).filter(Boolean);
-        if (options.length < 2) {
-          parseError = 'Matching needs at least 2 options (optionA–optionD for the left column)';
-          break;
-        }
-        // answer is pipe-separated right-column values in matching order
-        const pairs = parsedAnswer.split('|').map(s => s.trim()).filter(Boolean);
-        if (pairs.length !== options.length) {
-          parseError = `Matching answer must have ${options.length} pipe-separated values, got ${pairs.length}`;
-          break;
-        }
-        parsedAnswer = pairs.join('|');
-        break;
-      }
-
-      case 'ordering': {
-        options = [optA, optB, optC, optD].map(o => o?.trim()).filter(Boolean);
-        if (options.length < 2) {
-          parseError = 'Ordering needs at least 2 options (optionA–optionD)';
-          break;
-        }
-        // answer is pipe-separated 0-based indices representing the correct order
-        const indices = parsedAnswer.split('|').map(s => parseInt(s.trim(), 10));
-        if (
-          indices.length !== options.length ||
-          indices.some(n => isNaN(n) || n < 0 || n >= options.length)
-        ) {
-          parseError = `Ordering answer must be ${options.length} pipe-separated 0-based indices, e.g. "2|0|3|1"`;
-          break;
-        }
-        // Check it's a valid permutation
-        if (new Set(indices).size !== options.length) {
-          parseError = 'Ordering answer indices must be a permutation with no repeats';
-          break;
-        }
-        parsedAnswer = indices.join('|');
-        break;
-      }
-    }
-
-    if (parseError) {
-      results.push({ ok: false, row: i + 1, error: parseError });
-      continue;
-    }
-
-    const row: ParsedRow & { remappedKey?: boolean } = {
-      ok: true,
-      row: i + 1,
-      remappedKey: wasRemapped,
-      data: {
-        quizId: null,
-        topicKey: resolvedTopicKey,
-        type: type as Question['type'],
-        text: text.trim(),
-        options,
-        answer: parsedAnswer,
-        explanation: explanation?.trim() || '',
-        difficulty: (['easy', 'medium', 'hard'].includes(difficulty?.trim()) ? difficulty.trim() : 'medium') as Question['difficulty'],
-        points: parseInt(pointsStr?.trim() || '1', 10) || 1,
-        chapter: parseInt(chapterStr?.trim() || '1', 10) || 1,
-        ...(imageUrlRaw?.trim() ? { imageUrl: imageUrlRaw.trim() } : {}),
-        approvalStatus: 'pending',
-        source: 'imported' as const,
-        createdAt: Date.now(),
-      },
-    };
-    results.push(row);
-  }
-  return results;
-}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -449,8 +224,8 @@ export default function ImportCSVPage() {
   const { configured } = useFirebase();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
-  const [parseMeta, setParseMeta] = useState<ParseMeta | null>(null);
+  const [result, setResult] = useState<CSVParseResult | null>(null);
+  const [answerConvention, setAnswerConvention] = useState<AnswerConvention>('0based');
   const [filename, setFilename] = useState('');
   const [importing, setImporting] = useState(false);
   const [templateLoading, setTemplateLoading] = useState(false);
@@ -482,9 +257,8 @@ const [importedCount, setImportedCount] = useState(0);
       const text = e.target?.result as string;
 
       // Standard WOW format
-      const { rows, meta } = parseCSV(text);
-      setParsed(rows);
-      setParseMeta(meta);
+      const parsed = parseCSV(text, answerConvention);
+      setResult(parsed);
     };
     reader.readAsText(file);
   }
@@ -496,8 +270,8 @@ const [importedCount, setImportedCount] = useState(0);
   }
 
   async function doImport() {
-    if (!parsed) return;
-    const valid = parsed.filter(r => r.ok && r.data).map(r => r.data!);
+    if (!result) return;
+    const valid = result.valid.map(pq => pq.data);
     if (valid.length === 0) { toast('No valid rows to import', 'error'); return; }
 
     setImporting(true);
@@ -608,8 +382,9 @@ const [importedCount, setImportedCount] = useState(0);
     URL.revokeObjectURL(url);
   }
 
-  const okCount = parsed?.filter(r => r.ok).length ?? 0;
-  const errCount = parsed?.filter(r => !r.ok).length ?? 0;
+  const okCount = result?.valid.length ?? 0;
+  const errCount = result?.errors.length ?? 0;
+  const warnCount = result?.warnings.length ?? 0;
 
   return (
     <div className="min-h-screen" style={{ background: BG, color: '#f5f3ee' }}>
@@ -665,6 +440,36 @@ const [importedCount, setImportedCount] = useState(0);
           </div>
         </div>
 
+        {/* Answer convention selector */}
+        <div style={{ marginBottom: 16, borderRadius: 12, padding: '14px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', marginBottom: 10, letterSpacing: '0.06em' }}>ANSWER KEY CONVENTION</p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {([
+              { value: '0based', label: '0-based', desc: '0, 1, 2, 3' },
+              { value: 'alpha',  label: 'Alphabetical', desc: 'A, B, C, D' },
+              { value: '1based', label: '1-based', desc: '1, 2, 3, 4' },
+            ] as { value: AnswerConvention; label: string; desc: string }[]).map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setAnswerConvention(opt.value)}
+                style={{
+                  padding: '8px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                  background: answerConvention === opt.value ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${answerConvention === opt.value ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  color: answerConvention === opt.value ? '#6ee7b7' : 'rgba(255,255,255,0.45)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{opt.label}</span>
+                <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.7, fontFamily: 'var(--font-mono)' }}>{opt.desc}</span>
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
+            Must match the format in your CSV's <code>answer</code> column — the parser will not silently guess.
+          </p>
+        </div>
+
         {/* Drop zone */}
         <div
           onDrop={onDrop}
@@ -694,7 +499,7 @@ const [importedCount, setImportedCount] = useState(0);
         </div>
 
         {/* Parse results */}
-        {parsed && (
+        {result && (
           <div style={{ marginBottom: 24 }}>
             {/* Summary */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -714,15 +519,36 @@ const [importedCount, setImportedCount] = useState(0);
                   </div>
                 </div>
               )}
+              {warnCount > 0 && (
+                <div style={{ flex: 1, borderRadius: 12, padding: '14px 18px', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Info size={18} color="#fbbf24" />
+                  <div>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: '#fbbf24' }}>{warnCount}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>warnings</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Error rows */}
             {errCount > 0 && (
               <div style={{ borderRadius: 14, padding: '12px 16px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', marginBottom: 16 }}>
                 <p style={{ fontSize: 12, color: '#f87171', fontWeight: 600, marginBottom: 8, fontFamily: 'var(--font-mono)' }}>PARSE ERRORS</p>
-                {parsed.filter(r => !r.ok).map((r, i) => (
+                {result.errors.map((e, i) => (
                   <p key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>
-                    Row {r.row}: {r.error}
+                    Row {e.row}: {e.message}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* Warnings */}
+            {warnCount > 0 && (
+              <div style={{ borderRadius: 14, padding: '12px 16px', background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', marginBottom: 16 }}>
+                <p style={{ fontSize: 12, color: '#fbbf24', fontWeight: 600, marginBottom: 8, fontFamily: 'var(--font-mono)' }}>WARNINGS</p>
+                {result.warnings.map((w, i) => (
+                  <p key={i} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>
+                    Row {w.row}: {w.message}
                   </p>
                 ))}
               </div>
@@ -745,7 +571,7 @@ const [importedCount, setImportedCount] = useState(0);
             )}
 
             {/* topicKey remap notice */}
-            {parseMeta && parseMeta.remapped > 0 && (
+            {result && result.remappedCount > 0 && (
               <div style={{
                 borderRadius: 10, background: 'rgba(251,191,36,0.07)',
                 border: '1px solid rgba(251,191,36,0.25)', padding: '10px 14px',
@@ -754,7 +580,7 @@ const [importedCount, setImportedCount] = useState(0);
               }}>
                 <Info size={14} color="#fbbf24" style={{ marginTop: 1, flexShrink: 0 }} />
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  <strong style={{ color: '#fbbf24' }}>{parseMeta.remapped} topicKey{parseMeta.remapped !== 1 ? 's' : ''} auto-remapped</strong>
+                  <strong style={{ color: '#fbbf24' }}>{result.remappedCount} topicKey{result.remappedCount !== 1 ? 's' : ''} auto-remapped</strong>
                   {' '}to canonical app keys (e.g. <code>gr9-cs-cpu-architecture</code> → <code>gr9-cpu</code>).
                   No action needed — they will import correctly.
                 </span>
@@ -821,7 +647,7 @@ const [importedCount, setImportedCount] = useState(0);
                     View in Question Bank →
                   </button>
                   <button
-                    onClick={() => { setParsed(null); setFilename(''); setDone(false); }}
+                    onClick={() => { setResult(null); setFilename(''); setDone(false); }}
                     style={{ fontSize: 14, padding: '10px 20px', borderRadius: 12, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
                   >
                     Import another file

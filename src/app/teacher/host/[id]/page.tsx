@@ -1,5 +1,6 @@
 'use client';
 import { resolveAnswerIndex } from '@/lib/utils';
+import { applyShuffleToQuestions } from '@/lib/quiz/shuffle';
 
 import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,20 +159,26 @@ export default function HostPage({ params }: { params: Promise<{ id: string }> }
       }
     } catch { /* if the check fails, allow creation to proceed */ }
     try {
+      const shuffleQ   = quiz.settings?.shuffleQuestions ?? false;
+      const shuffleOpts = quiz.settings?.shuffleOptions   ?? false;
+      // Apply Fisher-Yates shuffle with object-based option tracking so
+      // correct answers stay permanently associated with their original option.
+      const deliveryQuestions = applyShuffleToQuestions(questions, shuffleQ, shuffleOpts);
+
       const sid = await createSession(
-        quizId, quiz.title, user.uid, questions,
+        quizId, quiz.title, user.uid, deliveryQuestions,
         {
           timeLimit: quiz.settings?.timeLimit || 20,
           pointsPerQ: quiz.settings?.pointsPerQ || 100,
           antiCheat: quiz.settings?.antiCheat ?? true,
           showLeaderboard: quiz.settings?.showLeaderboard ?? true,
-          shuffleQuestions: quiz.settings?.shuffleQuestions ?? false,
-          shuffleOptions: quiz.settings?.shuffleOptions ?? false,
+          shuffleQuestions: shuffleQ,
+          shuffleOptions: shuffleOpts,
         },
         closeAt ?? undefined
       );
       // Auto-start immediately — no separate "Start" button needed
-      await startSession(sid, questions);
+      await startSession(sid, deliveryQuestions);
       setSessionId(sid);
       setCurrentQIdx(0);
       setPhase('question');
