@@ -160,44 +160,81 @@ export default function SeedPage() {
           </p>
         </div>
 
-        {/* Stats */}
-        {total > 0 && (
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12,
-            marginBottom: 24,
-          }}>
-            {[
-              { label: 'Total',    value: total,    color: '#7dd3fc' },
-              { label: 'Written',  value: written,  color: '#34d399' },
-              { label: 'Skipped',  value: skipped,  color: '#fbbf24' },
-              { label: 'Errors',   value: errors.length, color: '#f87171' },
-            ].map(s => (
-              <div key={s.label} style={{
-                borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.03)', padding: '14px 16px', textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* Progress bar */}
-        {phase === 'running' && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>
-              <span>Importing…</span><span>{pct}%</span>
+        {/* Circular progress ring */}
+        {(phase === 'running' || phase === 'done') && total > 0 && (() => {
+          const R = 54;
+          const circ = 2 * Math.PI * R;
+          const fill = circ * (pct / 100);
+          const ringColor = phase === 'done' ? '#34d399' : '#34d399';
+          const trackColor = 'rgba(255,255,255,0.07)';
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginBottom: 28 }}>
+              {/* Ring */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <svg width={128} height={128} viewBox="0 0 128 128">
+                  {/* Track */}
+                  <circle
+                    cx={64} cy={64} r={R}
+                    fill="none"
+                    stroke={trackColor}
+                    strokeWidth={10}
+                  />
+                  {/* Fill */}
+                  <circle
+                    cx={64} cy={64} r={R}
+                    fill="none"
+                    stroke={ringColor}
+                    strokeWidth={10}
+                    strokeLinecap="round"
+                    strokeDasharray={`${fill} ${circ - fill}`}
+                    strokeDashoffset={circ * 0.25}   /* start at 12 o'clock */
+                    style={{ transition: 'stroke-dasharray 0.4s ease' }}
+                  />
+                  {/* Centre text */}
+                  <text
+                    x={64} y={60}
+                    textAnchor="middle"
+                    fill="#fff"
+                    fontSize={22}
+                    fontWeight={700}
+                    fontFamily="inherit"
+                  >{pct}%</text>
+                  <text
+                    x={64} y={78}
+                    textAnchor="middle"
+                    fill="rgba(255,255,255,0.35)"
+                    fontSize={11}
+                    fontFamily="inherit"
+                  >{phase === 'done' ? 'complete' : 'seeding'}</text>
+                </svg>
+              </div>
+              {/* Side stats */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Progress </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#7dd3fc' }}>
+                    {progress.toLocaleString()} / {total.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Written </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#34d399' }}>{written.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Skipped </span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fbbf24' }}>{skipped.toLocaleString()}</span>
+                </div>
+                {errors.length > 0 && (
+                  <div>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Errors </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#f87171' }}>{errors.length}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.08)' }}>
-              <div style={{
-                height: '100%', borderRadius: 4,
-                background: 'linear-gradient(90deg, #059669, #34d399)',
-                width: `${pct}%`, transition: 'width 0.3s',
-              }} />
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Log */}
         {log.length > 0 && (
