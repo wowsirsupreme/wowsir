@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed:build": "npx tsx scripts/collect-seed.ts"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",
