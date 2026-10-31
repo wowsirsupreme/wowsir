@@ -7,12 +7,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Questions: teachers can read/write all; students can read (filtering is
-    // done at query level with where('approvalStatus','==','approved') —
-    // resource.data is unavailable in collection scans so we can't use it here)
+    // Questions: public read — students are unauthenticated guests (same pattern
+    // as presetQuizzes). Filtering to approved-only is done at query level with
+    // where('approvalStatus','==','approved'). resource.data is unavailable in
+    // collection scans so field-level filtering can't be done in the rule.
+    // Teachers can read/write all (including unapproved questions for review).
     match /questions/{qId} {
-      allow read: if request.auth != null;
-      allow read, write: if request.auth != null &&
+      allow read: if true;
+      allow write: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
 
