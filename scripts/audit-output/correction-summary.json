@@ -1,0 +1,24 @@
+{
+  "original": {
+    "total": 6262,
+    "distribution": {
+      "A": 303,
+      "B": 5005,
+      "C": 825,
+      "D": 129
+    }
+  },
+  "corrected": {
+    "total": 6230,
+    "removed": 32,
+    "repositioned": 4655,
+    "optionFixed": 1,
+    "distribution": {
+      "A": 1558,
+      "B": 1558,
+      "C": 1558,
+      "D": 1556
+    }
+  },
+  "integrity": true
+}
