@@ -64,6 +64,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [seeding, setSeeding] = useState(false);
   const [seedingGrade, setSeedingGrade] = useState<string | null>(null);
   const [seedingAll, setSeedingAll] = useState(false);
+  const [seedAllProgress, setSeedAllProgress] = useState<{ done: number; total: number; written: number } | null>(null);
   const [seedingPresets, setSeedingPresets] = useState(false);
   const chapterStats = getStudyChapterStats();
   const totalStudyQ  = chapterStats.reduce((s, c) => s + c.count, 0);
@@ -97,13 +98,25 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   async function handleSeedAllGrades() {
     setSeedingAll(true);
+    const grades = gradeBankStats.map(g => g.grade);
+    setSeedAllProgress({ done: 0, total: grades.length, written: 0 });
+    let totalWritten = 0;
+    let totalProtected = 0;
     try {
-      const result = await seedGradeBank(undefined);
-      toast(`All grades: ${result.written} written, ${result.protected} protected`, 'success');
+      for (let i = 0; i < grades.length; i++) {
+        const grade = grades[i];
+        const g = grade === '9dt' ? '9dt' : (Number(grade) as 4|5|6|7|8|9|10|11|12);
+        const result = await seedGradeBank(g as Parameters<typeof seedGradeBank>[0]);
+        totalWritten += result.written;
+        totalProtected += result.protected;
+        setSeedAllProgress({ done: i + 1, total: grades.length, written: totalWritten });
+      }
+      toast(`All grades: ${totalWritten} written, ${totalProtected} protected`, 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Seed all failed', 'error');
     } finally {
       setSeedingAll(false);
+      setSeedAllProgress(null);
     }
   }
 
@@ -297,13 +310,50 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           variant="outline"
           size="sm"
           onClick={handleSeedAllGrades}
-          loading={seedingAll}
+          loading={seedingAll && !seedAllProgress}
           disabled={seedingAll || seedingGrade !== null}
           full
         >
           <Upload size={13} className="inline mr-1.5" />
           Seed ALL Grades ({totalGradeQ} questions)
         </Button>
+
+        {/* Inline progress ring shown while seeding all grades */}
+        {seedAllProgress && (() => {
+          const pct = Math.round((seedAllProgress.done / seedAllProgress.total) * 100);
+          const R = 22, circ = 2 * Math.PI * R;
+          const fill = circ * (pct / 100);
+          return (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              marginTop: 12, padding: '10px 14px',
+              borderRadius: 10, background: 'rgba(52,211,153,0.07)',
+              border: '1px solid rgba(52,211,153,0.2)',
+            }}>
+              <svg width={56} height={56} viewBox="0 0 56 56" style={{ flexShrink: 0 }}>
+                <circle cx={28} cy={28} r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={5} />
+                <circle
+                  cx={28} cy={28} r={R} fill="none"
+                  stroke="#34d399" strokeWidth={5} strokeLinecap="round"
+                  strokeDasharray={`${fill} ${circ - fill}`}
+                  strokeDashoffset={circ * 0.25}
+                  style={{ transition: 'stroke-dasharray 0.4s ease' }}
+                />
+                <text x={28} y={32} textAnchor="middle" fill="#fff" fontSize={11} fontWeight={700} fontFamily="inherit">
+                  {pct}%
+                </text>
+              </svg>
+              <div style={{ lineHeight: 1.5 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                  {seedAllProgress.done} / {seedAllProgress.total} grades
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>
+                  {seedAllProgress.written.toLocaleString()} questions written
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Preset Quiz Catalog */}
