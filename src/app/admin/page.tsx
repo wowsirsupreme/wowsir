@@ -714,6 +714,7 @@ function QuestionBankTab() {
   const [downloading, setDownloading] = useState<string | null>(null);    // topicKey being exported
   const [seedingGrade, setSeedingGrade] = useState<string | null>(null);
   const [seedingAll, setSeedingAll] = useState(false);
+  const [seedAllProgress, setSeedAllProgress] = useState<{ done: number; total: number; written: number } | null>(null);
   const [seedResult, setSeedResult] = useState<{ written: number; protected: number } | null>(null);
 
   const gradeBankStats = getGradeBankStats();
@@ -735,12 +736,22 @@ function QuestionBankTab() {
   async function handleSeedAll() {
     setSeedingAll(true);
     setSeedResult(null);
+    const grades = gradeBankStats.map(g => String(g.grade));
+    setSeedAllProgress({ done: 0, total: grades.length, written: 0 });
+    let totalWritten = 0, totalProtected = 0;
     try {
-      const result = await seedGradeBank(undefined);
-      setSeedResult(result);
+      for (let i = 0; i < grades.length; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await seedGradeBank(grades[i] as any);
+        totalWritten += result.written;
+        totalProtected += result.protected;
+        setSeedAllProgress({ done: i + 1, total: grades.length, written: totalWritten });
+      }
+      setSeedResult({ written: totalWritten, protected: totalProtected });
       await refreshCounts();
     } finally {
       setSeedingAll(false);
+      setSeedAllProgress(null);
     }
   }
 
@@ -1130,17 +1141,38 @@ function QuestionBankTab() {
               {totalSeedQ.toLocaleString()} questions available — teacher-modified questions are never overwritten
             </span>
           </div>
-          <button
-            onClick={handleSeedAll}
-            disabled={seedingAll || seedingGrade !== null}
-            style={{
-              fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 8, cursor: seedingAll ? 'default' : 'pointer',
-              background: seedingAll ? 'rgba(201,168,76,0.1)' : 'rgba(201,168,76,0.18)',
-              border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', whiteSpace: 'nowrap',
-            }}
-          >
-            {seedingAll ? 'Seeding…' : `Seed ALL (${totalSeedQ.toLocaleString()}q)`}
-          </button>
+          {seedAllProgress ? (() => {
+            const pct = Math.round((seedAllProgress.done / seedAllProgress.total) * 100);
+            const R = 16, circ = 2 * Math.PI * R;
+            const fill = circ * (pct / 100);
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <svg width={40} height={40} viewBox="0 0 40 40" style={{ flexShrink: 0 }}>
+                  <circle cx={20} cy={20} r={R} fill="none" stroke="rgba(201,168,76,0.15)" strokeWidth={4} />
+                  <circle cx={20} cy={20} r={R} fill="none" stroke="#c9a84c" strokeWidth={4} strokeLinecap="round"
+                    strokeDasharray={`${fill} ${circ - fill}`} strokeDashoffset={circ * 0.25}
+                    style={{ transition: 'stroke-dasharray 0.4s ease' }} />
+                  <text x={20} y={24} textAnchor="middle" fill="#c9a84c" fontSize={9} fontWeight={700} fontFamily="inherit">{pct}%</text>
+                </svg>
+                <div style={{ lineHeight: 1.4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#c9a84c' }}>{seedAllProgress.done}/{seedAllProgress.total} grades</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{seedAllProgress.written.toLocaleString()}q written</div>
+                </div>
+              </div>
+            );
+          })() : (
+            <button
+              onClick={handleSeedAll}
+              disabled={seedingAll || seedingGrade !== null}
+              style={{
+                fontSize: 12, fontWeight: 700, padding: '6px 16px', borderRadius: 8, cursor: 'pointer',
+                background: 'rgba(201,168,76,0.18)', border: '1px solid rgba(201,168,76,0.4)',
+                color: '#c9a84c', whiteSpace: 'nowrap',
+              }}
+            >
+              {`Seed ALL (${totalSeedQ.toLocaleString()}q)`}
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {gradeBankStats.map(gs => (
