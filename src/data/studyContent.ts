@@ -217,26 +217,33 @@ const GRADE9DT_CHAPTERS: StudyChapter[] = [
 ];
 
 /* ══════════════════════════════════════════════════════
-   IGCSE CS YEAR 2  (12 chapters · gr10 & gr11 IGCSE topic keys)
-   All questions live in gr9cs.ts which spans Year 1, 2 & revision.
+   IGCSE CS — FULL SYLLABUS  (28 chapters · 0478 complete)
+   Year 1 (gr9-*) + Year 2 / Exam-tier (gr10-*, gr11-revision)
+   All questions live in gr9cs.ts which spans the full syllabus.
    ══════════════════════════════════════════════════════ */
-const GRADE10CS_CHAPTERS: StudyChapter[] = [
+const IGCSE_CS_YEAR2_CHAPTERS: StudyChapter[] = [
   /* ── Year 2 new content ── */
-  { key: 'gr10-data-integrity',  shortTitle: 'Data Integrity',              title: 'Ch 4.1 – Data Integrity',                     description: 'Validation, verification, checksums and error-detection techniques.',              questions: [], flashcards: [] },
-  { key: 'gr10-cybersecurity',   shortTitle: 'Cybersecurity',               title: 'Ch 4.2 – Cybersecurity',                      description: 'Attack types, malware, phishing, social engineering and defence strategies.',     questions: [], flashcards: [] },
-  { key: 'gr10-robotics',        shortTitle: 'Robotics & Automation',       title: 'Ch 6 – Automated Systems & Robotics',         description: 'Sensors, actuators, automated systems and real-world robotic applications.',       questions: [], flashcards: [] },
-  { key: 'gr10-ai',              shortTitle: 'Artificial Intelligence',     title: 'Ch 7.1 – Artificial Intelligence',            description: 'Machine learning, expert systems, natural language processing and AI ethics.',     questions: [], flashcards: [] },
-  { key: 'gr10-algorithms',      shortTitle: 'Advanced Algorithms',         title: 'Ch 9 – Advanced Algorithm Design',            description: 'Big-O notation, divide and conquer, dynamic programming and complexity.',          questions: [], flashcards: [] },
-  { key: 'gr10-programming',     shortTitle: 'Further Programming',         title: 'Ch 10 – Further Programming & Testing',       description: 'Functions, libraries, file handling, testing strategies and debugging.',           questions: [], flashcards: [] },
+  { key: 'gr10-data-integrity',  shortTitle: 'Data Integrity',              title: 'Ch 16 – Data Integrity',                      description: 'Validation, verification, checksums and error-detection techniques.',              questions: [], flashcards: [] },
+  { key: 'gr10-cybersecurity',   shortTitle: 'Cybersecurity',               title: 'Ch 17 – Cybersecurity',                       description: 'Attack types, malware, phishing, social engineering and defence strategies.',     questions: [], flashcards: [] },
+  { key: 'gr10-robotics',        shortTitle: 'Robotics & Automation',       title: 'Ch 18 – Automated Systems & Robotics',        description: 'Sensors, actuators, automated systems and real-world robotic applications.',       questions: [], flashcards: [] },
+  { key: 'gr10-ai',              shortTitle: 'Artificial Intelligence',     title: 'Ch 19 – Artificial Intelligence',             description: 'Machine learning, expert systems, natural language processing and AI ethics.',     questions: [], flashcards: [] },
+  { key: 'gr10-algorithms',      shortTitle: 'Advanced Algorithms',         title: 'Ch 20 – Advanced Algorithm Design',           description: 'Big-O notation, divide and conquer, dynamic programming and complexity.',          questions: [], flashcards: [] },
+  { key: 'gr10-programming',     shortTitle: 'Further Programming',         title: 'Ch 21 – Further Programming & Testing',       description: 'Functions, libraries, file handling, testing strategies and debugging.',           questions: [], flashcards: [] },
   /* ── Exam-year revision tier ── */
-  { key: 'gr11-security',        shortTitle: 'Security & Ethics (Ext)',     title: 'Ch 4 – Security & Ethics (Extended)',         description: 'Encryption, digital certificates, legal frameworks and ethical computing.',        questions: [], flashcards: [] },
-  { key: 'gr11-oop',             shortTitle: 'Object-Oriented Programming', title: 'Ch 10.1–10.3 – Object-Oriented Programming',  description: 'Classes, objects, inheritance, encapsulation and polymorphism.',                   questions: [], flashcards: [] },
-  { key: 'gr11-programming',     shortTitle: 'File Handling & Testing',     title: 'Ch 10.4–10.5 – File Handling & Testing',      description: 'Reading and writing files, exception handling and test strategies.',               questions: [], flashcards: [] },
-  { key: 'gr11-databases',       shortTitle: 'Databases & SQL',             title: 'Ch 11 – Databases & SQL',                     description: 'Relational databases, ER diagrams, normalisation and SQL queries.',                questions: [], flashcards: [] },
-  { key: 'gr11-data-structures', shortTitle: 'Data Structures',             title: 'Ch 11 – Advanced Data Structures',            description: 'Stacks, queues, linked lists, trees and their practical implementations.',          questions: [], flashcards: [] },
-  { key: 'gr11-algorithms',      shortTitle: 'Algorithms (Revision)',       title: 'Ch 9 – Algorithms (Exam Revision)',           description: 'Sorting, searching, recursion and algorithm analysis for the exam.',               questions: [], flashcards: [] },
+  { key: 'gr11-security',        shortTitle: 'Security & Ethics (Ext)',     title: 'Ch 22 – Security & Ethics (Extended)',        description: 'Encryption, digital certificates, legal frameworks and ethical computing.',        questions: [], flashcards: [] },
+  { key: 'gr11-oop',             shortTitle: 'Object-Oriented Programming', title: 'Ch 23 – Object-Oriented Programming',         description: 'Classes, objects, inheritance, encapsulation and polymorphism.',                   questions: [], flashcards: [] },
+  { key: 'gr11-programming',     shortTitle: 'File Handling & Testing',     title: 'Ch 24 – File Handling & Testing',             description: 'Reading and writing files, exception handling and test strategies.',               questions: [], flashcards: [] },
+  { key: 'gr11-databases',       shortTitle: 'Databases & SQL',             title: 'Ch 25 – Databases & SQL',                     description: 'Relational databases, ER diagrams, normalisation and SQL queries.',                questions: [], flashcards: [] },
+  { key: 'gr11-data-structures', shortTitle: 'Data Structures',             title: 'Ch 26 – Advanced Data Structures',            description: 'Stacks, queues, linked lists, trees and their practical implementations.',          questions: [], flashcards: [] },
+  { key: 'gr11-algorithms',      shortTitle: 'Algorithms (Revision)',       title: 'Ch 27 – Algorithms (Exam Revision)',          description: 'Sorting, searching, recursion and algorithm analysis for the exam.',               questions: [], flashcards: [] },
   /* ── Emerging technology ── */
-  { key: 'gr10-quantum',         shortTitle: 'Quantum Computing',           title: 'Ch 7.2 – Quantum Computing',                  description: 'Qubits, superposition, entanglement, quantum algorithms and post-quantum cryptography.', questions: [], flashcards: [] },
+  { key: 'gr10-quantum',         shortTitle: 'Quantum Computing',           title: 'Ch 28 – Quantum Computing',                   description: 'Qubits, superposition, entanglement, quantum algorithms and post-quantum cryptography.', questions: [], flashcards: [] },
+];
+
+/* Full 0478 syllabus = Year 1 + Year 2 combined */
+const IGCSE_CS_0478_CHAPTERS: StudyChapter[] = [
+  ...GRADE9CS_CHAPTERS,
+  ...IGCSE_CS_YEAR2_CHAPTERS,
 ];
 
 /* ══════════════════════════════════════════════════════
@@ -287,8 +294,7 @@ const ALCS_CHAPTERS: StudyChapter[] = [
 const ALL_CHAPTER_ARRAYS = [
   GRADE4_CHAPTERS, GRADE5_CHAPTERS, GRADE6_CHAPTERS,
   GRADE7_CHAPTERS, GRADE8_CHAPTERS,
-  GRADE9CS_CHAPTERS, GRADE9DT_CHAPTERS,
-  GRADE10CS_CHAPTERS,
+  IGCSE_CS_0478_CHAPTERS, GRADE9DT_CHAPTERS,
   ALCS_CHAPTERS,
 ];
 /* Build a topicKey → questions lookup once */
@@ -334,9 +340,11 @@ export const GRADE_CHAPTERS: Record<string, StudyChapter[]> = {
   'gr6-cs':  GRADE6_CHAPTERS,
   'gr7-cs':  GRADE7_CHAPTERS,
   'gr8-cs':  GRADE8_CHAPTERS,
-  'gr9-cs':  GRADE9CS_CHAPTERS,
+  // IGCSE CS 0478 — full syllabus under one class (Year 1 + Year 2 merged)
+  'gr9-cs':  IGCSE_CS_0478_CHAPTERS,
+  // Backward-compat alias: gr10-cs now shows the full 0478 syllabus too
+  'gr10-cs': IGCSE_CS_0478_CHAPTERS,
   'gr9-dt':  GRADE9DT_CHAPTERS,
-  'gr10-cs': GRADE10CS_CHAPTERS,
   'gr11-cs': ALCS_CHAPTERS,
 };
 
@@ -368,23 +376,28 @@ export const GRADE_PRACTICE_TESTS: Record<string, PracticeTest[]> = {
     { id: 'gr8-full', title: 'Full Mock Exam', description: 'All chapters · 45 questions · 60 min', timeLimitMinutes: 60, chapterKeys: GRADE8_CHAPTERS.map(c=>c.key), maxQuestions: 45 },
   ],
   'gr9-cs': [
-    { id: 'gr9cs-pt1', title: 'Practice Test 1', description: 'Ch 1–5 · 25 questions · 35 min',  timeLimitMinutes: 35, chapterKeys: GRADE9CS_CHAPTERS.slice(0,5).map(c=>c.key), maxQuestions: 25 },
-    { id: 'gr9cs-pt2', title: 'Practice Test 2', description: 'Ch 6–10 · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: GRADE9CS_CHAPTERS.slice(5,10).map(c=>c.key),maxQuestions: 25 },
-    { id: 'gr9cs-pt3', title: 'Practice Test 3', description: 'Ch 11–15 · 25 questions · 35 min',timeLimitMinutes: 35, chapterKeys: GRADE9CS_CHAPTERS.slice(10).map(c=>c.key),  maxQuestions: 25 },
-    { id: 'gr9cs-full', title: 'Full Mock Exam', description: 'All 15 chapters · 50 questions · 75 min', timeLimitMinutes: 75, chapterKeys: GRADE9CS_CHAPTERS.map(c=>c.key), maxQuestions: 50 },
+    // 0478 Paper 1 — Theory (all syllabus chapters available as practice tests)
+    { id: 'gr9cs-pt1',  title: 'Theory Test 1',  description: 'Ch 1–5 · Number Systems, Text, Compression, CPU, Memory · 25 Q · 35 min',  timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(0,5).map(c=>c.key),   maxQuestions: 25 },
+    { id: 'gr9cs-pt2',  title: 'Theory Test 2',  description: 'Ch 6–10 · I/O, OS, Networks, Cybersecurity, Data Rep · 25 Q · 35 min',      timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(5,10).map(c=>c.key),  maxQuestions: 25 },
+    { id: 'gr9cs-pt3',  title: 'Theory Test 3',  description: 'Ch 11–15 · Algorithms, Programming, Logic, Languages, Embedded · 25 Q · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(10,15).map(c=>c.key), maxQuestions: 25 },
+    { id: 'gr9cs-pt4',  title: 'Theory Test 4',  description: 'Ch 16–21 · Integrity, Cybersec, Robotics, AI, Algorithms, Programming · 25 Q · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(15,21).map(c=>c.key), maxQuestions: 25 },
+    { id: 'gr9cs-pt5',  title: 'Exam Revision',  description: 'Ch 22–28 · Security, OOP, Files, Databases, Data Structures, Quantum · 25 Q · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(21).map(c=>c.key),   maxQuestions: 25 },
+    { id: 'gr9cs-full', title: 'Full Mock Exam', description: 'All 28 chapters · Full syllabus · 60 questions · 90 min',                    timeLimitMinutes: 90, chapterKeys: IGCSE_CS_0478_CHAPTERS.map(c=>c.key),               maxQuestions: 60 },
+  ],
+  // gr10-cs alias: same practice tests as gr9-cs (backward compat)
+  'gr10-cs': [
+    { id: 'gr10cs-pt1',  title: 'Theory Test 1',  description: 'Ch 1–5 · 25 questions · 35 min',  timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(0,5).map(c=>c.key),   maxQuestions: 25 },
+    { id: 'gr10cs-pt2',  title: 'Theory Test 2',  description: 'Ch 6–10 · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(5,10).map(c=>c.key),  maxQuestions: 25 },
+    { id: 'gr10cs-pt3',  title: 'Theory Test 3',  description: 'Ch 11–15 · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(10,15).map(c=>c.key), maxQuestions: 25 },
+    { id: 'gr10cs-pt4',  title: 'Theory Test 4',  description: 'Ch 16–21 · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(15,21).map(c=>c.key), maxQuestions: 25 },
+    { id: 'gr10cs-pt5',  title: 'Exam Revision',  description: 'Ch 22–28 · 25 questions · 35 min', timeLimitMinutes: 35, chapterKeys: IGCSE_CS_0478_CHAPTERS.slice(21).map(c=>c.key),   maxQuestions: 25 },
+    { id: 'gr10cs-full', title: 'Full Mock Exam', description: 'All 28 chapters · 60 questions · 90 min', timeLimitMinutes: 90, chapterKeys: IGCSE_CS_0478_CHAPTERS.map(c=>c.key),       maxQuestions: 60 },
   ],
   'gr9-dt': [
     { id: 'gr9dt-pt1', title: 'Practice Test 1', description: 'CC 1.1–1.4 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: GRADE9DT_CHAPTERS.slice(0,4).map(c=>c.key), maxQuestions: 20 },
     { id: 'gr9dt-pt2', title: 'Practice Test 2', description: 'CC 1.5–1.8 · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: ['gr9dt-health-safety','gr9dt-materials','gr9dt-mechanisms','gr9dt-manufacturing'], maxQuestions: 20 },
     { id: 'gr9dt-pt3', title: 'Practice Test 3', description: 'Graphic Products · 20 questions · 30 min', timeLimitMinutes: 30, chapterKeys: ['gr9dt-gp-materials','gr9dt-gp-drawing','gr9dt-gp-making','gr9dt-gp-analysis','gr9dt-gp-technology'], maxQuestions: 20 },
     { id: 'gr9dt-full', title: 'Full Mock Exam', description: 'All CC + GP topics · 50 questions · 70 min', timeLimitMinutes: 70, chapterKeys: GRADE9DT_CHAPTERS.map(c=>c.key), maxQuestions: 50 },
-  ],
-  'gr10-cs': [
-    { id: 'gr10cs-pt1',     title: 'Practice Test 1', description: 'Security & Robotics · 25 questions · 35 min',           timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(0,3).map(c=>c.key),  maxQuestions: 25 },
-    { id: 'gr10cs-pt2',     title: 'Practice Test 2', description: 'AI, Algorithms & Programming · 25 questions · 35 min',   timeLimitMinutes: 35, chapterKeys: GRADE10CS_CHAPTERS.slice(3,6).map(c=>c.key),  maxQuestions: 25 },
-    { id: 'gr10cs-pt3',     title: 'Revision Test',   description: 'OOP, Databases & Algorithms · 25 questions · 35 min',   timeLimitMinutes: 35, chapterKeys: ['gr11-security','gr11-oop','gr11-programming','gr11-databases','gr11-data-structures','gr11-algorithms'], maxQuestions: 25 },
-    { id: 'gr10cs-quantum', title: 'Quantum Computing', description: 'Quantum Computing · 25 questions · 35 min',           timeLimitMinutes: 35, chapterKeys: ['gr10-quantum'],                             maxQuestions: 25 },
-    { id: 'gr10cs-full',    title: 'Full Mock Exam',   description: 'All topics including Quantum · 50 questions · 75 min', timeLimitMinutes: 75, chapterKeys: GRADE10CS_CHAPTERS.map(c=>c.key),             maxQuestions: 50 },
   ],
   'gr11-cs': [
     { id: 'alcs-as-pt1',  title: 'AS Paper 1 – Data & Systems',    description: 'Ch 1–6 · 30 questions · 45 min',   timeLimitMinutes: 45, chapterKeys: ALCS_CHAPTERS.slice(0,6).map(c=>c.key),   maxQuestions: 30 },

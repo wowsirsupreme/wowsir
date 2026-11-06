@@ -55,44 +55,35 @@ export const CLASSES: StudyClass[] = [
   },
   {
     id: 'gr8-cs',
-    label: 'Grade 8',
+    label: 'ICT',
     grade: 'Grade 8',
-    subject: 'Python & Networks',
+    subject: 'IGCSE ICT 0417',
     color: '#10b981',
     glow: 'rgba(16,185,129,0.2)',
   },
-  // ── IGCSE Year 1 ──────────────────────────────────────────────────
+  // ── IGCSE ─────────────────────────────────────────────────────────
   {
     id: 'gr9-cs',
-    label: 'Grade 9 CS',
-    grade: 'Grade 9',
-    subject: 'IGCSE CS 0478 Year 1',
+    label: 'CS',
+    grade: 'IGCSE',
+    subject: 'IGCSE CS 0478',
     color: '#6366f1',
     glow: 'rgba(99,102,241,0.2)',
   },
   {
     id: 'gr9-dt',
-    label: 'Grade 9 DT',
-    grade: 'Grade 9',
-    subject: 'IGCSE D&T 0445 Common',
+    label: 'DT',
+    grade: 'IGCSE',
+    subject: 'D&T 0445 / 9705',
     color: '#ec4899',
     glow: 'rgba(236,72,153,0.2)',
   },
-  // ── IGCSE Year 2 ──────────────────────────────────────────────────
-  {
-    id: 'gr10-cs',
-    label: 'Grade 10',
-    grade: 'Grade 10',
-    subject: 'IGCSE CS 0478 Year 2',
-    color: '#6366f1',
-    glow: 'rgba(99,102,241,0.2)',
-  },
-  // ── A-Level ───────────────────────────────────────────────────────
+  // ── A Level ───────────────────────────────────────────────────────
   {
     id: 'gr11-cs',
-    label: 'Grade 11',
-    grade: 'Grade 11',
-    subject: 'A-Level CS 9618',
+    label: 'A Level CS',
+    grade: 'A Level',
+    subject: 'A Level CS 9618',
     color: '#8b5cf6',
     glow: 'rgba(139,92,246,0.2)',
   },
